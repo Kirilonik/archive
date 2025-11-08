@@ -27,6 +27,8 @@ const summaryStats: UserSummaryStats = {
   seriesWithRating: 2,
   filmsWithOpinion: 1,
   seriesWithOpinion: 1,
+  filmsDurationMinutes: 95,
+  seriesDurationMinutes: 360,
 };
 
 const detailedStats: UserDetailedStats = {

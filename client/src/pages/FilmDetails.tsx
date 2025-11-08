@@ -5,6 +5,16 @@ import MarkdownPreview from '@uiw/react-markdown-preview';
 import { MarkdownEditor } from '../components/MarkdownEditor';
 import { apiFetch } from '../lib/api';
 
+function formatMinutes(amount?: number | null): string | null {
+  if (!amount || amount <= 0) return null;
+  const hours = Math.floor(amount / 60);
+  const minutes = amount % 60;
+  if (hours > 0) {
+    return `${hours} ч ${minutes} мин`;
+  }
+  return `${minutes} мин`;
+}
+
 export function FilmDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -45,6 +55,9 @@ export function FilmDetails() {
 
   if (!data) return <main className="mx-auto max-w-5xl px-4 py-6 text-text">Загрузка...</main>;
 
+  const kpRating = typeof data.rating_kinopoisk === 'number' ? Math.round(data.rating_kinopoisk * 10) / 10 : null;
+  const formattedDuration = formatMinutes(data.film_length);
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
       <div className="card">
@@ -55,8 +68,43 @@ export function FilmDetails() {
             ) : null}
           </div>
           <div>
-            <div className="flex items-center justify-between gap-4 mb-2">
+            <div className="flex flex-col gap-3 mb-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  {data.logo_url ? (
+                    <img src={data.logo_url} alt={data.title} className="max-h-16 object-contain mb-2" />
+                  ) : null}
               <h1 className="text-3xl font-semibold tracking-wide text-text">{data.title}</h1>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    {kpRating != null && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/90 px-3 py-1 text-sm font-semibold text-black shadow">
+                        KP {kpRating}
+                      </span>
+                    )}
+                    {formattedDuration && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-xs text-textMuted">
+                        {formattedDuration}
+                      </span>
+                    )}
+                    {data.rating && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-xs text-textMuted">
+                        Рейтинг каталога: {data.rating}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {data.web_url && (
+                    <a
+                      href={data.web_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn px-3 py-1 flex items-center gap-2 bg-[#ff6d1f] text-black hover:bg-[#ff853f] border-transparent"
+                    >
+                      <span aria-hidden="true" className="text-lg leading-none">🎬</span>
+                      Кинопоиск
+                    </a>
+                  )}
               <button
                 className="btn px-3 py-1 text-red-400 hover:bg-red-500/20 border-red-500/30"
                 disabled={deleting}
@@ -83,17 +131,47 @@ export function FilmDetails() {
               >
                 {deleting ? 'Удаление...' : 'Удалить'}
               </button>
+                </div>
+              </div>
             </div>
             <div className="mt-2 text-textMuted space-y-2">
               <div className="flex flex-wrap gap-3 items-center">
                 {data.year && <span>Год: {data.year}</span>}
-                <span className="inline-flex items-center gap-2">
+                {data.director && <span>Режиссёр: {data.director}</span>}
+                {data.web_url && (
+                  <a
+                    href={data.web_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-orange-300 underline decoration-dotted underline-offset-4 hover:text-orange-200"
+                  >
+                    Страница на Кинопоиске
+                  </a>
+                )}
+              </div>
+              <div className="inline-flex items-center gap-2 flex-wrap">
                   <span>Моя оценка: {data.my_rating != null ? data.my_rating : '—'}</span>
                   {!ratingEditMode ? (
-                    <button className="btn px-2 py-0.5" onClick={() => { setRatingEditMode(true); setRatingDraft(data.my_rating != null ? String(data.my_rating) : ''); }}>Изменить</button>
+                  <button
+                    className="btn px-2 py-0.5"
+                    onClick={() => {
+                      setRatingEditMode(true);
+                      setRatingDraft(data.my_rating != null ? String(data.my_rating) : '');
+                    }}
+                  >
+                    Изменить
+                  </button>
                   ) : (
                     <span className="inline-flex items-center gap-2">
-                      <input type="number" min={0} max={10} step={0.1} className="input w-20" value={ratingDraft} onChange={(e) => setRatingDraft(e.target.value)} />
+                    <input
+                      type="number"
+                      min={0}
+                      max={10}
+                      step={0.1}
+                      className="input w-20"
+                      value={ratingDraft}
+                      onChange={(e) => setRatingDraft(e.target.value)}
+                    />
                       <button
                         className="btn btn-primary px-2 py-0.5"
                         disabled={saving}
@@ -124,16 +202,26 @@ export function FilmDetails() {
                             setSaving(false);
                           }
                         }}
-                      >Сохранить</button>
-                      <button className="btn px-2 py-0.5" onClick={() => { setRatingEditMode(false); setRatingDraft(data.my_rating != null ? String(data.my_rating) : ''); }}>Отмена</button>
+                    >
+                      Сохранить
+                    </button>
+                    <button
+                      className="btn px-2 py-0.5"
+                      onClick={() => {
+                        setRatingEditMode(false);
+                        setRatingDraft(data.my_rating != null ? String(data.my_rating) : '');
+                      }}
+                    >
+                      Отмена
+                    </button>
                     </span>
                   )}
-                </span>
+              </div>
               </div>
               <div className="flex flex-wrap gap-3 items-center">
-                {data.director && <span>Режиссёр: {data.director}</span>}
                 {typeof data.budget === 'number' && <span>Бюджет: {data.budget.toLocaleString()} ₽</span>}
                 {typeof data.revenue === 'number' && <span>Сборы: {data.revenue.toLocaleString()} ₽</span>}
+                {formattedDuration && <span>Продолжительность: {formattedDuration}</span>}
               </div>
             </div>
             {Array.isArray(data.genres) && data.genres.length > 0 && (

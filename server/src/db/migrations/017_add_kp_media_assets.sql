@@ -1,0 +1,15 @@
+ALTER TABLE films_catalog
+  ADD COLUMN IF NOT EXISTS poster_url_preview TEXT,
+  ADD COLUMN IF NOT EXISTS logo_url TEXT,
+  ADD COLUMN IF NOT EXISTS rating_kinopoisk FLOAT,
+  ADD COLUMN IF NOT EXISTS web_url TEXT,
+  ADD COLUMN IF NOT EXISTS film_length INT;
+
+ALTER TABLE series_catalog
+  ADD COLUMN IF NOT EXISTS poster_url_preview TEXT,
+  ADD COLUMN IF NOT EXISTS logo_url TEXT,
+  ADD COLUMN IF NOT EXISTS rating_kinopoisk FLOAT,
+  ADD COLUMN IF NOT EXISTS web_url TEXT,
+  ADD COLUMN IF NOT EXISTS film_length INT;
+
+

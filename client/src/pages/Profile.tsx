@@ -116,6 +116,19 @@ export function Profile() {
     reader.readAsDataURL(file);
   }
 
+  function formatMinutes(total?: number | null): string {
+    if (!total || total <= 0) return '—';
+    const hours = Math.floor(total / 60);
+    const minutes = total % 60;
+    if (hours > 0 && minutes > 0) {
+      return `${hours} ч ${minutes} мин`;
+    }
+    if (hours > 0) {
+      return `${hours} ч`;
+    }
+    return `${minutes} мин`;
+  }
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
       <h1 className="text-2xl font-semibold mb-4 text-text">Профиль</h1>
@@ -166,7 +179,7 @@ export function Profile() {
           {/* Статистика */}
           <div className="space-y-6">
             {/* Основные метрики */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
               <div className="card p-4 text-center">
                 <div className="text-3xl font-semibold text-text">{data.stats?.films ?? 0}</div>
                 <div className="text-sm text-textMuted mt-1">Фильмы</div>
@@ -187,6 +200,18 @@ export function Profile() {
                 <div className="text-3xl font-semibold text-text">{data.stats?.totalSeasons ?? 0}</div>
                 <div className="text-sm text-textMuted mt-1">Всего сезонов</div>
               </div>
+            <div className="card p-4 text-center">
+              <div className="text-3xl font-semibold text-text">
+                {formatMinutes(data.stats?.filmsDurationMinutes)}
+              </div>
+              <div className="text-sm text-textMuted mt-1">Хронометраж фильмов</div>
+            </div>
+            <div className="card p-4 text-center">
+              <div className="text-3xl font-semibold text-text">
+                {formatMinutes(data.stats?.seriesDurationMinutes)}
+              </div>
+              <div className="text-sm text-textMuted mt-1">Хронометраж сериалов</div>
+            </div>
             </div>
 
             {/* Дополнительные метрики */}
@@ -267,8 +292,8 @@ function ProfileSkeleton() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {Array.from({ length: 5 }).map((_, idx) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+        {Array.from({ length: 7 }).map((_, idx) => (
           <div key={idx} className="card p-4 animate-pulse space-y-3">
             <div className="h-8 bg-white/10 rounded" />
             <div className="h-4 bg-white/10 rounded w-3/4" />

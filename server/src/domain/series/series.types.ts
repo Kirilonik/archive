@@ -22,18 +22,23 @@ export interface SeriesUpdateInput {
 export interface SeriesCatalogCreateInput {
   title: string;
   posterUrl?: string | null;
+  posterUrlPreview?: string | null;
+  logoUrl?: string | null;
   rating?: number | null;
+  ratingKinopoisk?: number | null;
   year?: number | null;
   description?: string | null;
   kpIsSeries?: boolean | null;
   kpEpisodesCount?: number | null;
   kpSeasonsCount?: number | null;
   kpId?: number | null;
+  webUrl?: string | null;
   director?: string | null;
   budget?: number | null;
   revenue?: number | null;
   genres?: string[] | null;
   actors?: string[] | null;
+  filmLength?: number | null;
 }
 
 export interface UserSeriesRow {
@@ -42,18 +47,23 @@ export interface UserSeriesRow {
   user_id: number;
   title: string;
   poster_url: string | null;
+  poster_url_preview: string | null;
+  logo_url: string | null;
   rating: number | null;
+  rating_kinopoisk: number | null;
   year: number | null;
   description: string | null;
   kp_is_series: boolean | null;
   kp_episodes_count: number | null;
   kp_seasons_count: number | null;
   kp_id: number | null;
+  web_url: string | null;
   director: string | null;
   budget: number | null;
   revenue: number | null;
   genres: string[] | null;
   actors: string[] | null;
+  film_length: number | null;
   my_rating: number | null;
   opinion: string | null;
   user_status: string | null;

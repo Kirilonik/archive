@@ -200,6 +200,9 @@ export function SeriesDetails() {
 
   if (!series) return <main className="mx-auto max-w-5xl px-4 py-6 text-text">Загрузка...</main>;
 
+  const kpRating = typeof series?.rating_kinopoisk === 'number' ? Math.round(series.rating_kinopoisk * 10) / 10 : null;
+  const episodeDuration = typeof series?.film_length === 'number' ? formatDuration(series.film_length) : null;
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
       <div className="card">
@@ -210,34 +213,71 @@ export function SeriesDetails() {
             ) : null}
           </div>
           <div>
-            <div className="flex items-center justify-between gap-4 mb-2">
-              <h1 className="text-3xl font-semibold tracking-wide text-text">{series.title}</h1>
-              <button
-                className="btn px-3 py-1 text-red-400 hover:bg-red-500/20 border-red-500/30"
-                disabled={deleting}
-                onClick={async () => {
-                  if (!id) return;
-                  if (!confirm(`Вы уверены, что хотите удалить сериал "${series.title}"? Это действие удалит все сезоны и эпизоды и его нельзя отменить.`)) {
-                    return;
-                  }
-                  try {
-                    setDeleting(true);
-                    const resp = await apiFetch(`/api/series/${id}`, { method: 'DELETE' });
-                    if (!resp.ok) {
-                      toast.error('Ошибка при удалении сериала');
-                      return;
-                    }
-                    toast.success('Сериал удален из библиотеки');
-                    navigate('/');
-                  } catch (e) {
-                    toast.error('Ошибка при удалении сериала');
-                  } finally {
-                    setDeleting(false);
-                  }
-                }}
-              >
-                {deleting ? 'Удаление...' : 'Удалить'}
-              </button>
+            <div className="flex flex-col gap-3 mb-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  {series.logo_url ? (
+                    <img src={series.logo_url} alt={series.title} className="max-h-16 object-contain mb-2" />
+                  ) : null}
+                  <h1 className="text-3xl font-semibold tracking-wide text-text">{series.title}</h1>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    {kpRating != null && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/90 px-3 py-1 text-sm font-semibold text-black shadow">
+                        KP {kpRating}
+                      </span>
+                    )}
+                    {episodeDuration && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-xs text-textMuted">
+                        Серия: {episodeDuration}
+                      </span>
+                    )}
+                    {series.rating && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-xs text-textMuted">
+                        Рейтинг каталога: {series.rating}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {series.web_url && (
+                    <a
+                      href={series.web_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn px-3 py-1 flex items-center gap-2 bg-[#ff6d1f] text-black hover:bg-[#ff853f] border-transparent"
+                    >
+                      <span aria-hidden="true" className="text-lg leading-none">🎬</span>
+                      Кинопоиск
+                    </a>
+                  )}
+                  <button
+                    className="btn px-3 py-1 text-red-400 hover:bg-red-500/20 border-red-500/30"
+                    disabled={deleting}
+                    onClick={async () => {
+                      if (!id) return;
+                      if (!confirm(`Вы уверены, что хотите удалить сериал "${series.title}"? Это действие удалит все сезоны и эпизоды и его нельзя отменить.`)) {
+                        return;
+                      }
+                      try {
+                        setDeleting(true);
+                        const resp = await apiFetch(`/api/series/${id}`, { method: 'DELETE' });
+                        if (!resp.ok) {
+                          toast.error('Ошибка при удалении сериала');
+                          return;
+                        }
+                        toast.success('Сериал удален из библиотеки');
+                        navigate('/');
+                      } catch (e) {
+                        toast.error('Ошибка при удалении сериала');
+                      } finally {
+                        setDeleting(false);
+                      }
+                    }}
+                  >
+                    {deleting ? 'Удаление...' : 'Удалить'}
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="mt-2 text-textMuted space-y-2">
               <div className="flex flex-wrap gap-3 items-center">
@@ -291,6 +331,17 @@ export function SeriesDetails() {
                 {series.director && <span>Режиссёр: {series.director}</span>}
                 {typeof series.budget === 'number' && <span>Бюджет: {series.budget.toLocaleString()} ₽</span>}
                 {typeof series.revenue === 'number' && <span>Сборы: {series.revenue.toLocaleString()} ₽</span>}
+                {episodeDuration && <span>Длительность серии: {episodeDuration}</span>}
+                {series.web_url && (
+                  <a
+                    href={series.web_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-orange-300 underline decoration-dotted underline-offset-4 hover:text-orange-200"
+                  >
+                    Страница на Кинопоиске
+                  </a>
+                )}
               </div>
             </div>
             {Array.isArray(series.genres) && series.genres.length > 0 && (

@@ -5,21 +5,30 @@ interface Props {
   id: number;
   title: string;
   poster_url?: string;
+  poster_url_preview?: string;
   rating?: number;
+  rating_kinopoisk?: number;
   status?: string;
   genres?: string[];
   my_rating?: number;
 }
 
-export function Card({ kind, id, title, poster_url, rating, status, genres, my_rating }: Props) {
+export function Card({ kind, id, title, poster_url, poster_url_preview, rating, rating_kinopoisk, status, genres, my_rating }: Props) {
   const href = kind === 'film' ? `/films/${id}` : `/series/${id}`;
+  const imageSrc = poster_url_preview || poster_url;
+  const kpRating = typeof rating_kinopoisk === 'number' ? Math.round(rating_kinopoisk * 10) / 10 : null;
   return (
     <Link to={href} className="card overflow-hidden p-0 relative">
-      <div className="aspect-[2/3] bg-black/30 flex items-center justify-center">
-        {poster_url ? (
-          <img src={poster_url} alt={title} className="w-full h-full object-cover" />
+      <div className="aspect-[2/3] bg-black/30 flex items-center justify-center relative">
+        {imageSrc ? (
+          <img src={imageSrc} alt={title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
         ) : (
           <span className="text-sm text-textMuted px-2 text-center">Нет постера</span>
+        )}
+        {kpRating != null && (
+          <span className="absolute top-2 right-2 bg-orange-500/90 text-black text-xs font-semibold px-2 py-1 rounded-full shadow">
+            KP {kpRating}
+          </span>
         )}
       </div>
       <div className="p-3">

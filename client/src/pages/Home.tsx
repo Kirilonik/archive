@@ -183,7 +183,9 @@ export function Home() {
             id={it.id}
             title={it.title}
             poster_url={it.poster_url}
+            poster_url_preview={it.poster_url_preview}
             rating={it.rating}
+            rating_kinopoisk={it.rating_kinopoisk}
             my_rating={it.my_rating}
             status={it.status}
             genres={it.genres}

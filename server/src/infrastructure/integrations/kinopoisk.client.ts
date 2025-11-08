@@ -77,19 +77,32 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       if (!detail) return {};
       const genres = (detail.genres || []).map((g: any) => g.genre).filter(Boolean) as string[];
       const { director, actors } = await this.fetchStaff(kpId);
+      const episodeLength = detail.episodeLength ?? detail.seriesLength ?? null;
+      const episodesCount =
+        detail.episodesLength ??
+        detail.serialEpisodesNumber ??
+        detail.serialEpisodesCount ??
+        detail.totalEpisodes ??
+        null;
+      const seasonsCount = detail.seasons?.length ?? detail.serialSeasonsNumber ?? detail.totalSeasons ?? null;
       return {
         kp_id: detail.kinopoiskId ?? kpId,
         kp_poster: detail.posterUrl || detail.posterUrlPreview || null,
+        kp_posterPreview: detail.posterUrlPreview || detail.posterUrl || null,
+        kp_logo: detail.logoUrl ?? null,
         kp_description: detail.description ?? null,
         kp_year: detail.year ?? detail.startYear ?? null,
         kp_isSeries: detail.type === 'TV_SERIES' || detail.type === 'MINI_SERIES' || detail.serial === true,
-        kp_episodesCount: null,
-        kp_seasonsCount: detail.seasons?.length ?? null,
+        kp_episodesCount: episodesCount ?? null,
+        kp_seasonsCount: seasonsCount ?? null,
         kp_genres: genres.length ? genres : null,
         kp_director: director,
         kp_actors: actors,
         kp_budget: detail.budget ?? null,
         kp_revenue: null,
+        kp_ratingKinopoisk: detail.ratingKinopoisk ?? null,
+        kp_webUrl: detail.webUrl ?? null,
+        kp_filmLength: episodeLength ?? detail.filmLength ?? null,
       };
     } catch (error) {
       logger.error({ err: error, kpId }, 'Error fetching film details by kp_id');
@@ -121,16 +134,21 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       return {
         kp_id: film.kinopoiskId ?? posterId,
         kp_poster: film.posterUrl || film.posterUrlPreview || null,
+        kp_posterPreview: film.posterUrlPreview || film.posterUrl || null,
+        kp_logo: film.logoUrl ?? null,
         kp_description: film.description ?? null,
         kp_year: film.year ?? null,
         kp_isSeries: film.type === 'TV_SERIES' || film.type === 'MINI_SERIES' || film.serial === true,
-        kp_episodesCount: null,
-        kp_seasonsCount: null,
+        kp_episodesCount: film.episodesLength ?? film.serialEpisodesNumber ?? film.serialEpisodesCount ?? null,
+        kp_seasonsCount: film.seasonsCount ?? film.serialSeasonsNumber ?? null,
         kp_genres: genres.length ? genres : null,
         kp_director: null,
         kp_actors: null,
         kp_budget: null,
         kp_revenue: null,
+        kp_ratingKinopoisk: film.rating ?? null,
+        kp_webUrl: film.webUrl ?? null,
+        kp_filmLength: film.episodeLength ?? film.filmLength ?? null,
       };
     } catch (error) {
       logger.error({ err: error, title }, 'Error in searchBestByTitle');
@@ -155,7 +173,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
           number: e.episodeNumber,
           name: e.nameRu || e.nameEn || undefined,
           releaseDate: e.releaseDate || undefined,
-          duration: undefined,
+          duration: e.episodeLength ?? e.duration ?? null,
         })),
       }));
       return { seasons };

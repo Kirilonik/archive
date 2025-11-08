@@ -1,6 +1,8 @@
 export type KpEnriched = {
   kp_id?: number | null;
   kp_poster?: string | null;
+  kp_posterPreview?: string | null;
+  kp_logo?: string | null;
   kp_description?: string | null;
   kp_year?: number | null;
   kp_isSeries?: boolean | null;
@@ -11,6 +13,9 @@ export type KpEnriched = {
   kp_actors?: string[] | null;
   kp_budget?: number | null;
   kp_revenue?: number | null;
+  kp_ratingKinopoisk?: number | null;
+  kp_webUrl?: string | null;
+  kp_filmLength?: number | null;
 };
 
 export type KpSuggestItem = {

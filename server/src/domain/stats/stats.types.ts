@@ -9,6 +9,8 @@ export interface UserSummaryStats {
   seriesWithRating: number;
   filmsWithOpinion: number;
   seriesWithOpinion: number;
+  filmsDurationMinutes: number;
+  seriesDurationMinutes: number;
 }
 
 export interface GenreStat {
