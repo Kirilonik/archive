@@ -25,15 +25,19 @@ export function Card({ kind, id, title, poster_url, poster_url_preview, rating, 
         ) : (
           <span className="text-sm text-textMuted px-2 text-center">Нет постера</span>
         )}
-        {kpRating != null && (
-          <span className="absolute top-2 right-2 bg-orange-500/90 text-black text-xs font-semibold px-2 py-1 rounded-full shadow">
-            KP {kpRating}
-          </span>
-        )}
       </div>
       <div className="p-3">
         <div className="font-medium line-clamp-2 text-text">{title}</div>
-        <div className="text-sm text-textMuted mt-1">Моя оценка: {my_rating ?? '—'}</div>
+        <div className="flex items-center gap-2 mt-2">
+          {kpRating != null && (
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full shadow bg-orange-500/90 text-black">
+              KP {kpRating}
+            </span>
+          )}
+          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full shadow bg-gradient-to-r from-indigo-400 via-fuchsia-500 to-pink-500 text-white">
+            Я {typeof my_rating === 'number' ? Math.round(my_rating * 10) / 10 : '—'}
+          </span>
+        </div>
         {status && <div className="text-xs text-textMuted mt-1">{status}</div>}
         {genres && genres.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">

@@ -57,6 +57,28 @@ export class FilmsController {
     }
   };
 
+  getConceptArt = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as any).user?.id as number | undefined;
+      const conceptArt = await this.filmService.getFilmConceptArt(Number(req.params.id), userId);
+      if (!conceptArt) return res.status(404).json({ error: 'Not found' });
+      res.json(conceptArt);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getPosters = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as any).user?.id as number | undefined;
+      const posters = await this.filmService.getFilmPosters(Number(req.params.id), userId);
+      if (!posters) return res.status(404).json({ error: 'Not found' });
+      res.json(posters);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = (req as any).user?.id as number | undefined;

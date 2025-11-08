@@ -20,6 +20,7 @@ export function SeriesDetails() {
   const [opinionDraft, setOpinionDraft] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -202,10 +203,30 @@ export function SeriesDetails() {
 
   const kpRating = typeof series?.rating_kinopoisk === 'number' ? Math.round(series.rating_kinopoisk * 10) / 10 : null;
   const episodeDuration = typeof series?.film_length === 'number' ? formatDuration(series.film_length) : null;
+  const myRatingValue = typeof series?.my_rating === 'number' ? Math.round(series.my_rating * 10) / 10 : null;
+
+  async function handleDelete() {
+    if (!id) return;
+    try {
+      setDeleting(true);
+      const resp = await apiFetch(`/api/series/${id}`, { method: 'DELETE' });
+      if (!resp.ok) {
+        toast.error('Ошибка при удалении сериала');
+        return;
+      }
+      toast.success('Сериал удален из библиотеки');
+      navigate('/');
+    } catch (e) {
+      toast.error('Ошибка при удалении сериала');
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  }
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
-      <div className="card">
+      <div className="card relative overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-[220px,1fr] gap-6 items-start">
           <div className="w-full overflow-hidden rounded-soft bg-black/30 aspect-[2/3]">
             {series.poster_url ? (
@@ -216,18 +237,30 @@ export function SeriesDetails() {
             <div className="flex flex-col gap-3 mb-3">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  {series.logo_url ? (
-                    <img src={series.logo_url} alt={series.title} className="max-h-16 object-contain mb-2" />
-                  ) : null}
                   <h1 className="text-3xl font-semibold tracking-wide text-text">{series.title}</h1>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     {kpRating != null && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/90 px-3 py-1 text-sm font-semibold text-black shadow">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/90 px-3 py-1 text-xs font-semibold text-black shadow">
                         KP {kpRating}
                       </span>
                     )}
+                    <span
+                      className="relative inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-white shadow bg-gradient-to-r from-indigo-400 via-fuchsia-500 to-pink-500 cursor-pointer group"
+                      onClick={() => {
+                        setRatingEditMode(true);
+                        setRatingDraft(series.my_rating != null ? String(series.my_rating) : '');
+                      }}
+                    >
+                      Я {myRatingValue ?? '—'}
+                      <span className="absolute inset-0 rounded-full bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <span className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-white drop-shadow">
+                          <path d="M15.414 3.586a2 2 0 0 1 0 2.828l-.793.793-2.828-2.828.793-.793a2 2 0 0 1 2.828 0ZM10.5 5.207 3 12.707V16h3.293l7.5-7.5-3.293-3.293Z" />
+                        </svg>
+                      </span>
+                    </span>
                     {episodeDuration && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-xs text-textMuted">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-xs font-semibold text-textMuted">
                         Серия: {episodeDuration}
                       </span>
                     )}
@@ -244,37 +277,17 @@ export function SeriesDetails() {
                       href={series.web_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn px-3 py-1 flex items-center gap-2 bg-[#ff6d1f] text-black hover:bg-[#ff853f] border-transparent"
+                      className="btn px-3 py-1 flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/20"
                     >
-                      <span aria-hidden="true" className="text-lg leading-none">🎬</span>
-                      Кинопоиск
+                      <img src="/kinopoisk-logo-white-on-blackbackground-rus.png" alt="Кинопоиск" className="h-5" />
                     </a>
                   )}
                   <button
                     className="btn px-3 py-1 text-red-400 hover:bg-red-500/20 border-red-500/30"
                     disabled={deleting}
-                    onClick={async () => {
-                      if (!id) return;
-                      if (!confirm(`Вы уверены, что хотите удалить сериал "${series.title}"? Это действие удалит все сезоны и эпизоды и его нельзя отменить.`)) {
-                        return;
-                      }
-                      try {
-                        setDeleting(true);
-                        const resp = await apiFetch(`/api/series/${id}`, { method: 'DELETE' });
-                        if (!resp.ok) {
-                          toast.error('Ошибка при удалении сериала');
-                          return;
-                        }
-                        toast.success('Сериал удален из библиотеки');
-                        navigate('/');
-                      } catch (e) {
-                        toast.error('Ошибка при удалении сериала');
-                      } finally {
-                        setDeleting(false);
-                      }
-                    }}
+                    onClick={() => setShowDeleteConfirm(true)}
                   >
-                    {deleting ? 'Удаление...' : 'Удалить'}
+                    Удалить
                   </button>
                 </div>
               </div>
@@ -282,15 +295,76 @@ export function SeriesDetails() {
             <div className="mt-2 text-textMuted space-y-2">
               <div className="flex flex-wrap gap-3 items-center">
                 {series.year && <span>Год: {series.year}</span>}
-                <span className="inline-flex items-center gap-2">
-                  <span>Моя оценка: {series.my_rating != null ? series.my_rating : '—'}</span>
-                  {!ratingEditMode ? (
-                    <button className="btn px-2 py-0.5" onClick={() => { setRatingEditMode(true); setRatingDraft(series.my_rating != null ? String(series.my_rating) : ''); }}>Изменить</button>
-                  ) : (
-                    <span className="inline-flex items-center gap-2">
-                      <input type="number" min={0} max={10} step={0.1} className="input w-20" value={ratingDraft} onChange={(e) => setRatingDraft(e.target.value)} />
+                {series.kp_seasonsCount && <span>Сезонов: {series.kp_seasonsCount}</span>}
+                {series.kp_episodesCount && <span>Эпизодов: {series.kp_episodesCount}</span>}
+              </div>
+              <div className="flex flex-wrap gap-3 items-center">
+                {series.director && <span className="basis-full sm:basis-auto">Режиссёр: {series.director}</span>}
+                {typeof series.budget === 'number' && <span>Бюджет: {series.budget.toLocaleString()} ₽</span>}
+                {typeof series.revenue === 'number' && <span>Сборы: {series.revenue.toLocaleString()} ₽</span>}
+                {episodeDuration && <span>Длительность серии: {episodeDuration}</span>}
+              </div>
+            </div>
+            {Array.isArray(series.genres) && series.genres.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {series.genres.map((g: string, i: number) => (
+                  <span key={i} className="px-2 py-0.5 text-xs bg-white/15 border border-white/20 rounded-soft text-text">{g}</span>
+                ))}
+              </div>
+            )}
+            {series.description && (
+              <div className="text-sm text-textMuted mt-4 leading-relaxed max-w-2xl">{series.description}</div>
+            )}
+          </div>
+        </div>
+      </div>
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => !deleting && setShowDeleteConfirm(false)}>
+          <div className="card max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="text-lg font-semibold text-text mb-2">Удалить сериал</div>
+            <div className="text-sm text-textMuted mb-4">
+              Сериал «{series.title}» и все его seasons/эпизоды будут удалены. Это действие нельзя отменить.
+            </div>
+            <div className="flex justify-end gap-2">
+              <button className="btn px-3 py-1" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
+                Отмена
+              </button>
+              <button
+                className="btn px-3 py-1 bg-red-500/80 hover:bg-red-500 text-white border border-red-500/40"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? 'Удаление…' : 'Да, удалить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {ratingEditMode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => !saving && setRatingEditMode(false)}>
+          <div className="card max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="text-lg font-semibold text-text mb-2">Изменить оценку</div>
+            <div className="text-sm text-textMuted mb-4">Обновите свою оценку для сериала «{series.title}».</div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-textMuted mb-1">Новая оценка (0-10)</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  className="input"
+                  value={ratingDraft}
+                  onChange={(e) => setRatingDraft(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button className="btn px-3 py-1" onClick={() => setRatingEditMode(false)} disabled={saving}>
+                Отмена
+              </button>
                       <button
-                        className="btn btn-primary px-2 py-0.5"
+                className="btn btn-primary px-3 py-1"
                         disabled={saving}
                         onClick={async () => {
                           if (!id) return;
@@ -319,44 +393,13 @@ export function SeriesDetails() {
                             setSaving(false);
                           }
                         }}
-                      >Сохранить</button>
-                      <button className="btn px-2 py-0.5" onClick={() => { setRatingEditMode(false); setRatingDraft(series.my_rating != null ? String(series.my_rating) : ''); }}>Отмена</button>
-                    </span>
-                  )}
-                </span>
-                {series.kp_seasonsCount && <span>Сезонов: {series.kp_seasonsCount}</span>}
-                {series.kp_episodesCount && <span>Эпизодов: {series.kp_episodesCount}</span>}
-              </div>
-              <div className="flex flex-wrap gap-3 items-center">
-                {series.director && <span>Режиссёр: {series.director}</span>}
-                {typeof series.budget === 'number' && <span>Бюджет: {series.budget.toLocaleString()} ₽</span>}
-                {typeof series.revenue === 'number' && <span>Сборы: {series.revenue.toLocaleString()} ₽</span>}
-                {episodeDuration && <span>Длительность серии: {episodeDuration}</span>}
-                {series.web_url && (
-                  <a
-                    href={series.web_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-orange-300 underline decoration-dotted underline-offset-4 hover:text-orange-200"
-                  >
-                    Страница на Кинопоиске
-                  </a>
-                )}
-              </div>
+              >
+                Сохранить
+              </button>
             </div>
-            {Array.isArray(series.genres) && series.genres.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {series.genres.map((g: string, i: number) => (
-                  <span key={i} className="px-2 py-0.5 text-xs bg-white/15 border border-white/20 rounded-soft text-text">{g}</span>
-                ))}
-              </div>
-            )}
-            {series.description && (
-              <div className="text-sm text-textMuted mt-4 leading-relaxed max-w-2xl">{series.description}</div>
-            )}
           </div>
         </div>
-      </div>
+      )}
 
       <div className="card mt-6">
         <div className="flex items-center justify-between mb-3">

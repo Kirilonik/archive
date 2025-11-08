@@ -1,5 +1,11 @@
 import { env } from '../../config/env.js';
-import type { KinopoiskClient, KpEnriched, KpSeriesDetails, KpSuggestItem } from '../../domain/integrations/kinopoisk.types.js';
+import type {
+  KinopoiskClient,
+  KpEnriched,
+  KpImageResponse,
+  KpSeriesDetails,
+  KpSuggestItem,
+} from '../../domain/integrations/kinopoisk.types.js';
 import { logger } from '../../shared/logger.js';
 
 const API_URL = env.KINOPOISK_API_URL;
@@ -244,6 +250,21 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     } catch (error) {
       logger.error({ err: error, query }, 'Error in Kinopoisk suggest');
       return [];
+    }
+  }
+
+  async fetchFilmImages(kpId: number, type: string, page = 1): Promise<KpImageResponse | null> {
+    if (!kpId) {
+      logger.warn({ kpId, type, page }, 'fetchFilmImages: kpId is missing or invalid');
+      return null;
+    }
+    try {
+      const url = `${API_URL}/api/v2.2/films/${kpId}/images?type=${encodeURIComponent(type)}&page=${page}`;
+      const resp = await this.fetchJson<KpImageResponse>(url);
+      return resp ?? null;
+    } catch (error) {
+      logger.error({ err: error, kpId, type, page }, 'Error fetching Kinopoisk film images');
+      return null;
     }
   }
 }

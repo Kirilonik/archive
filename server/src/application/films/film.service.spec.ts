@@ -54,6 +54,7 @@ function createKinopoiskMock(overrides: Partial<KinopoiskClient> = {}): Kinopois
     searchBestByTitle: jest.fn().mockResolvedValue({}) as any,
     fetchFilmDetails: jest.fn().mockResolvedValue({}) as any,
     fetchSeriesDetails: jest.fn().mockResolvedValue({}) as any,
+    fetchFilmImages: jest.fn().mockResolvedValue(null),
     suggest: jest.fn().mockResolvedValue([]),
     extractKpIdFromPosterUrl: jest.fn().mockReturnValue(null),
     ...overrides,

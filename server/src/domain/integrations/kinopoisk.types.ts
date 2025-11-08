@@ -44,11 +44,23 @@ export type KpSeriesDetails = {
   seasons?: KpSeriesSeason[];
 };
 
+export type KpImageItem = {
+  imageUrl?: string | null;
+  previewUrl?: string | null;
+};
+
+export type KpImageResponse = {
+  total?: number;
+  totalPages?: number;
+  items?: KpImageItem[];
+};
+
 export interface KinopoiskClient {
   searchBestByTitle(title: string): Promise<KpEnriched>;
   fetchFilmDetails(kpId: number): Promise<KpEnriched>;
   fetchSeriesDetails(kpId: number): Promise<KpSeriesDetails>;
   suggest(query: string): Promise<KpSuggestItem[]>;
   extractKpIdFromPosterUrl(posterUrl: string | null | undefined): number | null;
+  fetchFilmImages(kpId: number, type: string, page?: number): Promise<KpImageResponse | null>;
 }
 

@@ -86,6 +86,14 @@ export class FilmService {
     return mapRowToResponse(row, userId);
   }
 
+  async getFilmConceptArt(userFilmId: number, userId?: number) {
+    return this.getFilmImagesByType(userFilmId, userId, 'CONCEPT');
+  }
+
+  async getFilmPosters(userFilmId: number, userId?: number) {
+    return this.getFilmImagesByType(userFilmId, userId, 'POSTER');
+  }
+
   private async resolveCatalogId(input: FilmCreateDto, kpData: KpEnriched): Promise<number> {
     let kpIdToUse: number | null = input.kp_id ?? kpData.kp_id ?? null;
     if (!kpIdToUse) {
@@ -131,6 +139,27 @@ export class FilmService {
     };
 
     return this.repository.createCatalogEntry(catalogInput);
+  }
+
+  private async getFilmImagesByType(userFilmId: number, userId: number | undefined, type: string) {
+    if (!userId) return null;
+    const row = await this.repository.getUserFilm(userFilmId, userId);
+    if (!row) return null;
+    if (!row.kp_id) {
+      return { items: [] };
+    }
+    const response = await this.kinopoiskClient.fetchFilmImages(row.kp_id, type, 1);
+    const items =
+      response?.items
+        ?.filter(
+          (item): item is { imageUrl: string; previewUrl: string } =>
+            typeof item?.imageUrl === 'string' && typeof item?.previewUrl === 'string',
+        )
+        .map((item) => ({
+          imageUrl: item.imageUrl,
+          previewUrl: item.previewUrl,
+        })) ?? [];
+    return { items };
   }
 
   private async loadKpDataForCreate(input: FilmCreateDto): Promise<KpEnriched> {

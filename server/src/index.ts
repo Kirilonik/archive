@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { registerRoutes } from './routes/register.js';
 import { errorMiddleware } from './middlewares/error.js';
@@ -12,6 +13,11 @@ async function bootstrap() {
   const app = express();
 
   app.use(cors({ credentials: true, origin: true }));
+  app.use(
+    compression({
+      threshold: 0,
+    }),
+  );
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
   app.use(cookieParser());
