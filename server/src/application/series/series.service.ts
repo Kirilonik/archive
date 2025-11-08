@@ -28,16 +28,48 @@ function mapRowToResponse(row: UserSeriesRow, userId: number) {
   };
 }
 
+interface ListParams {
+  query?: string;
+  status?: string;
+  ratingGte?: number;
+  limit: number;
+  offset: number;
+  userId?: number;
+}
+
 export class SeriesService {
   constructor(
     private readonly repository: SeriesRepository,
     private readonly kinopoiskClient: KinopoiskClient,
   ) {}
 
-  async listSeries(query: string | undefined, status: string | undefined, ratingGte: number | undefined, userId?: number) {
-    if (!userId) return [];
-    const rows = await this.repository.listUserSeries({ userId, query, status, ratingGte });
-    return rows.map((row) => mapRowToResponse(row, userId));
+  async listSeries(params: ListParams) {
+    const { userId } = params;
+    if (!userId) {
+      return {
+        items: [],
+        total: 0,
+        limit: params.limit,
+        offset: params.offset,
+        hasMore: false,
+      };
+    }
+    const { items, total } = await this.repository.listUserSeries({
+      userId,
+      query: params.query,
+      status: params.status,
+      ratingGte: params.ratingGte,
+      limit: params.limit,
+      offset: params.offset,
+    });
+    const mapped = items.map((row) => mapRowToResponse(row, userId));
+    return {
+      items: mapped,
+      total,
+      limit: params.limit,
+      offset: params.offset,
+      hasMore: params.offset + mapped.length < total,
+    };
   }
 
   async getSeries(userSeriesId: number, userId?: number) {

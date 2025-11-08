@@ -46,7 +46,13 @@ function buildApp(overrides: Partial<SeriesService>) {
 
 describe('series routes', () => {
   it('возвращает сериалы пользователя', async () => {
-    const listSeries = jest.fn().mockResolvedValue([series]);
+    const listSeries = jest.fn().mockResolvedValue({
+      items: [series],
+      total: 1,
+      limit: 24,
+      offset: 0,
+      hasMore: false,
+    });
     const app = buildApp({
       listSeries,
     });
@@ -56,8 +62,21 @@ describe('series routes', () => {
       .set('Authorization', `Bearer ${makeToken()}`);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual([series]);
-    expect(listSeries).toHaveBeenCalledWith(undefined, undefined, undefined, 1);
+    expect(response.body).toEqual({
+      items: [series],
+      total: 1,
+      limit: 24,
+      offset: 0,
+      hasMore: false,
+    });
+    expect(listSeries).toHaveBeenCalledWith({
+      query: undefined,
+      status: undefined,
+      ratingGte: undefined,
+      limit: 24,
+      offset: 0,
+      userId: 1,
+    });
   });
 
   it('создаёт сериал', async () => {

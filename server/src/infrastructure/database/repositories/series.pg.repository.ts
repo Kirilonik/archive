@@ -2,7 +2,14 @@ import { pool } from '../../../config/db.js';
 import type { SeriesRepository, SeriesCatalogCreateInput, UserSeriesRow } from '../../../domain/series/series.types.js';
 
 export class SeriesPgRepository implements SeriesRepository {
-  async listUserSeries(params: { userId: number; query?: string; status?: string; ratingGte?: number }): Promise<UserSeriesRow[]> {
+  async listUserSeries(params: {
+    userId: number;
+    query?: string;
+    status?: string;
+    ratingGte?: number;
+    limit: number;
+    offset: number;
+  }): Promise<{ items: UserSeriesRow[]; total: number }> {
     const conditions: string[] = ['us.user_id = $1'];
     const values: unknown[] = [params.userId];
     let paramIndex = 2;
@@ -26,7 +33,18 @@ export class SeriesPgRepository implements SeriesRepository {
     }
 
     const where = conditions.join(' AND ');
-    const { rows } = await pool.query<UserSeriesRow>(
+    const limitParamIndex = paramIndex;
+    const offsetParamIndex = paramIndex + 1;
+
+    const [countResult, listResult] = await Promise.all([
+      pool.query<{ total: number }>(
+        `SELECT COUNT(*)::int as total
+         FROM user_series us
+         JOIN series_catalog sc ON us.series_catalog_id = sc.id
+         WHERE ${where}`,
+        values,
+      ),
+      pool.query<UserSeriesRow>(
       `SELECT 
         us.id as user_series_id,
         us.user_id,
@@ -53,10 +71,15 @@ export class SeriesPgRepository implements SeriesRepository {
       FROM user_series us
       JOIN series_catalog sc ON us.series_catalog_id = sc.id
       WHERE ${where}
-      ORDER BY us.created_at DESC`,
-      values,
-    );
-    return rows;
+      ORDER BY us.created_at DESC
+      LIMIT $${limitParamIndex}
+      OFFSET $${offsetParamIndex}`,
+        [...values, params.limit, params.offset],
+      ),
+    ]);
+
+    const total = countResult.rows[0]?.total ?? 0;
+    return { items: listResult.rows, total };
   }
 
   async getUserSeries(userSeriesId: number, userId: number): Promise<UserSeriesRow | null> {

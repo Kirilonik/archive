@@ -12,6 +12,8 @@ const listQuerySchema = z.object({
       if (typeof val === 'number') return val;
       return undefined;
     }, z.number().min(0).max(10).optional()),
+  limit: z.coerce.number().int().min(1).max(100).default(24),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 export class SeriesController {
@@ -20,12 +22,21 @@ export class SeriesController {
   list = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = (req as any).user?.id as number | undefined;
-      const { query, status, ratingGte } = listQuerySchema.parse({
+      const { query, status, ratingGte, limit, offset } = listQuerySchema.parse({
         query: req.query.query,
         status: req.query.status,
         ratingGte: req.query.ratingGte,
+        limit: req.query.limit,
+        offset: req.query.offset,
       });
-      const data = await this.seriesService.listSeries(query, status, ratingGte, userId);
+      const data = await this.seriesService.listSeries({
+        query,
+        status,
+        ratingGte,
+        limit,
+        offset,
+        userId,
+      });
       res.json(data);
     } catch (error) {
       if (error instanceof z.ZodError) {

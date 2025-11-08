@@ -29,7 +29,7 @@ const baseRow: UserSeriesRow = {
 
 function createRepositoryMock(overrides: Partial<SeriesRepository> = {}): SeriesRepository {
   return {
-    listUserSeries: jest.fn().mockResolvedValue([baseRow]),
+    listUserSeries: jest.fn().mockResolvedValue({ items: [baseRow], total: 1 }),
     getUserSeries: jest.fn().mockResolvedValue(baseRow),
     findCatalogIdByKpId: jest.fn().mockResolvedValue(null),
     findCatalogIdByTitleYear: jest.fn().mockResolvedValue(null),
@@ -63,9 +63,11 @@ describe('SeriesService', () => {
     const kinopoisk = createKinopoiskMock();
     const service = new SeriesService(repository, kinopoisk);
 
-    const result = await service.listSeries(undefined, undefined, undefined, 1);
-    expect(result).toHaveLength(1);
-    expect(result[0].title).toBe('Example Series');
+    const result = await service.listSeries({ userId: 1, query: undefined, status: undefined, ratingGte: undefined, limit: 10, offset: 0 });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].title).toBe('Example Series');
+    expect(result.total).toBe(1);
+    expect(result.hasMore).toBe(false);
   });
 
   it('создает сериал и загружает сезоны', async () => {

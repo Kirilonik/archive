@@ -2,7 +2,14 @@ import { pool } from '../../../config/db.js';
 import type { FilmsRepository, FilmCatalogCreateInput, UserFilmRow } from '../../../domain/films/film.types.js';
 
 export class FilmsPgRepository implements FilmsRepository {
-  async listUserFilms(params: { userId: number; query?: string; status?: string; ratingGte?: number }): Promise<UserFilmRow[]> {
+  async listUserFilms(params: {
+    userId: number;
+    query?: string;
+    status?: string;
+    ratingGte?: number;
+    limit: number;
+    offset: number;
+  }): Promise<{ items: UserFilmRow[]; total: number }> {
     const conditions: string[] = ['uf.user_id = $1'];
     const values: unknown[] = [params.userId];
     let paramIndex = 2;
@@ -26,7 +33,18 @@ export class FilmsPgRepository implements FilmsRepository {
     }
 
     const where = conditions.join(' AND ');
-    const { rows } = await pool.query<UserFilmRow>(
+    const limitParamIndex = paramIndex;
+    const offsetParamIndex = paramIndex + 1;
+
+    const [countResult, listResult] = await Promise.all([
+      pool.query<{ total: number }>(
+        `SELECT COUNT(*)::int as total
+         FROM user_films uf
+         JOIN films_catalog fc ON uf.film_catalog_id = fc.id
+         WHERE ${where}`,
+        values,
+      ),
+      pool.query<UserFilmRow>(
       `SELECT 
         uf.id as user_film_id,
         uf.user_id,
@@ -53,10 +71,15 @@ export class FilmsPgRepository implements FilmsRepository {
       FROM user_films uf
       JOIN films_catalog fc ON uf.film_catalog_id = fc.id
       WHERE ${where}
-      ORDER BY uf.created_at DESC`,
-      values,
-    );
-    return rows;
+      ORDER BY uf.created_at DESC
+      LIMIT $${limitParamIndex}
+      OFFSET $${offsetParamIndex}`,
+        [...values, params.limit, params.offset],
+      ),
+    ]);
+
+    const total = countResult.rows[0]?.total ?? 0;
+    return { items: listResult.rows, total };
   }
 
   async getUserFilm(userFilmId: number, userId: number): Promise<UserFilmRow | null> {

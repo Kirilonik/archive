@@ -28,16 +28,48 @@ function mapRowToResponse(row: UserFilmRow, userId: number) {
   };
 }
 
+interface ListParams {
+  query?: string;
+  status?: string;
+  ratingGte?: number;
+  limit: number;
+  offset: number;
+  userId?: number;
+}
+
 export class FilmService {
   constructor(
     private readonly repository: FilmsRepository,
     private readonly kinopoiskClient: KinopoiskClient,
   ) {}
 
-  async listFilms(query: string | undefined, status: string | undefined, ratingGte: number | undefined, userId?: number) {
-    if (!userId) return [];
-    const rows = await this.repository.listUserFilms({ userId, query, status, ratingGte });
-    return rows.map((row) => mapRowToResponse(row, userId));
+  async listFilms(params: ListParams) {
+    const { userId } = params;
+    if (!userId) {
+      return {
+        items: [],
+        total: 0,
+        limit: params.limit,
+        offset: params.offset,
+        hasMore: false,
+      };
+    }
+    const { items, total } = await this.repository.listUserFilms({
+      userId,
+      query: params.query,
+      status: params.status,
+      ratingGte: params.ratingGte,
+      limit: params.limit,
+      offset: params.offset,
+    });
+    const mapped = items.map((row) => mapRowToResponse(row, userId));
+    return {
+      items: mapped,
+      total,
+      limit: params.limit,
+      offset: params.offset,
+      hasMore: params.offset + mapped.length < total,
+    };
   }
 
   async getFilm(userFilmId: number, userId?: number) {

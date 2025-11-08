@@ -29,7 +29,7 @@ const baseRow: UserFilmRow = {
 
 function createRepositoryMock(overrides: Partial<FilmsRepository> = {}): FilmsRepository {
   return {
-    listUserFilms: jest.fn().mockResolvedValue([baseRow]),
+    listUserFilms: jest.fn().mockResolvedValue({ items: [baseRow], total: 1 }),
     getUserFilm: jest.fn().mockResolvedValue(baseRow),
     findCatalogIdByKpId: jest.fn().mockResolvedValue(null),
     findCatalogIdByTitleYear: jest.fn().mockResolvedValue(null),
@@ -59,10 +59,12 @@ describe('FilmService', () => {
     const kinopoisk = createKinopoiskMock();
     const service = new FilmService(repository, kinopoisk);
 
-    const result = await service.listFilms(undefined, undefined, undefined, 1);
-    expect(result).toHaveLength(1);
-    expect(result[0].title).toBe('Example Film');
-    expect(repository.listUserFilms).toHaveBeenCalledWith({ userId: 1, query: undefined, status: undefined, ratingGte: undefined });
+    const result = await service.listFilms({ userId: 1, query: undefined, status: undefined, ratingGte: undefined, limit: 10, offset: 0 });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].title).toBe('Example Film');
+    expect(result.total).toBe(1);
+    expect(result.hasMore).toBe(false);
+    expect(repository.listUserFilms).toHaveBeenCalledWith({ userId: 1, query: undefined, status: undefined, ratingGte: undefined, limit: 10, offset: 0 });
   });
 
   it('создает фильм и возвращает данные', async () => {

@@ -62,7 +62,14 @@ export interface UserFilmRow {
 }
 
 export interface FilmsRepository {
-  listUserFilms(params: { userId: number; query?: string; status?: string; ratingGte?: number }): Promise<UserFilmRow[]>;
+  listUserFilms(params: {
+    userId: number;
+    query?: string;
+    status?: string;
+    ratingGte?: number;
+    limit: number;
+    offset: number;
+  }): Promise<{ items: UserFilmRow[]; total: number }>;
   getUserFilm(userFilmId: number, userId: number): Promise<UserFilmRow | null>;
   findCatalogIdByKpId(kpId: number): Promise<number | null>;
   findCatalogIdByTitleYear(title: string, year: number | null): Promise<number | null>;

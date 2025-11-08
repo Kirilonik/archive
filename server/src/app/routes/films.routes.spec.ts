@@ -46,7 +46,13 @@ function buildApp(overrides: Partial<FilmService>) {
 
 describe('films routes', () => {
   it('возвращает фильмы пользователя', async () => {
-    const listFilms = jest.fn().mockResolvedValue([film]);
+    const listFilms = jest.fn().mockResolvedValue({
+      items: [film],
+      total: 1,
+      limit: 24,
+      offset: 0,
+      hasMore: false,
+    });
     const app = buildApp({
       listFilms,
     });
@@ -56,8 +62,21 @@ describe('films routes', () => {
       .set('Authorization', `Bearer ${makeToken()}`);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual([film]);
-    expect(listFilms).toHaveBeenCalledWith(undefined, undefined, undefined, 1);
+    expect(response.body).toEqual({
+      items: [film],
+      total: 1,
+      limit: 24,
+      offset: 0,
+      hasMore: false,
+    });
+    expect(listFilms).toHaveBeenCalledWith({
+      query: undefined,
+      status: undefined,
+      ratingGte: undefined,
+      limit: 24,
+      offset: 0,
+      userId: 1,
+    });
   });
 
   it('создаёт фильм', async () => {

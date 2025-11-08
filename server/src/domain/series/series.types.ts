@@ -62,7 +62,14 @@ export interface UserSeriesRow {
 }
 
 export interface SeriesRepository {
-  listUserSeries(params: { userId: number; query?: string; status?: string; ratingGte?: number }): Promise<UserSeriesRow[]>;
+  listUserSeries(params: {
+    userId: number;
+    query?: string;
+    status?: string;
+    ratingGte?: number;
+    limit: number;
+    offset: number;
+  }): Promise<{ items: UserSeriesRow[]; total: number }>;
   getUserSeries(userSeriesId: number, userId: number): Promise<UserSeriesRow | null>;
   findCatalogIdByKpId(kpId: number): Promise<number | null>;
   findCatalogIdByTitleYear(title: string, year: number | null): Promise<number | null>;
