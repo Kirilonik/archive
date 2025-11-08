@@ -64,6 +64,8 @@ export class FilmsPgRepository implements FilmsRepository {
         fc.web_url,
         fc.director,
         fc.budget,
+        fc.budget_currency_code,
+        fc.budget_currency_symbol,
         fc.revenue,
         fc.genres,
         fc.actors,
@@ -108,6 +110,8 @@ export class FilmsPgRepository implements FilmsRepository {
         fc.web_url,
         fc.director,
         fc.budget,
+        fc.budget_currency_code,
+        fc.budget_currency_symbol,
         fc.revenue,
         fc.genres,
         fc.actors,
@@ -142,8 +146,9 @@ export class FilmsPgRepository implements FilmsRepository {
     const { rows } = await pool.query<{ id: number }>(
       `INSERT INTO films_catalog (
         title, poster_url, poster_url_preview, logo_url, rating, rating_kinopoisk, year, description, kp_is_series,
-        kp_episodes_count, kp_seasons_count, kp_id, web_url, director, budget, revenue, genres, actors, film_length
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+        kp_episodes_count, kp_seasons_count, kp_id, web_url, director, budget, budget_currency_code, budget_currency_symbol,
+        revenue, genres, actors, film_length
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
       RETURNING id`,
       [
         input.title,
@@ -161,6 +166,8 @@ export class FilmsPgRepository implements FilmsRepository {
         input.webUrl ?? null,
         input.director ?? null,
         input.budget ?? null,
+        input.budgetCurrencyCode ?? null,
+        input.budgetCurrencySymbol ?? null,
         input.revenue ?? null,
         input.genres ?? null,
         input.actors ?? null,
@@ -192,6 +199,8 @@ export class FilmsPgRepository implements FilmsRepository {
         fc.web_url,
         fc.director,
         fc.budget,
+        fc.budget_currency_code,
+        fc.budget_currency_symbol,
         fc.revenue,
         fc.genres,
         fc.actors,

@@ -21,6 +21,8 @@ const baseRow: UserFilmRow = {
   web_url: null,
   director: 'Director',
   budget: null,
+  budget_currency_code: null,
+  budget_currency_symbol: null,
   revenue: null,
   genres: ['Drama'],
   actors: ['Actor'],

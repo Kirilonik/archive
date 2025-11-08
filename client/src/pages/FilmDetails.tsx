@@ -15,6 +15,14 @@ function formatMinutes(amount?: number | null): string | null {
   return `${minutes} мин`;
 }
 
+function formatBudget(amount?: number | null, symbol?: string | null, code?: string | null): string | null {
+  if (amount == null) return null;
+  const formatted = amount.toLocaleString('en-US');
+  if (symbol) return `${symbol}${formatted}`;
+  if (code) return `${formatted} ${code}`;
+  return `${amount.toLocaleString()} ₽`;
+}
+
 export function FilmDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -57,6 +65,7 @@ export function FilmDetails() {
 
   const kpRating = typeof data.rating_kinopoisk === 'number' ? Math.round(data.rating_kinopoisk * 10) / 10 : null;
   const formattedDuration = formatMinutes(data.film_length);
+  const formattedBudget = formatBudget(data.budget, data.budget_currency_symbol, data.budget_currency_code);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
@@ -94,136 +103,136 @@ export function FilmDetails() {
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  {data.web_url && (
-                    <a
-                      href={data.web_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn px-3 py-1 flex items-center gap-2 bg-[#ff6d1f] text-black hover:bg-[#ff853f] border-transparent"
-                    >
-                      <span aria-hidden="true" className="text-lg leading-none">🎬</span>
-                      Кинопоиск
-                    </a>
-                  )}
-              <button
-                className="btn px-3 py-1 text-red-400 hover:bg-red-500/20 border-red-500/30"
-                disabled={deleting}
-                onClick={async () => {
-                  if (!id) return;
-                  if (!confirm(`Вы уверены, что хотите удалить фильм "${data.title}"? Это действие нельзя отменить.`)) {
-                    return;
-                  }
-                  try {
-                    setDeleting(true);
-                    const resp = await apiFetch(`/api/films/${id}`, { method: 'DELETE' });
-                    if (!resp.ok) {
-                      toast.error('Ошибка при удалении фильма');
-                      return;
-                    }
-                    toast.success('Фильм удален из библиотеки');
-                    navigate('/');
-                  } catch (e) {
-                    toast.error('Ошибка при удалении фильма');
-                  } finally {
-                    setDeleting(false);
-                  }
-                }}
-              >
-                {deleting ? 'Удаление...' : 'Удалить'}
-              </button>
-                </div>
-              </div>
-            </div>
-            <div className="mt-2 text-textMuted space-y-2">
-              <div className="flex flex-wrap gap-3 items-center">
-                {data.year && <span>Год: {data.year}</span>}
-                {data.director && <span>Режиссёр: {data.director}</span>}
                 {data.web_url && (
                   <a
                     href={data.web_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-orange-300 underline decoration-dotted underline-offset-4 hover:text-orange-200"
+                    className="btn px-3 py-1 flex items-center gap-2 bg-[#ff6d1f] text-black hover:bg-[#ff853f] border-transparent"
                   >
-                    Страница на Кинопоиске
+                    <span aria-hidden="true" className="text-lg leading-none">🎬</span>
+                    Кинопоиск
                   </a>
                 )}
+                <button
+                  className="btn px-3 py-1 text-red-400 hover:bg-red-500/20 border-red-500/30"
+                  disabled={deleting}
+                  onClick={async () => {
+                    if (!id) return;
+                    if (!confirm(`Вы уверены, что хотите удалить фильм "${data.title}"? Это действие нельзя отменить.`)) {
+                      return;
+                    }
+                    try {
+                      setDeleting(true);
+                      const resp = await apiFetch(`/api/films/${id}`, { method: 'DELETE' });
+                      if (!resp.ok) {
+                        toast.error('Ошибка при удалении фильма');
+                        return;
+                      }
+                      toast.success('Фильм удален из библиотеки');
+                      navigate('/');
+                    } catch (e) {
+                      toast.error('Ошибка при удалении фильма');
+                    } finally {
+                      setDeleting(false);
+                    }
+                  }}
+                >
+                  {deleting ? 'Удаление...' : 'Удалить'}
+                </button>
               </div>
-              <div className="inline-flex items-center gap-2 flex-wrap">
-                  <span>Моя оценка: {data.my_rating != null ? data.my_rating : '—'}</span>
-                  {!ratingEditMode ? (
+              </div>
+            </div>
+          <div className="mt-2 text-textMuted space-y-2">
+            <div className="flex flex-wrap gap-3 items-center">
+              {data.year && <span>Год: {data.year}</span>}
+              {data.director && <span>Режиссёр: {data.director}</span>}
+              {data.web_url && (
+                <a
+                  href={data.web_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-300 underline decoration-dotted underline-offset-4 hover:text-orange-200"
+                >
+                  Страница на Кинопоиске
+                </a>
+              )}
+            </div>
+            <div className="inline-flex items-center gap-2 flex-wrap">
+              <span>Моя оценка: {data.my_rating != null ? data.my_rating : '—'}</span>
+                {formattedBudget && <span>Бюджет: {formattedBudget}</span>}
+              {!ratingEditMode ? (
+                <button
+                  className="btn px-2 py-0.5"
+                  onClick={() => {
+                    setRatingEditMode(true);
+                    setRatingDraft(data.my_rating != null ? String(data.my_rating) : '');
+                  }}
+                >
+                  Изменить
+                </button>
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    max={10}
+                    step={0.1}
+                    className="input w-20"
+                    value={ratingDraft}
+                    onChange={(e) => setRatingDraft(e.target.value)}
+                  />
+                  <button
+                    className="btn btn-primary px-2 py-0.5"
+                    disabled={saving}
+                    onClick={async () => {
+                      if (!id) return;
+                      try {
+                        setSaving(true);
+                        const body: any = { my_rating: ratingDraft === '' ? null : Number(ratingDraft) };
+                        const resp = await apiFetch(`/api/films/${id}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(body),
+                        });
+                        if (!resp.ok) {
+                          toast.error('Ошибка при сохранении оценки');
+                          return;
+                        }
+                        const fresh = await apiFetch(`/api/films/${id}`);
+                        if (fresh.ok) {
+                          const payload = await fresh.json();
+                          setData(payload);
+                        }
+                        setRatingEditMode(false);
+                        toast.success('Оценка сохранена');
+                      } catch (e) {
+                        toast.error('Ошибка при сохранении оценки');
+                      } finally {
+                        setSaving(false);
+                      }
+                    }}
+                  >
+                    Сохранить
+                  </button>
                   <button
                     className="btn px-2 py-0.5"
                     onClick={() => {
-                      setRatingEditMode(true);
+                      setRatingEditMode(false);
                       setRatingDraft(data.my_rating != null ? String(data.my_rating) : '');
                     }}
                   >
-                    Изменить
+                    Отмена
                   </button>
-                  ) : (
-                    <span className="inline-flex items-center gap-2">
-                    <input
-                      type="number"
-                      min={0}
-                      max={10}
-                      step={0.1}
-                      className="input w-20"
-                      value={ratingDraft}
-                      onChange={(e) => setRatingDraft(e.target.value)}
-                    />
-                      <button
-                        className="btn btn-primary px-2 py-0.5"
-                        disabled={saving}
-                        onClick={async () => {
-                          if (!id) return;
-                          try {
-                            setSaving(true);
-                            const body: any = { my_rating: ratingDraft === '' ? null : Number(ratingDraft) };
-                            const resp = await apiFetch(`/api/films/${id}`, {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify(body),
-                            });
-                            if (!resp.ok) {
-                              toast.error('Ошибка при сохранении оценки');
-                              return;
-                            }
-                            const fresh = await apiFetch(`/api/films/${id}`);
-                            if (fresh.ok) {
-                              const payload = await fresh.json();
-                              setData(payload);
-                            }
-                            setRatingEditMode(false);
-                            toast.success('Оценка сохранена');
-                          } catch (e) {
-                            toast.error('Ошибка при сохранении оценки');
-                          } finally {
-                            setSaving(false);
-                          }
-                        }}
-                    >
-                      Сохранить
-                    </button>
-                    <button
-                      className="btn px-2 py-0.5"
-                      onClick={() => {
-                        setRatingEditMode(false);
-                        setRatingDraft(data.my_rating != null ? String(data.my_rating) : '');
-                      }}
-                    >
-                      Отмена
-                    </button>
-                    </span>
-                  )}
-              </div>
-              </div>
-              <div className="flex flex-wrap gap-3 items-center">
-                {typeof data.budget === 'number' && <span>Бюджет: {data.budget.toLocaleString()} ₽</span>}
-                {typeof data.revenue === 'number' && <span>Сборы: {data.revenue.toLocaleString()} ₽</span>}
-                {formattedDuration && <span>Продолжительность: {formattedDuration}</span>}
-              </div>
+                </span>
+              )}
             </div>
+            <div className="flex flex-wrap gap-3 items-center">
+              {formattedBudget && <span>Бюджет: {formattedBudget}</span>}
+              {typeof data.revenue === 'number' && <span>Сборы: {data.revenue.toLocaleString()} ₽</span>}
+              {formattedDuration && <span>Продолжительность: {formattedDuration}</span>}
+            </div>
+          </div>
             {Array.isArray(data.genres) && data.genres.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {data.genres.map((g: string, i: number) => (

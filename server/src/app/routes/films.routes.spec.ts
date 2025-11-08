@@ -19,6 +19,8 @@ const film = {
   kp_id: 123,
   director: 'Christopher Nolan',
   budget: 160000000,
+  budget_currency_code: 'USD',
+  budget_currency_symbol: '$',
   revenue: 800000000,
   genres: ['Sci-Fi'],
   actors: ['Leonardo DiCaprio'],

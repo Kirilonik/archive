@@ -35,6 +35,8 @@ export interface FilmCatalogCreateInput {
   webUrl?: string | null;
   director?: string | null;
   budget?: number | null;
+  budgetCurrencyCode?: string | null;
+  budgetCurrencySymbol?: string | null;
   revenue?: number | null;
   genres?: string[] | null;
   actors?: string[] | null;
@@ -60,6 +62,8 @@ export interface UserFilmRow {
   web_url: string | null;
   director: string | null;
   budget: number | null;
+  budget_currency_code: string | null;
+  budget_currency_symbol: string | null;
   revenue: number | null;
   genres: string[] | null;
   actors: string[] | null;

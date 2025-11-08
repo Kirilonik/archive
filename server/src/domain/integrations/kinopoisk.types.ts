@@ -13,6 +13,8 @@ export type KpEnriched = {
   kp_actors?: string[] | null;
   kp_budget?: number | null;
   kp_revenue?: number | null;
+  kp_budgetCurrencyCode?: string | null;
+  kp_budgetCurrencySymbol?: string | null;
   kp_ratingKinopoisk?: number | null;
   kp_webUrl?: string | null;
   kp_filmLength?: number | null;

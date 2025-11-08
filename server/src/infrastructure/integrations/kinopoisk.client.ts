@@ -13,6 +13,7 @@ function getHeaders(): Record<string, string> {
 }
 
 type StaffItem = { staffId?: number; nameRu?: string; nameEn?: string; professionText?: string; professionKey?: string };
+type BoxOfficeItem = { type?: string; amount?: number; currencyCode?: string; symbol?: string };
 
 export class KinopoiskHttpClient implements KinopoiskClient {
   extractKpIdFromPosterUrl(posterUrl: string | null | undefined): number | null {
@@ -69,6 +70,28 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     }
   }
 
+  private async fetchBudgetInfo(kpId: number): Promise<{ amount: number | null; currencyCode: string | null; currencySymbol: string | null }> {
+    try {
+      const url = `${API_URL}/api/v2.2/films/${kpId}/box_office`;
+      const data = await this.fetchJson<{ items?: BoxOfficeItem[] }>(url);
+      if (!data?.items) {
+        return { amount: null, currencyCode: null, currencySymbol: null };
+      }
+      const budgetItem = data.items.find((item) => item.type === 'BUDGET');
+      if (!budgetItem) {
+        return { amount: null, currencyCode: null, currencySymbol: null };
+      }
+      return {
+        amount: typeof budgetItem.amount === 'number' ? budgetItem.amount : null,
+        currencyCode: budgetItem.currencyCode ?? null,
+        currencySymbol: budgetItem.symbol ?? null,
+      };
+    } catch (error) {
+      logger.error({ err: error, kpId }, 'Error fetching Kinopoisk budget info');
+      return { amount: null, currencyCode: null, currencySymbol: null };
+    }
+  }
+
   async fetchFilmDetails(kpId: number): Promise<KpEnriched> {
     if (!kpId) return {};
     try {
@@ -77,6 +100,13 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       if (!detail) return {};
       const genres = (detail.genres || []).map((g: any) => g.genre).filter(Boolean) as string[];
       const { director, actors } = await this.fetchStaff(kpId);
+      const budgetInfo = await this.fetchBudgetInfo(kpId);
+      const budgetAmount =
+        detail.budget != null
+          ? typeof detail.budget === 'number'
+            ? detail.budget
+            : Number.parseInt(detail.budget, 10)
+          : null;
       const episodeLength = detail.episodeLength ?? detail.seriesLength ?? null;
       const episodesCount =
         detail.episodesLength ??
@@ -98,7 +128,9 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         kp_genres: genres.length ? genres : null,
         kp_director: director,
         kp_actors: actors,
-        kp_budget: detail.budget ?? null,
+        kp_budget: budgetAmount ?? budgetInfo.amount ?? null,
+        kp_budgetCurrencyCode: budgetInfo.currencyCode ?? null,
+        kp_budgetCurrencySymbol: budgetInfo.currencySymbol ?? null,
         kp_revenue: null,
         kp_ratingKinopoisk: detail.ratingKinopoisk ?? null,
         kp_webUrl: detail.webUrl ?? null,
@@ -131,6 +163,8 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       }
       const genres = (film.genres || []).map((g: any) => g.genre).filter(Boolean) as string[];
       const posterId = this.extractKpIdFromPosterUrl(film.posterUrl || film.posterUrlPreview);
+      const budgetInfo = filmKpId ? await this.fetchBudgetInfo(filmKpId) : { amount: null, currencyCode: null, currencySymbol: null };
+
       return {
         kp_id: film.kinopoiskId ?? posterId,
         kp_poster: film.posterUrl || film.posterUrlPreview || null,
@@ -144,7 +178,9 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         kp_genres: genres.length ? genres : null,
         kp_director: null,
         kp_actors: null,
-        kp_budget: null,
+        kp_budget: budgetInfo.amount ?? null,
+        kp_budgetCurrencyCode: budgetInfo.currencyCode ?? null,
+        kp_budgetCurrencySymbol: budgetInfo.currencySymbol ?? null,
         kp_revenue: null,
         kp_ratingKinopoisk: film.rating ?? null,
         kp_webUrl: film.webUrl ?? null,
