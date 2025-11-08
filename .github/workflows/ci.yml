@@ -4,6 +4,47 @@ on:
   push:
     branches:
       - main
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Build server
+        run: npm -w server run build
+
+      - name: Build client
+        run: npm -w client run build
+
+name: CI
+
+on:
+  push:
+    branches:
+      - main
       - master
   pull_request:
 

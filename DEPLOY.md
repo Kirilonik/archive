@@ -25,9 +25,10 @@ docker compose up --build
 ## CI
 
 Репозиторий содержит workflow `.github/workflows/ci.yml`, который при push/pull-request:
-- устанавливает зависимости (`npm ci`);
+- устанавливает зависимости (`npm install`);
 - запускает `npm run lint` для всех пакетов workspaces;
-- выполняет `npm run test` (включая Jest-тесты сервера).
+- выполняет `npm run test` (включая Jest-тесты сервера);
+- собирает production-версии клиента и сервера.
 
 Локально тот же набор проверок можно запустить вручную:
 
@@ -68,7 +69,38 @@ VITE_API_TARGET=http://localhost:4000
 3. Проверьте, что `.env` (или секреты CI/CD) содержит корректные `JWT_*`, `KINOPOISK_API_KEY` и DB-параметры.
 4. После деплоя выполните smoke-проверку API:
    - `POST /api/auth/login` с тестовым пользователем;
+   - `GET /api/auth/me` → 200 с профилем;
    - `GET /api/users/:id`, `GET /api/films`, `GET /api/series/:id`.
+
+## CD и контейнеры
+
+Workflow `.github/workflows/deploy.yml` запускается при пуше в `main` и при создании тэгов `v*`:
+
+- собирает и публикует Docker-образы `server` и `client` в GitHub Container Registry (`ghcr.io/<owner>/<repo>-server` и `ghcr.io/<owner>/<repo>-client`);
+- после успешной публикации (только для ветки `main`) запускает миграции БД (`node server/dist/db/migrate.js`) с использованием production-переменных окружения.
+
+### Секреты для деплоя
+
+В `Settings` → `Secrets and variables` → `Actions` необходимо задать:
+
+| Secret | Назначение |
+|--------|------------|
+| `DEPLOY_PGHOST` | Адрес PostgreSQL |
+| `DEPLOY_PGPORT` | Порт PostgreSQL (например, `5432`) |
+| `DEPLOY_PGUSER` | Пользователь базы данных |
+| `DEPLOY_PGPASSWORD` | Пароль |
+| `DEPLOY_PGDATABASE` | Имя базы данных |
+
+При необходимости добавьте другие секреты (например, `KINOPOISK_API_KEY`) и прокиньте их в инфраструктуру.
+
+### Использование образов
+
+Теги, публикуемые в GHCR:
+
+- `ghcr.io/<owner>/<repo>-server:latest` и `ghcr.io/<owner>/<repo>-server:<commit-sha>`;
+- `ghcr.io/<owner>/<repo>-client:latest` и `ghcr.io/<owner>/<repo>-client:<commit-sha>`.
+
+Ими можно пользоваться в `docker-compose.prod.yml`, Kubernetes-манифестах и прочих оркестраторах.
 
 
 
