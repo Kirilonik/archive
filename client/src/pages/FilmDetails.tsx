@@ -17,9 +17,21 @@ function formatMinutes(amount?: number | null): string | null {
 
 function formatBudget(amount?: number | null, symbol?: string | null, code?: string | null): string | null {
   if (amount == null) return null;
-  const formatted = amount.toLocaleString('en-US');
-  if (symbol) return `${symbol}${formatted}`;
-  if (code) return `${formatted} ${code}`;
+  let value = amount;
+  let suffix = '';
+  if (amount >= 1_000_000_000) {
+    value = amount / 1_000_000_000;
+    suffix = ' млрд';
+  } else if (amount >= 1_000_000) {
+    value = amount / 1_000_000;
+    suffix = ' млн';
+  } else if (amount >= 1_000) {
+    value = amount / 1_000;
+    suffix = ' тыс';
+  }
+  const formattedValue = value.toFixed(2);
+  if (symbol) return `${symbol}${formattedValue}${suffix}`;
+  if (code) return `${formattedValue}${suffix} ${code}`;
   return `${amount.toLocaleString()} ₽`;
 }
 
@@ -147,20 +159,9 @@ export function FilmDetails() {
             <div className="flex flex-wrap gap-3 items-center">
               {data.year && <span>Год: {data.year}</span>}
               {data.director && <span>Режиссёр: {data.director}</span>}
-              {data.web_url && (
-                <a
-                  href={data.web_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-orange-300 underline decoration-dotted underline-offset-4 hover:text-orange-200"
-                >
-                  Страница на Кинопоиске
-                </a>
-              )}
             </div>
             <div className="inline-flex items-center gap-2 flex-wrap">
               <span>Моя оценка: {data.my_rating != null ? data.my_rating : '—'}</span>
-                {formattedBudget && <span>Бюджет: {formattedBudget}</span>}
               {!ratingEditMode ? (
                 <button
                   className="btn px-2 py-0.5"
@@ -228,9 +229,7 @@ export function FilmDetails() {
               )}
             </div>
             <div className="flex flex-wrap gap-3 items-center">
-              {formattedBudget && <span>Бюджет: {formattedBudget}</span>}
               {typeof data.revenue === 'number' && <span>Сборы: {data.revenue.toLocaleString()} ₽</span>}
-              {formattedDuration && <span>Продолжительность: {formattedDuration}</span>}
             </div>
           </div>
             {Array.isArray(data.genres) && data.genres.length > 0 && (
@@ -254,6 +253,9 @@ export function FilmDetails() {
             <button className="btn px-3 py-1" onClick={() => setOpinionEditMode(true)}>Редактировать</button>
           )}
         </div>
+        {formattedBudget && (
+          <div className="text-sm text-textMuted mb-3">Бюджет: {formattedBudget}</div>
+        )}
         {!opinionEditMode ? (
           <div className="markdown-preview-wrapper" data-color-mode="dark">
             <MarkdownPreview source={data.opinion ?? ''} />
