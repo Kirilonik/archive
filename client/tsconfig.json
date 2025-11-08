@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": true,
+    "baseUrl": "."
+  },
+  "include": ["src", "vite-env.d.ts"],
+  "references": [
+    { "path": "../shared" }
+  ]
+}
+
+

@@ -1,0 +1,92 @@
+import { UsersPgRepository } from '../infrastructure/database/repositories/users.pg.repository.js';
+import { SharpAvatarProcessor } from '../infrastructure/media/sharp-avatar-processor.js';
+import { UserService } from '../application/users/user.service.js';
+import { UsersController } from './controllers/users.controller.js';
+import { AuthPgRepository } from '../infrastructure/database/repositories/auth.pg.repository.js';
+import { BcryptPasswordHasher } from '../infrastructure/security/bcrypt-password-hasher.js';
+import { AuthService } from '../application/auth/auth.service.js';
+import { AuthController } from './controllers/auth.controller.js';
+import { KinopoiskHttpClient } from '../infrastructure/integrations/kinopoisk.client.js';
+import { FilmsPgRepository } from '../infrastructure/database/repositories/films.pg.repository.js';
+import { FilmService } from '../application/films/film.service.js';
+import { FilmsController } from './controllers/films.controller.js';
+import { SeriesPgRepository } from '../infrastructure/database/repositories/series.pg.repository.js';
+import { SeriesService } from '../application/series/series.service.js';
+import { SeriesController } from './controllers/series.controller.js';
+import { SeasonsPgRepository } from '../infrastructure/database/repositories/seasons.pg.repository.js';
+import { SeasonService } from '../application/seasons/season.service.js';
+import { SeasonsController } from './controllers/seasons.controller.js';
+import { EpisodesPgRepository } from '../infrastructure/database/repositories/episodes.pg.repository.js';
+import { EpisodeService } from '../application/episodes/episode.service.js';
+import { EpisodesController } from './controllers/episodes.controller.js';
+import { StatsPgRepository } from '../infrastructure/database/repositories/stats.pg.repository.js';
+import { StatsService } from '../application/stats/stats.service.js';
+
+const usersRepository = new UsersPgRepository();
+const avatarProcessor = new SharpAvatarProcessor();
+const userService = new UserService(usersRepository, avatarProcessor);
+const statsRepository = new StatsPgRepository();
+const statsService = new StatsService(statsRepository);
+const usersController = new UsersController(userService, statsService);
+
+const authRepository = new AuthPgRepository();
+const passwordHasher = new BcryptPasswordHasher();
+const authService = new AuthService(authRepository, passwordHasher);
+const authController = new AuthController(authService, (userId) => userService.getUserById(userId));
+
+const kinopoiskClient = new KinopoiskHttpClient();
+const filmsRepository = new FilmsPgRepository();
+const filmService = new FilmService(filmsRepository, kinopoiskClient);
+const filmsController = new FilmsController(filmService);
+const seriesRepository = new SeriesPgRepository();
+const seriesService = new SeriesService(seriesRepository, kinopoiskClient);
+const seriesController = new SeriesController(seriesService);
+const seasonsRepository = new SeasonsPgRepository();
+const seasonService = new SeasonService(seasonsRepository, seriesRepository);
+const seasonsController = new SeasonsController(seasonService);
+const episodesRepository = new EpisodesPgRepository();
+const episodeService = new EpisodeService(episodesRepository, seriesRepository);
+const episodesController = new EpisodesController(episodeService);
+
+export const container = {
+  users: {
+    repository: usersRepository,
+    avatarProcessor,
+    service: userService,
+    controller: usersController,
+  },
+  stats: {
+    repository: statsRepository,
+    service: statsService,
+  },
+  auth: {
+    repository: authRepository,
+    passwordHasher,
+    service: authService,
+    controller: authController,
+  },
+  integrations: {
+    kinopoisk: kinopoiskClient,
+  },
+  films: {
+    repository: filmsRepository,
+    service: filmService,
+    controller: filmsController,
+  },
+  series: {
+    repository: seriesRepository,
+    service: seriesService,
+    controller: seriesController,
+  },
+  seasons: {
+    repository: seasonsRepository,
+    service: seasonService,
+    controller: seasonsController,
+  },
+  episodes: {
+    repository: episodesRepository,
+    service: episodeService,
+    controller: episodesController,
+  },
+};
+

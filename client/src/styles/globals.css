@@ -1,0 +1,344 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+/* Apple-like минималистичная палитра (темная тема) */
+:root {
+  --text: 255 255 255;         /* White */
+  --text-muted: 235 235 245 / 0.6; /* iOS secondary label */
+  --border: 84 84 88 / 0.36;   /* iOS separator */
+  --accent: 10 132 255;        /* iOS system blue */
+
+  /* Mesh/Glass палитра под задачу */
+  --mesh-purple-1: 139 92 246;   /* #8B5CF6 */
+  --mesh-purple-2: 168 85 247;   /* #A855F7 */
+  --mesh-pink-1: 236 72 153;     /* #EC4899 */
+  --mesh-pink-2: 244 114 182;    /* #F472B6 */
+  --mesh-orange-1: 251 146 60;   /* #FB923C */
+  --mesh-orange-2: 252 165 165;  /* #FCA5A5 */
+  --mesh-purple-accent: 217 70 239; /* #D946EF */
+  --mesh-pink-accent: 251 182 206;  /* #FBB6CE */
+}
+
+@layer base {
+  html, body {
+    /* Современный многослойный mesh-gradient фон с мягкими пятнами света */
+    background:
+      /* Верх — фиолетовый акцент */
+      radial-gradient(1200px 800px at 20% 10%, rgb(var(--mesh-purple-1) / 0.40) 0%, transparent 55%),
+      radial-gradient(900px 700px at 80% 8%, rgb(var(--mesh-purple-2) / 0.35) 0%, transparent 60%),
+
+      /* Центр — розовые переливы */
+      radial-gradient(1100px 750px at 70% 45%, rgb(var(--mesh-pink-1) / 0.40) 0%, transparent 55%),
+      radial-gradient(800px 600px at 30% 55%, rgb(var(--mesh-pink-2) / 0.30) 0%, transparent 60%),
+
+      /* Низ — тёплый оранжевый градиент */
+      radial-gradient(1200px 800px at 40% 90%, rgb(var(--mesh-orange-1) / 0.28) 0%, transparent 55%),
+      radial-gradient(900px 650px at 65% 100%, rgb(var(--mesh-orange-2) / 0.22) 0%, transparent 60%),
+
+      /* Лёгкое мягкое свечение для объёма */
+      radial-gradient(1000px 700px at 10% 80%, rgb(var(--mesh-purple-accent) / 0.10) 0%, transparent 65%),
+      radial-gradient(1000px 700px at 90% 20%, rgb(var(--mesh-pink-accent) / 0.08) 0%, transparent 65%),
+
+      /* Базовый глубокий тёмный фон */
+      #0A0A0F;
+    background-attachment: fixed;
+    background-size: 100% 100%;
+    @apply text-text font-ui antialiased;
+  }
+
+  body::before {
+    /* Зерно поверх фона */
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: .04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nNScgaGVpZ2h0PSc1JyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPjZmaWx0ZXJzPjxmZUZsdW5rIEkgPSAnbi'ZmUnR1cmJ1bGVuY2UnIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nLjgnIG51bU9jdG'vYXZlcz0nNi8nIC8+PGZlQ29tcG9zaXRlIGZpbHRlcklkPSduJmZlUnR1cmJ1bGVuY2UnIG9wZXJhdG9yPSJhbHZoYSI+PC9mZUNvbXBvc2l0ZT48L2ZpbHRlcnM+PHJlY3Qgd2lkdGg9JzUnIGhlaWdodD0nNScgZmlsdGVyPSJ1cmwoI24mZmVSdHVyYnVsZW5jZSkiIG9wYWNpdHk9IjAuOCI+PC9yZWN0Pjwvc3ZnPg==");
+    background-size: 200px 200px;
+  }
+
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  /* Карточка / контейнер — glassmorphism */
+  .card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    transition: transform 0.2s ease, box-shadow 0.3s ease, background 0.3s ease;
+  }
+
+  .card::before {
+    /* Мягкий внутренний градиентный блик */
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      radial-gradient(500px 350px at 85% 20%, rgb(var(--mesh-pink-1) / 0.12) 0%, transparent 60%),
+      radial-gradient(450px 320px at 15% 85%, rgb(var(--mesh-purple-1) / 0.10) 0%, transparent 60%),
+      radial-gradient(420px 300px at 20% 10%, rgb(var(--mesh-orange-1) / 0.08) 0%, transparent 60%);
+    mix-blend-mode: plus-lighter;
+    pointer-events: none;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .card:active {
+    transform: translateY(0);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  }
+
+  /* Кнопки — glass */
+  .btn { @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-text transition-all duration-200 border border-white/10; background: rgba(0,0,0,0.35); }
+  .btn:hover { background: rgba(255,255,255,0.12); @apply -translate-y-0.5; box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
+  .btn:active { @apply translate-y-0; box-shadow: 0 2px 10px rgba(0,0,0,0.20); }
+  .btn-primary { background: rgba(10,132,255,0.18); border-color: rgba(10,132,255,0.45); }
+  .btn-danger { background: rgba(234,67,53,0.18); border-color: rgba(234,67,53,0.45); @apply text-red-200; }
+
+  /* Мягкая кнопка — в стиле DESIGN_STYLE.md */
+  .soft-button {
+    background: rgba(255, 255, 255, 0.15);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    @apply text-text inline-flex items-center justify-center;
+  }
+  .soft-button:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  .soft-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* Поля ввода — glass */
+  .input { @apply w-full rounded-xl px-3 py-2 text-text outline-none transition-all duration-200 border border-white/10; background: rgba(0,0,0,0.35); }
+  .input::placeholder { color: rgba(235,235,245,0.6); }
+  .input:focus { box-shadow: 0 0 0 3px rgba(10,132,255,0.18); border-color: rgba(10,132,255,0.5); }
+
+  /* Выпадающие панели */
+  .popover-panel { @apply rounded-xl p-2 text-text border border-white/10; background: rgba(0,0,0,0.35); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
+
+  /* Glass панель (для эпизодов) */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+  }
+
+  /* Теги */
+  .tag { @apply px-2 py-0.5 text-xs rounded-xl text-text border border-white/10; background: rgba(0,0,0,0.35); }
+}
+
+.markdown-editor {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(15, 23, 42, 0.55);
+  box-shadow: 0 18px 42px -24px rgba(56, 189, 248, 0.45);
+  overflow: hidden;
+}
+
+[data-color-mode="dark"] .markdown-editor .w-md-editor {
+  background: transparent;
+  color: rgb(var(--text));
+  border: none;
+}
+
+[data-color-mode="dark"] .markdown-editor .w-md-editor-toolbar {
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-color-mode="dark"] .markdown-editor .w-md-editor-toolbar ul li button {
+  color: rgba(235, 235, 245, 0.85);
+}
+
+[data-color-mode="dark"] .markdown-editor .w-md-editor-toolbar ul li button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-color-mode="dark"] .markdown-editor .w-md-editor-content,
+[data-color-mode="dark"] .markdown-editor .w-md-editor-text-input,
+[data-color-mode="dark"] .markdown-editor .w-md-editor-preview {
+  background: transparent;
+  color: rgb(var(--text));
+}
+
+[data-color-mode="dark"] .markdown-editor .w-md-editor-preview pre code,
+[data-color-mode="dark"] .markdown-editor .w-md-editor-text-input {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+[data-color-mode="dark"] .markdown-editor .w-md-editor-preview {
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-color-mode="dark"] .markdown-editor .w-md-editor-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+[data-color-mode="dark"] .markdown-editor .w-md-editor-content::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+}
+
+/* Markdown Preview Styles */
+.markdown-preview-wrapper {
+  color: rgb(var(--text));
+  background: transparent !important;
+}
+
+.markdown-preview-wrapper > * {
+  background: transparent !important;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: rgb(var(--text));
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown > * {
+  background-color: transparent !important;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown > div {
+  background-color: transparent !important;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown div {
+  background-color: transparent !important;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown h1,
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown h2,
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown h3,
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown h4,
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown h5,
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown h6 {
+  color: rgb(var(--text));
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown p {
+  color: rgba(235, 235, 245, 0.9);
+  line-height: 1.6;
+  margin-bottom: 1em;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown a {
+  color: rgb(var(--accent));
+  text-decoration: underline;
+  text-decoration-color: rgba(10, 132, 255, 0.4);
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown a:hover {
+  text-decoration-color: rgb(var(--accent));
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown code {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f472b6;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown pre {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1em;
+  overflow-x: auto;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown pre code {
+  background: transparent;
+  color: rgba(235, 235, 245, 0.9);
+  padding: 0;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown ul,
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown ol {
+  color: rgba(235, 235, 245, 0.9);
+  margin-bottom: 1em;
+  padding-left: 1.5em;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown li {
+  margin-bottom: 0.5em;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown blockquote {
+  border-left: 3px solid rgba(255, 255, 255, 0.2);
+  padding-left: 1em;
+  margin-left: 0;
+  color: rgba(235, 235, 245, 0.7);
+  font-style: italic;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1em;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown table th,
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown table td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5em;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown table th {
+  background: rgba(255, 255, 255, 0.08) !important;
+  font-weight: 600;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown strong {
+  color: rgb(var(--text));
+  font-weight: 600;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown em {
+  color: rgba(235, 235, 245, 0.8);
+  font-style: italic;
+}
+
+[data-color-mode="dark"] .markdown-preview-wrapper .wmde-markdown hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 2em 0;
+}
+
+

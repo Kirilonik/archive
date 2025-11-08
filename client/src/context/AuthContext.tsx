@@ -1,0 +1,122 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { apiFetch } from '../lib/api';
+
+export type AuthenticatedUser = {
+  id: number;
+  email: string;
+  name?: string | null;
+  avatar_url?: string | null;
+};
+
+type LoginPayload = { email: string; password: string };
+type RegisterPayload = { name?: string; email: string; password: string };
+
+type AuthContextValue = {
+  user: AuthenticatedUser | null;
+  loading: boolean;
+  login: (payload: LoginPayload) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<void>;
+  logout: () => Promise<void>;
+  refresh: () => Promise<void>;
+};
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+async function readJsonSafely(response: Response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<AuthenticatedUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    try {
+      const resp = await apiFetch('/api/auth/me');
+      if (!resp.ok) {
+        setUser(null);
+        return;
+      }
+      const data = await resp.json();
+      setUser(data.user ?? null);
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refresh().catch(() => {
+      setUser(null);
+      setLoading(false);
+    });
+  }, [refresh]);
+
+  const login = useCallback(async ({ email, password }: LoginPayload) => {
+    const resp = await fetch('/api/auth/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!resp.ok) {
+      const data = await readJsonSafely(resp);
+      const message = data?.error ?? 'Ошибка входа';
+      throw new Error(message);
+    }
+    const data = await resp.json();
+    setUser(data.user ?? null);
+    toast.success('Вход выполнен успешно!');
+  }, []);
+
+  const register = useCallback(async ({ name, email, password }: RegisterPayload) => {
+    const resp = await fetch('/api/auth/register', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password }),
+    });
+    if (!resp.ok) {
+      const data = await readJsonSafely(resp);
+      const message = data?.error ?? 'Ошибка регистрации';
+      throw new Error(message);
+    }
+    const data = await resp.json();
+    setUser(data.user ?? null);
+    toast.success('Регистрация успешна!');
+  }, []);
+
+  const logout = useCallback(async () => {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    setUser(null);
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      user,
+      loading,
+      login,
+      register,
+      logout,
+      refresh,
+    }),
+    [user, loading, login, register, logout, refresh],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+}
+

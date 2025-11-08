@@ -1,0 +1,216 @@
+import { useState, useEffect, useRef } from 'react';
+import toast from 'react-hot-toast';
+import { MarkdownEditor } from '../components/MarkdownEditor';
+import { apiFetch } from '../lib/api';
+
+type SuggestItem = {
+  id?: number;
+  title: string;
+  poster?: string | null;
+  year?: number | null;
+  isSeries?: boolean;
+  description?: string;
+};
+
+export function Add() {
+  const [query, setQuery] = useState('');
+  const [items, setItems] = useState<SuggestItem[]>([]);
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<SuggestItem | null>(null);
+  const [myRating, setMyRating] = useState<string>('');
+  const [opinion, setOpinion] = useState<string>('');
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce для поиска - запрос отправляется через 1 секунду после последнего изменения
+  useEffect(() => {
+    // Очищаем предыдущий таймер
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Если запрос пустой, сразу очищаем результаты
+    if (!query.trim()) {
+      setItems([]);
+      setOpen(false);
+      return;
+    }
+
+    // Устанавливаем новый таймер
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        const resp = await apiFetch(`/api/search/suggest?query=${encodeURIComponent(query)}`);
+        if (!resp.ok) {
+          setItems([]);
+          setOpen(false);
+          return;
+        }
+        const data = await resp.json();
+        setItems(data);
+        // Открываем предложения только если есть результаты
+        if (Array.isArray(data) && data.length > 0) {
+          setOpen(true);
+        }
+      } catch {
+        setItems([]);
+        setOpen(false);
+      }
+    }, 1000);
+
+    // Очистка таймера при размонтировании
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [query]);
+
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Закрываем предложения при клике вне области поиска
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        // Не закрываем, если открыто модальное окно
+        if (!selected) {
+          setOpen(false);
+        }
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [selected]);
+
+  async function addToLibrary(item: SuggestItem) {
+    setSelected(item);
+    setMyRating('');
+    setOpinion('');
+    // Не закрываем предложения при открытии модального окна
+  }
+
+  return (
+    <main className="mx-auto max-w-6xl px-4 py-6">
+      <div className="card relative">
+        <div className="mb-3 text-text font-semibold">Начните вводить название</div>
+        <div className="relative" ref={searchContainerRef}>
+          <div className="relative">
+            <input
+              className="input w-full text-lg py-3 pr-10"
+              placeholder="Название фильма или сериала"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => items.length > 0 && setOpen(true)}
+            />
+            {query && (
+              <button
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-textMuted hover:text-text transition-colors p-1"
+                onClick={() => {
+                  setQuery('');
+                  setItems([]);
+                  setOpen(false);
+                }}
+                type="button"
+                title="Очистить"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {open && items.length > 0 && (
+            <div className="absolute left-0 right-0 mt-2 popover-panel max-h-[70vh] overflow-auto z-30">
+              <ul className="divide-y divide-white/10">
+                {items.map((it, idx) => (
+                  <li key={idx} className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors">
+                    <div className="w-12 h-18 shrink-0 bg-black/30 rounded-soft overflow-hidden flex items-center justify-center">
+                      {it.poster ? (
+                        <img src={it.poster} alt={it.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs text-textMuted">Нет постера</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-text truncate">{it.title}</div>
+                      <div className="text-sm text-textMuted">{it.year ? `Год: ${it.year}` : ''}{it.isSeries ? (it.year ? ' · ' : '') + 'Сериал' : ''}</div>
+                    </div>
+                    <button className="btn btn-primary px-3 py-1" onMouseDown={(e) => e.preventDefault()} onClick={() => addToLibrary(it)}>
+                      Добавить
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {selected && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-40" onClick={() => setSelected(null)}>
+          <div className="card max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="text-xl font-semibold text-text mb-2">Добавить в библиотеку</div>
+            <div className="text-textMuted mb-4 truncate">{selected.title}</div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-textMuted mb-1">Ваша оценка (0-10)</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  className="input"
+                  value={myRating}
+                  onChange={(e) => setMyRating(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-textMuted mb-1">Мнение (Markdown, необязательно)</label>
+                <MarkdownEditor value={opinion} onChange={(val) => setOpinion(val)} />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button className="btn px-3 py-1" onClick={() => setSelected(null)}>Отмена</button>
+              <button
+                className="btn btn-primary px-3 py-1"
+                onClick={async () => {
+                  try {
+                    const body: any = { title: selected.title };
+                    // Передаем kp_id (ID с Кинопоиска) если он есть в выбранном элементе
+                    if (selected.id) {
+                      body.kp_id = selected.id;
+                    }
+                    if (myRating) body.my_rating = Number(myRating);
+                    if (opinion) body.opinion = opinion;
+                    const url = selected.isSeries ? '/api/series' : '/api/films';
+                    const resp = await apiFetch(url, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(body),
+                    });
+                    if (!resp.ok) {
+                      const errorData = await resp.json().catch(() => ({ error: 'Ошибка при добавлении' }));
+                      toast.error(errorData.error || 'Ошибка при добавлении в библиотеку');
+                      return;
+                    }
+                    toast.success(selected.isSeries ? 'Сериал добавлен в библиотеку' : 'Фильм добавлен в библиотеку');
+                    setSelected(null);
+                    setMyRating('');
+                    setOpinion('');
+                  } catch (err) {
+                    toast.error('Ошибка при добавлении в библиотеку. Попробуйте еще раз.');
+                  }
+                }}
+              >
+                Добавить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
+
+
