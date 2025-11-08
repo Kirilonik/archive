@@ -1,5 +1,6 @@
 import { env } from '../../config/env.js';
 import type { KinopoiskClient, KpEnriched, KpSeriesDetails, KpSuggestItem } from '../../domain/integrations/kinopoisk.types.js';
+import { logger } from '../../shared/logger.js';
 
 const API_URL = env.KINOPOISK_API_URL;
 const API_KEY = env.KINOPOISK_API_KEY;
@@ -30,7 +31,10 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     const resp = await fetch(url, { headers: getHeaders() });
     if (!resp.ok) {
       const body = await resp.text().catch(() => '');
-      console.error(`[kinopoisk] ${resp.status} ${resp.statusText} for ${url}`, body);
+      logger.error(
+        { status: resp.status, statusText: resp.statusText, url, body },
+        '[kinopoisk] request failed',
+      );
       return null;
     }
     return resp.json() as Promise<T>;
@@ -60,7 +64,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       }
       return this.mapStaff(staff);
     } catch (error) {
-      console.error('Error fetching staff:', error);
+      logger.error({ err: error, kpId }, 'Error fetching Kinopoisk staff');
       return { director: null, actors: null };
     }
   }
@@ -88,7 +92,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         kp_revenue: null,
       };
     } catch (error) {
-      console.error('Error fetching film details by kp_id:', error);
+      logger.error({ err: error, kpId }, 'Error fetching film details by kp_id');
       return {};
     }
   }
@@ -129,14 +133,14 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         kp_revenue: null,
       };
     } catch (error) {
-      console.error('Error in searchBestByTitle:', error);
+      logger.error({ err: error, title }, 'Error in searchBestByTitle');
       return {};
     }
   }
 
   async fetchSeriesDetails(kpId: number): Promise<KpSeriesDetails> {
     if (!kpId) {
-      console.error('fetchSeriesDetails: kpId is missing or invalid');
+      logger.warn({ kpId }, 'fetchSeriesDetails: kpId is missing or invalid');
       return {};
     }
     try {
@@ -156,7 +160,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       }));
       return { seasons };
     } catch (error) {
-      console.error('Error in fetchSeriesDetails:', error);
+      logger.error({ err: error, kpId }, 'Error in fetchSeriesDetails');
       return {};
     }
   }
@@ -184,7 +188,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         };
       });
     } catch (error) {
-      console.error('Error in suggest:', error);
+      logger.error({ err: error, query }, 'Error in Kinopoisk suggest');
       return [];
     }
   }

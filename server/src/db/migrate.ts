@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { pool } from '../config/db.js';
+import { logger } from '../shared/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,8 +30,7 @@ export async function runMigrations() {
     ];
     const dir = candidates.find((p) => fs.existsSync(p));
     if (!dir) {
-      // eslint-disable-next-line no-console
-      console.warn('[migrate] migrations directory not found, skipping');
+      logger.warn('[migrate] migrations directory not found, skipping');
       return;
     }
 
@@ -52,20 +52,17 @@ export async function runMigrations() {
         await client.query(sql);
         await client.query('INSERT INTO migrations(name) VALUES ($1)', [name]);
         await client.query('COMMIT');
-        // eslint-disable-next-line no-console
-        console.log(`[migrate] applied ${name}`);
+        logger.info({ migration: name }, '[migrate] applied');
       } catch (e) {
         await client.query('ROLLBACK');
-        // eslint-disable-next-line no-console
-        console.error(`[migrate] failed ${name}`, e);
+        logger.error({ err: e, migration: name }, '[migrate] failed');
         throw e;
       }
     }
   } finally {
     if (lockAcquired) {
-      await client.query('SELECT pg_advisory_unlock(hashtext($1))', [LOCK_KEY]).catch(() => {
-        // eslint-disable-next-line no-console
-        console.error('[migrate] failed to release advisory lock');
+      await client.query('SELECT pg_advisory_unlock(hashtext($1))', [LOCK_KEY]).catch((unlockError) => {
+        logger.error({ err: unlockError }, '[migrate] failed to release advisory lock');
       });
     }
     client.release();

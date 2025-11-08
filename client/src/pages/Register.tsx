@@ -8,16 +8,20 @@ export function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { register: registerUser } = useAuth();
 
   async function submit() {
     try {
       setLoading(true);
+      setError(null);
       await registerUser({ name, email, password });
       navigate('/');
     } catch (e: any) {
-      toast.error(e.message || 'Ошибка регистрации');
+      const message = e?.message || 'Ошибка регистрации';
+      toast.error(message);
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -45,6 +49,11 @@ export function Register() {
           <button className="btn btn-primary px-4 py-2" disabled={loading} onClick={submit}>Создать</button>
           <Link className="text-textMuted hover:text-text" to="/login">У меня уже есть аккаунт</Link>
         </div>
+        {error && (
+          <p className="mt-4 text-sm text-red-400" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     </main>
   );
