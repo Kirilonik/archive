@@ -1,11 +1,12 @@
 import express from 'express';
 import cors from 'cors';
-import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import { registerRoutes } from './routes/register.js';
 import { errorMiddleware } from './middlewares/error.js';
 import { runMigrations } from './db/migrate.js';
 import { env } from './config/env.js';
+import { requestLogger } from './app/middlewares/request-logger.middleware.js';
+import { logger } from './shared/logger.js';
 
 async function bootstrap() {
   const app = express();
@@ -14,7 +15,7 @@ async function bootstrap() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
   app.use(cookieParser());
-  app.use(morgan('dev'));
+  app.use(requestLogger);
 
   await runMigrations();
 
@@ -24,14 +25,12 @@ async function bootstrap() {
 
   const PORT = env.PORT ?? 4000;
   app.listen(PORT, () => {
-    // eslint-disable-next-line no-console
-    console.log(`Server listening on http://localhost:${PORT}`);
+    logger.info({ port: PORT }, 'Server listening');
   });
 }
 
 bootstrap().catch((e) => {
-  // eslint-disable-next-line no-console
-  console.error('Failed to start server', e);
+  logger.error({ err: e }, 'Failed to start server');
   process.exit(1);
 });
 
