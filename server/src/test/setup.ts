@@ -1,12 +1,7 @@
 import { TextEncoder, TextDecoder } from 'util';
 import { jest as jestGlobals } from '@jest/globals';
 
-declare global {
-  // eslint-disable-next-line no-var
-  var jest: typeof jestGlobals;
-}
-
-globalThis.jest = jestGlobals;
+(globalThis as any).jest = jestGlobals;
 
 if (typeof (global as any).TextEncoder === 'undefined') {
   (global as any).TextEncoder = TextEncoder;
