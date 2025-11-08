@@ -19,6 +19,9 @@ export function Profile() {
   const [name, setName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { user, refresh } = useAuth();
 
@@ -27,6 +30,9 @@ export function Profile() {
     let cancelled = false;
 
     async function load() {
+      setProfileLoading(true);
+      setStatsLoading(true);
+      setStatsError(null);
       try {
         const [profileResp, statsResp] = await Promise.all([
           apiFetch(`/api/users/${user.id}`),
@@ -43,14 +49,24 @@ export function Profile() {
 
         if (statsResp.ok) {
           const statsData = await statsResp.json();
-          if (!cancelled) setDetailedStats(statsData);
+          if (!cancelled) {
+            setDetailedStats(statsData);
+          }
         } else if (!cancelled) {
           setDetailedStats(null);
+          setStatsError('Не удалось загрузить детальную статистику');
         }
       } catch {
         if (!cancelled) {
           setData(null);
           setDetailedStats(null);
+          setStatsError('Не удалось загрузить данные профиля');
+          toast.error('Не удалось загрузить профиль');
+        }
+      } finally {
+        if (!cancelled) {
+          setProfileLoading(false);
+          setStatsLoading(false);
         }
       }
     }
@@ -103,8 +119,12 @@ export function Profile() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
       <h1 className="text-2xl font-semibold mb-4 text-text">Профиль</h1>
-      {!data ? (
-        <div className="text-text">Загрузка...</div>
+      {profileLoading ? (
+        <ProfileSkeleton />
+      ) : !data ? (
+        <div className="card p-6 text-center text-text">
+          Не удалось загрузить профиль. Попробуйте обновить страницу позже.
+        </div>
       ) : (
         <div className="space-y-6">
           {/* Блок профиля: аватарка и имя */}
@@ -190,7 +210,9 @@ export function Profile() {
             </div>
 
             {/* Графики */}
-            {detailedStats && (
+            {statsLoading ? (
+              <StatsSkeleton />
+            ) : detailedStats ? (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <GenresChart data={detailedStats.genres || []} />
@@ -216,11 +238,58 @@ export function Profile() {
                   <DirectorsChart data={detailedStats.directors} />
                 )}
               </div>
+            ) : (
+              <div className="card p-6 text-center text-textMuted">
+                {statsError ?? 'Недостаточно данных для отображения статистики.'}
+              </div>
             )}
           </div>
         </div>
       )}
     </main>
+  );
+}
+
+function ProfileSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="card p-6 animate-pulse">
+        <div className="flex items-center gap-4">
+          <div className="size-20 rounded-full bg-white/10" />
+          <div className="flex-1 space-y-3">
+            <div className="h-4 bg-white/10 rounded w-1/3" />
+            <div className="h-10 bg-white/10 rounded" />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-6">
+          <div className="h-9 w-24 bg-white/10 rounded" />
+          <div className="h-9 w-28 bg-white/10 rounded" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {Array.from({ length: 5 }).map((_, idx) => (
+          <div key={idx} className="card p-4 animate-pulse space-y-3">
+            <div className="h-8 bg-white/10 rounded" />
+            <div className="h-4 bg-white/10 rounded w-3/4" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StatsSkeleton() {
+  return (
+    <div className="space-y-6">
+      {Array.from({ length: 3 }).map((_, block) => (
+        <div key={block} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {Array.from({ length: 2 }).map((__, idx) => (
+            <div key={idx} className="card h-64 animate-pulse bg-white/5" />
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }
 
