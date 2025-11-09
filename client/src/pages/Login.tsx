@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
@@ -11,17 +11,16 @@ export function Login() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const navigate = useNavigate();
   const { login, loginWithGoogle } = useAuth();
-  const location = useLocation();
   const googleContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(window.location.search);
     const error = params.get('auth_error');
     if (error) {
       toast.error(`Ошибка авторизации: ${error}`);
-      navigate('/login', { replace: true });
+      window.history.replaceState(null, '', '/login');
     }
-  }, [location.search, navigate]);
+  }, []);
 
   async function submit() {
     try {

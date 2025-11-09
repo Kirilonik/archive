@@ -25,10 +25,7 @@ const envSchema = z
       .url()
       .default('https://kinopoiskapiunofficial.tech'),
     KINOPOISK_API_KEY: z.string().min(1, 'KINOPOISK_API_KEY is required'),
-    GOOGLE_CLIENT_ID: z
-      .string()
-      .min(1, 'GOOGLE_CLIENT_ID is required')
-      .default('466743662626-7c6hg0i82n1fmnuir2niu1pof4qbhvui.apps.googleusercontent.com'),
+    GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required'),
   })
   .transform((values) => ({
     ...values,

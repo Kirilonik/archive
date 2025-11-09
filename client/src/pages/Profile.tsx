@@ -5,6 +5,8 @@ import { apiFetch } from '../lib/api';
 
 const ProfileCharts = lazy(() => import('../components/ProfileCharts'));
 
+const HARD_CODED_GOOGLE_ID = '466743662626-7c6hg0i82n1fmnuir2niu1pof4qbhvui.apps.googleusercontent.com';
+
 export function Profile() {
   const [data, setData] = useState<any | null>(null);
   const [detailedStats, setDetailedStats] = useState<any | null>(null);
@@ -16,6 +18,9 @@ export function Profile() {
   const [statsError, setStatsError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { user, refresh } = useAuth();
+
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const isHardcodedGoogleId = googleClientId === HARD_CODED_GOOGLE_ID;
 
   useEffect(() => {
     if (!user?.id) return;
@@ -118,6 +123,13 @@ export function Profile() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
       <h1 className="text-2xl font-semibold mb-4 text-text">Профиль</h1>
+      {isHardcodedGoogleId ? (
+        <div className="card p-4 border border-yellow-400/40 bg-yellow-500/10 text-yellow-100">
+          <div className="text-sm">
+            Используется дефолтный <code className="font-mono">GOOGLE_CLIENT_ID</code>. Вынесите реальный client id в .env.
+          </div>
+        </div>
+      ) : null}
       {profileLoading ? (
         <ProfileSkeleton />
       ) : !data ? (
