@@ -5,8 +5,6 @@ import type {
   AuthUser,
   AuthUserWithPassword,
   CreateGoogleUserInput,
-  CreateYandexUserInput,
-  AttachYandexAccountInput,
   RegisterUserInput,
 } from '../../../domain/auth/auth.types.js';
 
@@ -18,7 +16,6 @@ function mapRow(row: any): AuthUser {
     avatarUrl: row.avatar_url,
     authProvider: row.auth_provider ?? 'local',
     googleId: row.google_id ?? null,
-    yandexId: row.yandex_id ?? null,
   };
 }
 
@@ -43,15 +40,6 @@ export class AuthPgRepository implements AuthRepository {
     const { rows } = await pool.query(
       'SELECT id, email, name, avatar_url, auth_provider, google_id, yandex_id FROM users WHERE google_id = $1',
       [googleId],
-    );
-    if (!rows[0]) return null;
-    return mapRow(rows[0]);
-  }
-
-  async findByYandexId(yandexId: string): Promise<AuthUser | null> {
-    const { rows } = await pool.query(
-      'SELECT id, email, name, avatar_url, auth_provider, google_id, yandex_id FROM users WHERE yandex_id = $1',
-      [yandexId],
     );
     if (!rows[0]) return null;
     return mapRow(rows[0]);
@@ -92,29 +80,5 @@ export class AuthPgRepository implements AuthRepository {
     return mapRow(rows[0]);
   }
 
-  async createUserFromYandex(input: CreateYandexUserInput): Promise<AuthUser> {
-    const { rows } = await pool.query(
-      `INSERT INTO users (name, email, avatar_url, yandex_id, auth_provider)
-       VALUES ($1,$2,$3,$4,'yandex')
-       RETURNING id, name, email, avatar_url, auth_provider, google_id, yandex_id`,
-      [input.name, input.email, input.avatarUrl, input.yandexId],
-    );
-    return mapRow(rows[0]);
-  }
-
-  async attachYandexAccount(input: AttachYandexAccountInput): Promise<AuthUser> {
-    const { rows } = await pool.query(
-      `UPDATE users
-         SET yandex_id = $2,
-             auth_provider = 'yandex',
-             name = COALESCE(name, $3),
-             email = COALESCE(email, $4, email),
-             avatar_url = COALESCE($5, avatar_url)
-       WHERE id = $1
-       RETURNING id, name, email, avatar_url, auth_provider, google_id, yandex_id`,
-      [input.userId, input.yandexId, input.name, input.email, input.avatarUrl],
-    );
-    return mapRow(rows[0]);
-  }
 }
 

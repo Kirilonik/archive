@@ -29,13 +29,6 @@ const envSchema = z
       .string()
       .min(1, 'GOOGLE_CLIENT_ID is required')
       .default('466743662626-7c6hg0i82n1fmnuir2niu1pof4qbhvui.apps.googleusercontent.com'),
-    YANDEX_CLIENT_ID: z.string().min(1, 'YANDEX_CLIENT_ID is required').default('test-yandex-client-id'),
-    YANDEX_CLIENT_SECRET: z.string().min(1, 'YANDEX_CLIENT_SECRET is required').default('test-yandex-client-secret'),
-    YANDEX_REDIRECT_URI: z
-      .string()
-      .url()
-      .default('http://localhost:4000/api/auth/yandex/callback'),
-    FRONTEND_URL: z.string().url().default('http://localhost:5173'),
   })
   .transform((values) => ({
     ...values,

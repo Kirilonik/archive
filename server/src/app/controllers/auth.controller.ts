@@ -107,58 +107,6 @@ export class AuthController {
     }
   };
 
-  yandexStart = (req: Request, res: Response) => {
-    const state = crypto.randomBytes(16).toString('hex');
-    res.cookie('ya_oauth_state', state, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: env.NODE_ENV === 'production',
-      path: '/api/auth/yandex',
-      maxAge: 10 * 60 * 1000,
-    });
-
-    const params = new URLSearchParams({
-      response_type: 'code',
-      client_id: env.YANDEX_CLIENT_ID,
-      redirect_uri: env.YANDEX_REDIRECT_URI,
-      state,
-      scope: 'login:email login:info',
-    });
-
-    res.redirect(`https://oauth.yandex.ru/authorize?${params.toString()}`);
-  };
-
-  yandexCallback = async (req: Request, res: Response) => {
-    const { code, state, error } = req.query;
-    const expectedState = (req.cookies?.ya_oauth_state ?? (req as any).cookies?.ya_oauth_state) as string | undefined;
-    if (expectedState) {
-      res.clearCookie('ya_oauth_state', { path: '/api/auth/yandex' });
-    }
-
-    const redirectUrl = new URL(env.FRONTEND_URL ?? 'http://localhost:5173');
-
-    if (error) {
-      redirectUrl.searchParams.set('auth_error', String(error));
-      return res.redirect(redirectUrl.toString());
-    }
-
-    if (!code || typeof code !== 'string' || !state || state !== expectedState) {
-      redirectUrl.searchParams.set('auth_error', 'invalid_state');
-      return res.redirect(redirectUrl.toString());
-    }
-
-    try {
-      const result = await this.authService.loginWithYandex(code);
-      setRefreshCookie(res, result.tokens.refreshToken);
-      setAccessCookie(res, result.tokens.accessToken);
-      redirectUrl.searchParams.set('auth_success', 'yandex');
-      return res.redirect(redirectUrl.toString());
-    } catch (err: any) {
-      redirectUrl.searchParams.set('auth_error', err?.message ?? 'yandex_failed');
-      return res.redirect(redirectUrl.toString());
-    }
-  };
-
   refresh = async (req: Request, res: Response) => {
     const token = (req as any).cookies?.refresh_token || req.cookies?.refresh_token;
     if (!token) return res.status(401).json({ error: 'No refresh' });

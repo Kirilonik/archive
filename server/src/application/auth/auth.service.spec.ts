@@ -8,7 +8,6 @@ const baseUser: AuthUser = {
   avatarUrl: null,
   authProvider: 'local',
   googleId: null,
-  yandexId: null,
 };
 
 function createRepositoryMock(overrides: Partial<AuthRepository> = {}): AuthRepository {
@@ -19,32 +18,16 @@ function createRepositoryMock(overrides: Partial<AuthRepository> = {}): AuthRepo
     } as AuthUserWithPassword) as AuthRepository['findByEmail'],
     createUser: jest.fn().mockResolvedValue(baseUser) as AuthRepository['createUser'],
     findByGoogleId: jest.fn().mockResolvedValue(null),
-    findByYandexId: jest.fn().mockResolvedValue(null),
     createUserFromGoogle: jest.fn().mockResolvedValue({
       ...baseUser,
       id: 2,
       authProvider: 'google',
       googleId: 'google-123',
-      yandexId: null,
     }),
     attachGoogleAccount: jest.fn().mockResolvedValue({
       ...baseUser,
       authProvider: 'google',
       googleId: 'google-123',
-      yandexId: null,
-    }),
-    createUserFromYandex: jest.fn().mockResolvedValue({
-      ...baseUser,
-      id: 3,
-      authProvider: 'yandex',
-      yandexId: 'ya-123',
-      googleId: null,
-    }),
-    attachYandexAccount: jest.fn().mockResolvedValue({
-      ...baseUser,
-      authProvider: 'yandex',
-      yandexId: 'ya-123',
-      googleId: null,
     }),
     ...overrides,
   } as AuthRepository;
@@ -64,24 +47,6 @@ function createGoogleClientMock(overrides: Partial<{ verifyIdToken: jest.Mock }>
       .fn()
       .mockResolvedValue({ getPayload: () => ({ sub: 'google-123', email: baseUser.email, name: baseUser.name }) }),
     ...overrides,
-  };
-}
-
-function createYandexMocks(overrides?: {
-  exchange?: () => Promise<any>;
-  info?: () => Promise<any>;
-}) {
-  return {
-    exchange: jest.fn(overrides?.exchange ?? (() => Promise.resolve({ access_token: 'token', token_type: 'bearer', expires_in: 3600 }))),
-    info: jest.fn(
-      overrides?.info ??
-        (() =>
-          Promise.resolve({
-            id: 'ya-123',
-            default_email: baseUser.email,
-            display_name: 'Yandex User',
-          })),
-    ),
   };
 }
 
@@ -155,23 +120,6 @@ describe('AuthService', () => {
     const result = await service.loginWithGoogle('token');
     expect(result.user.id).toBe(5);
     expect(repository.createUserFromGoogle).toHaveBeenCalled();
-  });
-
-  it('создаёт пользователя через Yandex, если не найден', async () => {
-    const repository = createRepositoryMock({
-      findByEmail: jest.fn().mockResolvedValue(null),
-    });
-    const passwordHasher = createPasswordHasherMock();
-    const yaMocks = createYandexMocks();
-
-    const service = new AuthService(repository, passwordHasher, createGoogleClientMock() as any);
-    // Подменяем приватные методы через any
-    (service as any).exchangeYandexCode = yaMocks.exchange;
-    (service as any).fetchYandexUserInfo = yaMocks.info;
-
-    const result = await service.loginWithYandex('code');
-    expect(result.user.id).toBe(3);
-    expect(repository.createUserFromYandex).toHaveBeenCalled();
   });
 });
 

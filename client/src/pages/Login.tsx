@@ -9,21 +9,15 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [yandexLoading, setYandexLoading] = useState(false);
   const navigate = useNavigate();
   const { login, loginWithGoogle } = useAuth();
   const location = useLocation();
   const googleContainerRef = useRef<HTMLDivElement | null>(null);
-  const yandexButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const success = params.get('auth_success');
     const error = params.get('auth_error');
-    if (success === 'yandex') {
-      toast.success('Вход через Яндекс выполнен!');
-      navigate('/login', { replace: true });
-    } else if (error) {
+    if (error) {
       toast.error(`Ошибка авторизации: ${error}`);
       navigate('/login', { replace: true });
     }
@@ -59,11 +53,14 @@ export function Login() {
           <button className="btn btn-primary px-4 py-2" disabled={loading} onClick={submit}>Войти</button>
           <Link className="text-textMuted hover:text-text" to="/register">Регистрация</Link>
         </div>
-        <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <div className="relative flex h-11 w-11 items-center justify-center" title="Войти через Google">
+        <div className="mt-6 flex justify-center">
+          <div
+            ref={googleContainerRef}
+            className="relative flex h-11 w-11 items-center justify-center"
+            title="Войти через Google"
+          >
             <GoogleLogin
               containerProps={{
-                ref: googleContainerRef,
                 className: 'absolute inset-0 opacity-0 pointer-events-auto',
               }}
               onSuccess={async (credentialResponse) => {
@@ -117,30 +114,6 @@ export function Login() {
               </svg>
             </button>
           </div>
-          <button
-            ref={yandexButtonRef}
-            type="button"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white text-black shadow hover:shadow-lg disabled:opacity-60"
-            onClick={() => {
-              if (yandexLoading) return;
-              setYandexLoading(true);
-              window.location.href = '/api/auth/yandex/start';
-            }}
-            disabled={yandexLoading}
-            aria-label="Войти через Яндекс"
-            title="Войти через Яндекс"
-          >
-            <svg viewBox="0 0 48 48" className="h-6 w-6">
-              <path
-                fill="#FC3F1D"
-                d="M47.5 24c0 12.98-10.52 23.5-23.5 23.5S.5 36.98.5 24 11.02.5 24 .5 47.5 11.02 47.5 24Z"
-              />
-              <path
-                fill="#fff"
-                d="M23.35 13.05c-5.38 0-8.66 3.2-8.66 7.82 0 3.14 1.29 5.15 3.58 6.19-2.64.95-3.95 2.98-3.95 5.98 0 4.18 2.95 6.96 7.95 6.96h6.13v-3.6h-5.56c-3.04 0-4.66-1.2-4.66-3.28 0-2.18 1.35-3.28 4.66-3.28h5.56v-3.6h-4.43c-3.02 0-4.68-1.1-4.68-3.08 0-1.94 1.68-3.21 4.68-3.21h4.43v-3.6h-4.76Z"
-              />
-            </svg>
-          </button>
         </div>
       </div>
     </main>

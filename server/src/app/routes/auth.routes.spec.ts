@@ -16,7 +16,6 @@ const user: AuthUser = {
   avatarUrl: null,
   authProvider: 'local',
   googleId: null,
-  yandexId: null,
 };
 
 function buildApp(authOverrides: Partial<AuthService>, userOverrides: Partial<UserService>) {

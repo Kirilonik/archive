@@ -8,8 +8,6 @@ export function createAuthRouter(controller: AuthController) {
   router.post('/register', controller.register);
   router.post('/login', controller.login);
   router.post('/google', controller.loginWithGoogle);
-  router.get('/yandex/start', controller.yandexStart);
-  router.get('/yandex/callback', controller.yandexCallback);
   router.post('/refresh', controller.refresh);
   router.post('/logout', controller.logout);
   router.get('/me', authMiddleware, controller.me);
