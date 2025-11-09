@@ -39,16 +39,16 @@ const authController = new AuthController(authService, (userId) => userService.g
 
 const kinopoiskClient = new KinopoiskHttpClient();
 const filmsRepository = new FilmsPgRepository();
-const filmService = new FilmService(filmsRepository, kinopoiskClient);
+const filmService = new FilmService(filmsRepository, kinopoiskClient, statsService);
 const filmsController = new FilmsController(filmService);
 const seriesRepository = new SeriesPgRepository();
-const seriesService = new SeriesService(seriesRepository, kinopoiskClient);
+const seriesService = new SeriesService(seriesRepository, kinopoiskClient, statsService);
 const seriesController = new SeriesController(seriesService);
 const seasonsRepository = new SeasonsPgRepository();
-const seasonService = new SeasonService(seasonsRepository, seriesRepository);
+const seasonService = new SeasonService(seasonsRepository, seriesRepository, statsService);
 const seasonsController = new SeasonsController(seasonService);
 const episodesRepository = new EpisodesPgRepository();
-const episodeService = new EpisodeService(episodesRepository, seriesRepository);
+const episodeService = new EpisodeService(episodesRepository, seriesRepository, statsService);
 const episodesController = new EpisodesController(episodeService);
 
 export const container = {

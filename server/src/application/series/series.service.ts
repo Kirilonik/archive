@@ -1,6 +1,7 @@
 import type { SeriesRepository, SeriesCatalogCreateInput, UserSeriesRow } from '../../domain/series/series.types.js';
 import type { KinopoiskClient, KpEnriched } from '../../domain/integrations/kinopoisk.types.js';
 import type { SeriesCreateDto, SeriesUpdateDto } from '../../app/validators/series.schema.js';
+import type { StatsService } from '../stats/stats.service.js';
 
 function mapRowToResponse(row: UserSeriesRow, userId: number) {
   return {
@@ -46,7 +47,12 @@ export class SeriesService {
   constructor(
     private readonly repository: SeriesRepository,
     private readonly kinopoiskClient: KinopoiskClient,
+    private readonly statsService?: StatsService,
   ) {}
+
+  private invalidateStats(userId: number) {
+    this.statsService?.clearCacheFor(userId);
+  }
 
   async listSeries(params: ListParams) {
     const { userId } = params;
@@ -193,6 +199,7 @@ export class SeriesService {
 
     const row = await this.repository.getUserSeries(userSeriesId, userId);
     if (!row) throw new Error('Failed to load created series');
+    this.invalidateStats(userId);
     return mapRowToResponse(row, userId);
   }
 
@@ -206,12 +213,17 @@ export class SeriesService {
       status: input.status ?? null,
     });
     const updated = await this.repository.getUserSeries(userSeriesId, userId);
-    return updated ? mapRowToResponse(updated, userId) : null;
+    if (updated) {
+      this.invalidateStats(userId);
+      return mapRowToResponse(updated, userId);
+    }
+    return null;
   }
 
   async deleteSeries(userSeriesId: number, userId?: number) {
     if (!userId) return;
     await this.repository.deleteUserSeries(userSeriesId, userId);
+    this.invalidateStats(userId);
   }
 
   private async getSeriesImagesByType(userSeriesId: number, userId: number | undefined, type: string) {

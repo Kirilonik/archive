@@ -1,11 +1,17 @@
 import type { SeasonsRepository } from '../../domain/seasons/season.types.js';
 import type { SeriesRepository } from '../../domain/series/series.types.js';
+import type { StatsService } from '../stats/stats.service.js';
 
 export class SeasonService {
   constructor(
     private readonly seasonsRepository: SeasonsRepository,
     private readonly seriesRepository: SeriesRepository,
+    private readonly statsService?: StatsService,
   ) {}
+
+  private invalidateStats(userId: number) {
+    this.statsService?.clearCacheFor(userId);
+  }
 
   private mapToResponse(row: { catalog_id: number; user_season_id: number | null; number: number; watched: boolean | null; created_at: any; updated_at: any }, seriesId: number) {
     return {
@@ -49,6 +55,7 @@ export class SeasonService {
       };
     }
     const created = await this.seasonsRepository.createUserSeason(userId, seasonCatalogId);
+    this.invalidateStats(userId);
     return {
       id: created.id,
       series_id: seriesId,
@@ -60,6 +67,7 @@ export class SeasonService {
   async deleteSeason(seasonId: number, userId?: number) {
     if (!userId) return;
     await this.seasonsRepository.deleteUserSeason(seasonId, userId);
+    this.invalidateStats(userId);
   }
 
   async markSeasonWatched(seasonId: number, watched: boolean, userId?: number) {
@@ -78,6 +86,7 @@ export class SeasonService {
     if (!updated) return null;
     const episodeIds = await this.seasonsRepository.listSeasonEpisodeCatalogIds(seasonRef.seasonCatalogId);
     await Promise.all(episodeIds.map((episodeId) => this.seasonsRepository.syncUserEpisode(userId, episodeId, watched)));
+    this.invalidateStats(userId);
     return {
       id: updated.id,
       watched: updated.watched,

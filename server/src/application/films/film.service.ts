@@ -1,6 +1,7 @@
 import type { FilmsRepository, FilmCatalogCreateInput, UserFilmRow } from '../../domain/films/film.types.js';
 import type { KinopoiskClient, KpEnriched } from '../../domain/integrations/kinopoisk.types.js';
 import type { FilmCreateDto, FilmUpdateDto } from '../../app/validators/films.schema.js';
+import type { StatsService } from '../stats/stats.service.js';
 
 function mapRowToResponse(row: UserFilmRow, userId: number) {
   return {
@@ -48,7 +49,12 @@ export class FilmService {
   constructor(
     private readonly repository: FilmsRepository,
     private readonly kinopoiskClient: KinopoiskClient,
+    private readonly statsService?: StatsService,
   ) {}
+
+  private invalidateStats(userId: number) {
+    this.statsService?.clearCacheFor(userId);
+  }
 
   async listFilms(params: ListParams) {
     const { userId } = params;
@@ -196,6 +202,7 @@ export class FilmService {
     if (!row) {
       throw new Error('Failed to load created film');
     }
+    this.invalidateStats(userId);
     return mapRowToResponse(row, userId);
   }
 
@@ -209,12 +216,17 @@ export class FilmService {
       status: input.status ?? null,
     });
     const updated = await this.repository.getUserFilm(userFilmId, userId);
-    return updated ? mapRowToResponse(updated, userId) : null;
+    if (updated) {
+      this.invalidateStats(userId);
+      return mapRowToResponse(updated, userId);
+    }
+    return null;
   }
 
   async deleteFilm(userFilmId: number, userId?: number) {
     if (!userId) return;
     await this.repository.deleteUserFilm(userFilmId, userId);
+    this.invalidateStats(userId);
   }
 }
 

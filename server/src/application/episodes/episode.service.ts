@@ -1,11 +1,17 @@
 import type { EpisodesRepository } from '../../domain/episodes/episode.types.js';
 import type { SeriesRepository } from '../../domain/series/series.types.js';
+import type { StatsService } from '../stats/stats.service.js';
 
 export class EpisodeService {
   constructor(
     private readonly episodesRepository: EpisodesRepository,
     private readonly seriesRepository: SeriesRepository,
+    private readonly statsService?: StatsService,
   ) {}
+
+  private invalidateStats(userId: number) {
+    this.statsService?.clearCacheFor(userId);
+  }
 
   private mapToResponse(
     row: {
@@ -80,6 +86,7 @@ export class EpisodeService {
       };
     }
     const created = await this.episodesRepository.createUserEpisode(userId, episodeCatalogId);
+    this.invalidateStats(userId);
     return {
       id: created.id,
       season_id: seasonId,
@@ -107,12 +114,14 @@ export class EpisodeService {
     });
     const refreshed = await this.episodesRepository.getUserEpisode(episodeId, userId);
     if (!refreshed) return null;
+    this.invalidateStats(userId);
     return this.mapToResponse(refreshed, refreshed.user_season_id ?? 0);
   }
 
   async deleteEpisode(episodeId: number, userId?: number) {
     if (!userId) return;
     await this.episodesRepository.deleteUserEpisode(episodeId, userId);
+    this.invalidateStats(userId);
   }
 
   async markEpisodeWatched(episodeId: number, watched: boolean, userId?: number) {
@@ -122,6 +131,9 @@ export class EpisodeService {
       throw err;
     }
     const updated = await this.episodesRepository.markUserEpisode(episodeId, userId, watched);
+    if (updated) {
+      this.invalidateStats(userId);
+    }
     return updated;
   }
 }

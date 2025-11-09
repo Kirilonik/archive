@@ -32,7 +32,7 @@ export function AppRouter() {
   return (
     <div className="min-h-screen text-text">
       <Toaster
-        position="top-right"
+        position="bottom-right"
         toastOptions={{
           duration: 3000,
           style: {
