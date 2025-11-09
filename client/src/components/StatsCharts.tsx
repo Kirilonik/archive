@@ -1,388 +1,236 @@
+import { memo } from 'react';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  PointElement,
-  LineElement,
-  Filler,
-  Title,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
   Tooltip,
+  CartesianGrid,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
   Legend,
-} from 'chart.js';
-import { Bar, Doughnut, Line } from 'react-chartjs-2';
+} from 'recharts';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  PointElement,
-  LineElement,
-  Filler,
-  Title,
-  Tooltip,
-  Legend
-);
+type PaletteKey = 'purple' | 'pink' | 'orange' | 'blue' | 'teal' | 'yellow';
 
-const chartColors = {
-  purple: 'rgba(139, 92, 246, 0.8)',
-  pink: 'rgba(236, 72, 153, 0.8)',
-  orange: 'rgba(251, 146, 60, 0.8)',
-  purpleLight: 'rgba(168, 85, 247, 0.8)',
-  pinkLight: 'rgba(244, 114, 182, 0.8)',
-  orangeLight: 'rgba(252, 165, 165, 0.8)',
-  border: 'rgba(255, 255, 255, 0.2)',
-  text: 'rgba(255, 255, 255, 0.9)',
-  textMuted: 'rgba(255, 255, 255, 0.6)',
+const palette: Record<PaletteKey, string> = {
+  purple: '#a855f7',
+  pink: '#ec4899',
+  orange: '#f97316',
+  blue: '#60a5fa',
+  teal: '#2dd4bf',
+  yellow: '#facc15',
 };
 
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      labels: {
-        color: chartColors.text,
-      },
-    },
-    tooltip: {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      titleColor: chartColors.text,
-      bodyColor: chartColors.text,
-      borderColor: chartColors.border,
-      borderWidth: 1,
-    },
-  },
-  scales: {
-    x: {
-      ticks: { color: chartColors.textMuted },
-      grid: { color: chartColors.border },
-    },
-    y: {
-      ticks: { color: chartColors.textMuted },
-      grid: { color: chartColors.border },
-    },
-  },
+const textColor = '#f3f4f6';
+const textMuted = '#9ca3af';
+const gridColor = '#1f2937';
+
+function ChartContainer({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="card p-4">
+      <h3 className="text-lg font-semibold text-text mb-4">{title}</h3>
+      <div className="h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          {children}
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+const tooltipStyle = {
+  backgroundColor: '#111827',
+  borderColor: gridColor,
+  borderRadius: 8,
+  color: textColor,
 };
 
 interface GenresChartProps {
   data: { genre: string; count: number }[];
 }
 
-export function GenresChart({ data }: GenresChartProps) {
+export const GenresChart = memo(({ data }: GenresChartProps) => {
   if (!data || data.length === 0) {
-    return (
-      <div className="card p-4">
-        <h3 className="text-lg font-semibold text-text mb-4">Распределение по жанрам</h3>
-        <div className="text-textMuted text-center py-8">Нет данных</div>
-      </div>
-    );
+    return <ChartEmptyFallback title="Распределение по жанрам" />;
   }
-
-  const chartData = {
-    labels: data.map((d) => d.genre),
-    datasets: [
-      {
-        label: 'Количество',
-        data: data.map((d) => d.count),
-        backgroundColor: [
-          chartColors.purple,
-          chartColors.pink,
-          chartColors.orange,
-          chartColors.purpleLight,
-          chartColors.pinkLight,
-          chartColors.orangeLight,
-          chartColors.purple,
-          chartColors.pink,
-          chartColors.orange,
-          chartColors.purpleLight,
-        ],
-        borderColor: chartColors.border,
-        borderWidth: 1,
-      },
-    ],
-  };
-
+  const colors = [palette.purple, palette.orange, palette.pink, palette.blue, palette.teal, palette.yellow];
   return (
-    <div className="card p-4">
-      <h3 className="text-lg font-semibold text-text mb-4">Распределение по жанрам</h3>
-      <div style={{ height: '300px' }}>
-        <Bar data={chartData} options={chartOptions} />
-      </div>
-    </div>
+    <ChartContainer title="Распределение по жанрам">
+      <BarChart data={data} margin={{ left: 4 }}>
+        <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+        <XAxis dataKey="genre" stroke={textMuted} tick={{ fill: textMuted, fontSize: 12 }} interval={0} angle={-20} textAnchor="end" height={60} />
+        <YAxis stroke={textMuted} tick={{ fill: textMuted }} allowDecimals={false} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: textMuted }} />
+        <Bar dataKey="count" radius={6}>
+          {data.map((_, index) => (
+            <Cell key={index} fill={colors[index % colors.length]} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ChartContainer>
   );
-}
+});
 
 interface YearsChartProps {
   data: { year: number; count: number }[];
 }
 
-export function YearsChart({ data }: YearsChartProps) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="card p-4">
-        <h3 className="text-lg font-semibold text-text mb-4">Распределение по годам</h3>
-        <div className="text-textMuted text-center py-8">Нет данных</div>
-      </div>
-    );
-  }
-
-  const chartData = {
-    labels: data.map((d) => String(d.year)),
-    datasets: [
-      {
-        label: 'Количество',
-        data: data.map((d) => d.count),
-        borderColor: chartColors.purple,
-        backgroundColor: chartColors.purple + '40',
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  };
-
+export const YearsChart = memo(({ data }: YearsChartProps) => {
+  if (!data || data.length === 0) return <ChartEmptyFallback title="Распределение по годам" />;
+  const chartData = data.map((d) => ({ ...d, label: String(d.year) }));
   return (
-    <div className="card p-4">
-      <h3 className="text-lg font-semibold text-text mb-4">Распределение по годам</h3>
-      <div style={{ height: '300px' }}>
-        <Line data={chartData} options={chartOptions} />
-      </div>
-    </div>
+    <ChartContainer title="Распределение по годам">
+      <LineChart data={chartData} margin={{ left: 4 }}>
+        <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+        <XAxis dataKey="label" stroke={textMuted} tick={{ fill: textMuted }} interval="preserveStartEnd" />
+        <YAxis stroke={textMuted} tick={{ fill: textMuted }} allowDecimals={false} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: textMuted }} />
+        <Line type="monotone" dataKey="count" stroke={palette.purple} strokeWidth={2} dot={{ r: 3 }} />
+      </LineChart>
+    </ChartContainer>
   );
-}
+});
 
 interface RatingsChartProps {
   data: { range: string; count: number }[];
 }
 
-export function RatingsChart({ data }: RatingsChartProps) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="card p-4">
-        <h3 className="text-lg font-semibold text-text mb-4">Распределение оценок</h3>
-        <div className="text-textMuted text-center py-8">Нет данных</div>
-      </div>
-    );
-  }
-
-  const chartData = {
-    labels: data.map((d) => d.range),
-    datasets: [
-      {
-        label: 'Количество',
-        data: data.map((d) => d.count),
-        backgroundColor: [
-          chartColors.purple,
-          chartColors.pink,
-          chartColors.orange,
-          chartColors.purpleLight,
-          chartColors.pinkLight,
-        ],
-        borderColor: chartColors.border,
-        borderWidth: 1,
-      },
-    ],
-  };
-
+export const RatingsChart = memo(({ data }: RatingsChartProps) => {
+  if (!data || data.length === 0) return <ChartEmptyFallback title="Распределение оценок" />;
+  const colors = [palette.purple, palette.orange, palette.pink, palette.blue, palette.teal];
   return (
-    <div className="card p-4">
-      <h3 className="text-lg font-semibold text-text mb-4">Распределение оценок</h3>
-      <div style={{ height: '300px' }}>
-        <Bar data={chartData} options={chartOptions} />
-      </div>
-    </div>
+    <ChartContainer title="Распределение оценок">
+      <BarChart data={data} margin={{ left: 4 }}>
+        <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+        <XAxis dataKey="range" stroke={textMuted} tick={{ fill: textMuted }} />
+        <YAxis stroke={textMuted} tick={{ fill: textMuted }} allowDecimals={false} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: textMuted }} />
+        <Bar dataKey="count" radius={6}>
+          {data.map((_, index) => (
+            <Cell key={index} fill={colors[index % colors.length]} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ChartContainer>
   );
-}
+});
 
 interface FilmsVsSeriesChartProps {
   films: number;
   series: number;
 }
 
-export function FilmsVsSeriesChart({ films, series }: FilmsVsSeriesChartProps) {
-  if (films === 0 && series === 0) {
-    return (
-      <div className="card p-4">
-        <h3 className="text-lg font-semibold text-text mb-4">Соотношение фильмов и сериалов</h3>
-        <div className="text-textMuted text-center py-8">Нет данных</div>
-      </div>
-    );
-  }
-
-  const chartData = {
-    labels: ['Фильмы', 'Сериалы'],
-    datasets: [
-      {
-        data: [films, series],
-        backgroundColor: [chartColors.purple, chartColors.pink],
-        borderColor: chartColors.border,
-        borderWidth: 1,
-      },
-    ],
-  };
-
+export const FilmsVsSeriesChart = memo(({ films, series }: FilmsVsSeriesChartProps) => {
+  if (films === 0 && series === 0) return <ChartEmptyFallback title="Соотношение фильмов и сериалов" />;
+  const data = [
+    { name: 'Фильмы', value: films, color: palette.purple },
+    { name: 'Сериалы', value: series, color: palette.pink },
+  ];
   return (
-    <div className="card p-4">
-      <h3 className="text-lg font-semibold text-text mb-4">Соотношение фильмов и сериалов</h3>
-      <div style={{ height: '300px' }}>
-        <Doughnut data={chartData} options={chartOptions} />
-      </div>
-    </div>
+    <ChartContainer title="Соотношение фильмов и сериалов">
+      <PieChart>
+        <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: textMuted }} />
+        <Legend formatter={(value) => <span style={{ color: textColor }}>{value}</span>} />
+        <Pie data={data} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={4}>
+          {data.map((entry, index) => (
+            <Cell key={index} fill={entry.color} />
+          ))}
+        </Pie>
+      </PieChart>
+    </ChartContainer>
   );
-}
+});
 
 interface MonthlyChartProps {
   data: { month: string | null; count: number }[];
 }
 
-export function MonthlyChart({ data }: MonthlyChartProps) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="card p-4">
-        <h3 className="text-lg font-semibold text-text mb-4">Динамика добавления</h3>
-        <div className="text-textMuted text-center py-8">Нет данных</div>
-      </div>
-    );
-  }
-
-  const chartData = {
-    labels: data.map((d) => d.month || ''),
-    datasets: [
-      {
-        label: 'Добавлено',
-        data: data.map((d) => d.count),
-        borderColor: chartColors.orange,
-        backgroundColor: chartColors.orange + '40',
-        tension: 0.4,
-        fill: true,
-      },
-    ],
-  };
-
+export const MonthlyChart = memo(({ data }: MonthlyChartProps) => {
+  if (!data || data.length === 0) return <ChartEmptyFallback title="Динамика добавления" />;
+  const chartData = data.map((d) => ({ ...d, month: d.month ?? '' }));
   return (
-    <div className="card p-4">
-      <h3 className="text-lg font-semibold text-text mb-4">Динамика добавления</h3>
-      <div style={{ height: '300px' }}>
-        <Line data={chartData} options={chartOptions} />
-      </div>
-    </div>
+    <ChartContainer title="Динамика добавления">
+      <LineChart data={chartData} margin={{ left: 4 }}>
+        <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+        <XAxis dataKey="month" stroke={textMuted} tick={{ fill: textMuted }} interval="preserveStart" />
+        <YAxis stroke={textMuted} tick={{ fill: textMuted }} allowDecimals={false} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: textMuted }} />
+        <Line type="monotone" dataKey="count" stroke={palette.orange} strokeWidth={2} dot={{ r: 3 }} />
+      </LineChart>
+    </ChartContainer>
   );
-}
+});
 
 interface AvgRatingByGenreChartProps {
   data: { genre: string; avgRating: number; count: number }[];
 }
 
-export function AvgRatingByGenreChart({ data }: AvgRatingByGenreChartProps) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="card p-4">
-        <h3 className="text-lg font-semibold text-text mb-4">Средняя оценка по жанрам</h3>
-        <div className="text-textMuted text-center py-8">Нет данных</div>
-      </div>
-    );
-  }
-
-  const chartData = {
-    labels: data.map((d) => d.genre),
-    datasets: [
-      {
-        label: 'Средняя оценка',
-        data: data.map((d) => d.avgRating),
-        backgroundColor: chartColors.pink,
-        borderColor: chartColors.border,
-        borderWidth: 1,
-      },
-    ],
-  };
-
+export const AvgRatingByGenreChart = memo(({ data }: AvgRatingByGenreChartProps) => {
+  if (!data || data.length === 0) return <ChartEmptyFallback title="Средняя оценка по жанрам" />;
   return (
-    <div className="card p-4">
-      <h3 className="text-lg font-semibold text-text mb-4">Средняя оценка по жанрам</h3>
-      <div style={{ height: '300px' }}>
-        <Bar data={chartData} options={{ ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, max: 10 } } }} />
-      </div>
-    </div>
+    <ChartContainer title="Средняя оценка по жанрам">
+      <BarChart data={data} margin={{ left: 4 }}>
+        <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+        <XAxis dataKey="genre" stroke={textMuted} tick={{ fill: textMuted }} interval={0} angle={-20} textAnchor="end" height={60} />
+        <YAxis stroke={textMuted} tick={{ fill: textMuted }} domain={[0, 10]} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: textMuted }} />
+        <Bar dataKey="avgRating" fill={palette.teal} radius={6} />
+      </BarChart>
+    </ChartContainer>
   );
-}
+});
 
 interface StatusesChartProps {
   data: { status: string; count: number }[];
 }
 
-export function StatusesChart({ data }: StatusesChartProps) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="card p-4">
-        <h3 className="text-lg font-semibold text-text mb-4">Статусы просмотра</h3>
-        <div className="text-textMuted text-center py-8">Нет данных</div>
-      </div>
-    );
-  }
-
-  const chartData = {
-    labels: data.map((d) => d.status),
-    datasets: [
-      {
-        data: data.map((d) => d.count),
-        backgroundColor: [
-          chartColors.purple,
-          chartColors.pink,
-          chartColors.orange,
-          chartColors.purpleLight,
-          chartColors.pinkLight,
-        ],
-        borderColor: chartColors.border,
-        borderWidth: 1,
-      },
-    ],
-  };
-
+export const StatusesChart = memo(({ data }: StatusesChartProps) => {
+  if (!data || data.length === 0) return <ChartEmptyFallback title="Статусы просмотра" />;
+  const colors = [palette.purple, palette.orange, palette.blue, palette.teal, palette.yellow];
   return (
-    <div className="card p-4">
-      <h3 className="text-lg font-semibold text-text mb-4">Статусы просмотра</h3>
-      <div style={{ height: '300px' }}>
-        <Doughnut data={chartData} options={chartOptions} />
-      </div>
-    </div>
+    <ChartContainer title="Статусы просмотра">
+      <PieChart>
+        <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: textMuted }} />
+        <Legend formatter={(value) => <span style={{ color: textColor }}>{value}</span>} />
+        <Pie data={data} dataKey="count" nameKey="status" innerRadius={50} outerRadius={85} paddingAngle={3}>
+          {data.map((entry, index) => (
+            <Cell key={index} fill={colors[index % colors.length]} />
+          ))}
+        </Pie>
+      </PieChart>
+    </ChartContainer>
   );
-}
+});
 
 interface DirectorsChartProps {
   data: { director: string; count: number }[];
 }
 
-export function DirectorsChart({ data }: DirectorsChartProps) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="card p-4">
-        <h3 className="text-lg font-semibold text-text mb-4">Топ режиссеров</h3>
-        <div className="text-textMuted text-center py-8">Нет данных</div>
-      </div>
-    );
-  }
+export const DirectorsChart = memo(({ data }: DirectorsChartProps) => {
+  if (!data || data.length === 0) return <ChartEmptyFallback title="Топ режиссеров" />;
+  return (
+    <ChartContainer title="Топ режиссеров">
+      <BarChart data={data} margin={{ left: 4 }}>
+        <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+        <XAxis dataKey="director" stroke={textMuted} tick={{ fill: textMuted }} interval={0} angle={-25} textAnchor="end" height={70} />
+        <YAxis stroke={textMuted} tick={{ fill: textMuted }} allowDecimals={false} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: textMuted }} />
+        <Bar dataKey="count" fill={palette.blue} radius={6} />
+      </BarChart>
+    </ChartContainer>
+  );
+});
 
-  const chartData = {
-    labels: data.map((d) => d.director),
-    datasets: [
-      {
-        label: 'Количество',
-        data: data.map((d) => d.count),
-        backgroundColor: chartColors.orange,
-        borderColor: chartColors.border,
-        borderWidth: 1,
-      },
-    ],
-  };
-
+function ChartEmptyFallback({ title }: { title: string }) {
   return (
     <div className="card p-4">
-      <h3 className="text-lg font-semibold text-text mb-4">Топ режиссеров</h3>
-      <div style={{ height: '300px' }}>
-        <Bar data={chartData} options={chartOptions} />
-      </div>
+      <h3 className="text-lg font-semibold text-text mb-4">{title}</h3>
+      <div className="text-textMuted text-center py-8">Нет данных</div>
     </div>
   );
 }
