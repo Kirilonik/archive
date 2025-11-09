@@ -39,4 +39,7 @@ export interface UserProfile {
   avatar_url?: string;
 }
 
+export { resolveAppConfig } from './config/app-config.js';
+export type { AppConfig } from './config/app-config.js';
+
 

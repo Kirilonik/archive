@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { resolveAppConfig } from '@media/shared';
 
 const envSchema = z
   .object({
@@ -26,6 +27,8 @@ const envSchema = z
       .default('https://kinopoiskapiunofficial.tech'),
     KINOPOISK_API_KEY: z.string().min(1, 'KINOPOISK_API_KEY is required'),
     GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required'),
+    API_BASE_URL: z.string().optional(),
+    FRONTEND_URL: z.string().optional(),
   })
   .transform((values) => ({
     ...values,
@@ -42,5 +45,11 @@ if (!parsed.success) {
   throw new Error(`Invalid environment configuration: ${message}`);
 }
 
-export const env = parsed.data;
+const appConfig = resolveAppConfig(process.env);
+
+export const env = {
+  ...parsed.data,
+  API_BASE_URL: appConfig.apiBaseUrl,
+  FRONTEND_URL: appConfig.frontendUrl,
+};
 

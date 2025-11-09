@@ -44,6 +44,8 @@ npm run test
 ```
 PORT=4000
 NODE_ENV=development
+API_BASE_URL=http://localhost:4000
+FRONTEND_URL=http://localhost:5173
 
 PGHOST=localhost
 PGPORT=5432
@@ -56,11 +58,9 @@ JWT_REFRESH_SECRET=dev-refresh-secret-change-me
 
 KINOPOISK_API_URL=https://kinopoiskapiunofficial.tech
 KINOPOISK_API_KEY=<ваш_ключ>
-
-VITE_API_TARGET=http://localhost:4000
 ```
 
-В Docker Compose переменная `VITE_API_TARGET` уже указывает на `http://server:4000`, поэтому прокси клиента работает внутри сети контейнеров.
+В Docker Compose переменные `API_BASE_URL` и `FRONTEND_URL` прокидываются автоматически (`http://server:4000` и `http://localhost:5173` соответственно), поэтому клиент и сервер используют единый конфиг.
 
 ## Перед релизом
 

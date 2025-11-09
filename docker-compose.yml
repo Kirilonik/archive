@@ -29,6 +29,8 @@ services:
       REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-30}
       KINOPOISK_API_KEY: ${KINOPOISK_API_KEY:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      API_BASE_URL: ${API_BASE_URL}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
     depends_on:
       - postgres
     ports:
@@ -39,7 +41,8 @@ services:
       context: .
       dockerfile: ./client/Dockerfile
     environment:
-      VITE_API_TARGET: http://server:4000
+      API_BASE_URL: http://server:4000
+      FRONTEND_URL: http://localhost:5173
     ports:
       - "5173:5173"
     depends_on:

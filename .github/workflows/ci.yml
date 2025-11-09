@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - master
   pull_request:
 
 concurrency:
@@ -11,9 +12,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality:
+  build-and-test:
     runs-on: ubuntu-latest
-
+    services:
+      postgres:
+        image: postgres:16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: media_archive_test
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      NODE_ENV: test
+      PORT: 4000
+      API_BASE_URL: http://localhost:4000
+      FRONTEND_URL: http://localhost:5173
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: media_archive_test
+      JWT_SECRET: test-access-secret
+      JWT_REFRESH_SECRET: test-refresh-secret
+      ACCESS_TOKEN_TTL_MINUTES: 15
+      REFRESH_TOKEN_TTL_DAYS: 30
+      KINOPOISK_API_KEY: test-key
+      GOOGLE_CLIENT_ID: test-client-id.apps.googleusercontent.com
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,43 +55,6 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Run tests
-        run: npm run test
-
-      - name: Build server
-        run: npm -w server run build
-
-      - name: Build client
-        run: npm -w client run build
-
-name: CI
-
-on:
-  push:
-    branches:
-      - main
-      - master
-  pull_request:
-
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install dependencies
         run: npm ci
 
       - name: Lint
@@ -71,4 +64,16 @@ jobs:
         env:
           NODE_OPTIONS: --experimental-vm-modules
         run: npm run test
+
+      - name: Build shared package
+        run: npm -w shared run build
+
+      - name: Build server
+        run: npm -w server run build
+
+      - name: Run database migrations
+        run: node server/dist/db/migrate.js
+
+      - name: Build client
+        run: npm -w client run build
 

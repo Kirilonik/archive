@@ -72,6 +72,8 @@ docker compose up --build
 ```
 PORT=4000
 NODE_ENV=development
+API_BASE_URL=http://localhost:4000
+FRONTEND_URL=http://localhost:5173
 
 PGHOST=localhost
 PGPORT=5432
@@ -86,8 +88,7 @@ REFRESH_TOKEN_TTL_DAYS=30
 
 KINOPOISK_API_URL=https://kinopoiskapiunofficial.tech
 KINOPOISK_API_KEY=<ваш_ключ>
-
-VITE_API_TARGET=http://localhost:4000
+GOOGLE_CLIENT_ID=<ваш_client_id>
 ```
 
 В Docker Compose часть значений подставляется автоматически (см. `docker-compose.yml` и `DEPLOY.md`).
@@ -112,6 +113,9 @@ GitHub Actions (`.github/workflows/ci.yml`) выполняет:
 1. `npm ci`
 2. `npm run lint`
 3. `npm run test`
+4. `npm -w server run build`
+5. `node server/dist/db/migrate.js` (прогон миграций на свежей БД)
+6. `npm -w client run build`
 
 Перед релизом дополнительно проверьте чек-листы и выполните smoke-тесты API (см. ниже).
 

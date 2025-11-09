@@ -30,7 +30,7 @@ const textColor = '#f3f4f6';
 const textMuted = '#9ca3af';
 const gridColor = '#1f2937';
 
-function ChartContainer({ title, children }: { title: string; children: React.ReactNode }) {
+function ChartContainer({ title, children }: { title: string; children: React.ReactElement }) {
   return (
     <div className="card p-4">
       <h3 className="text-lg font-semibold text-text mb-4">{title}</h3>
@@ -225,6 +225,15 @@ export const DirectorsChart = memo(({ data }: DirectorsChartProps) => {
     </ChartContainer>
   );
 });
+
+GenresChart.displayName = 'GenresChart';
+YearsChart.displayName = 'YearsChart';
+RatingsChart.displayName = 'RatingsChart';
+FilmsVsSeriesChart.displayName = 'FilmsVsSeriesChart';
+MonthlyChart.displayName = 'MonthlyChart';
+AvgRatingByGenreChart.displayName = 'AvgRatingByGenreChart';
+StatusesChart.displayName = 'StatusesChart';
+DirectorsChart.displayName = 'DirectorsChart';
 
 function ChartEmptyFallback({ title }: { title: string }) {
   return (

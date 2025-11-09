@@ -60,9 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   const login = useCallback(async ({ email, password }: LoginPayload) => {
-    const resp = await fetch('/api/auth/login', {
+    const resp = await apiFetch('/api/auth/login', {
       method: 'POST',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
@@ -77,9 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loginWithGoogle = useCallback(async (credential: string) => {
-    const resp = await fetch('/api/auth/google', {
+    const resp = await apiFetch('/api/auth/google', {
       method: 'POST',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ credential }),
     });
@@ -94,9 +92,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const register = useCallback(async ({ name, email, password }: RegisterPayload) => {
-    const resp = await fetch('/api/auth/register', {
+    const resp = await apiFetch('/api/auth/register', {
       method: 'POST',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password }),
     });
@@ -111,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    await apiFetch('/api/auth/logout', { method: 'POST' });
     setUser(null);
   }, []);
 

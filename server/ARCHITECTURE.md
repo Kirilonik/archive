@@ -62,7 +62,7 @@ server/src/
 ## Инфраструктура и миграции
 
 - Подключение к PostgreSQL и `runMigrations` находятся в `config/db.ts` и `db/migrate.ts`; миграции защищены advisory-lock'ом.
-- Docker Compose прокидывает необходимые переменные (`JWT_SECRET`, `VITE_API_TARGET` и т.п.) в сервисы `server` и `client`.
+- Docker Compose прокидывает необходимые переменные (`JWT_SECRET`, `API_BASE_URL` и т.п.) в сервисы `server` и `client`.
 - Скрипты тестов и сборки запускаются в GitHub Actions workflow `.github/workflows/ci.yml`.
 
 ## Следующие шаги

@@ -1,6 +1,32 @@
+const API_BASE_URL = typeof __API_BASE_URL__ !== 'undefined' ? __API_BASE_URL__ : '';
+
+function resolveRequestInput(input: RequestInfo | URL): RequestInfo | URL {
+  if (typeof input === 'string') {
+    if (API_BASE_URL && input.startsWith('/')) {
+      return `${API_BASE_URL}${input}`;
+    }
+    return input;
+  }
+
+  if (typeof URL !== 'undefined' && input instanceof URL) {
+    if (
+      API_BASE_URL &&
+      typeof window !== 'undefined' &&
+      input.origin === window.location.origin &&
+      input.pathname.startsWith('/')
+    ) {
+      return new URL(input.pathname + input.search + input.hash, API_BASE_URL).toString();
+    }
+    return input;
+  }
+
+  return input;
+}
+
 export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const resolvedInput = resolveRequestInput(input);
   const doFetch = () =>
-    fetch(input, {
+    fetch(resolvedInput, {
       ...init,
       credentials: 'include',
       headers: init?.headers instanceof Headers ? init.headers : new Headers(init?.headers),
@@ -9,7 +35,7 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Pr
   let response = await doFetch();
 
   if (response.status === 401) {
-    const refreshResponse = await fetch('/api/auth/refresh', {
+    const refreshResponse = await fetch(resolveRequestInput('/api/auth/refresh'), {
       method: 'POST',
       credentials: 'include',
     });

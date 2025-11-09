@@ -84,63 +84,60 @@ export function ConceptArtCarousel({ items }: ConceptArtCarouselProps) {
   const modal =
     viewerOpen && items[activeIndex]
       ? createPortal(
-          <div
-            className="fixed inset-0 z-[1000] flex flex-col bg-black/50 backdrop-blur-lg"
-            role="dialog"
-            aria-modal="true"
-            onClick={closeViewer}
-          >
-            <div className="flex items-center justify-between px-6 py-4 text-white">
-              <div className="text-sm text-white/70">
-                Изображение {activeIndex + 1} из {items.length}
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center">
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/50 backdrop-blur-lg"
+              aria-label="Закрыть просмотр"
+              onClick={closeViewer}
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              className="relative z-[1001] flex w-full max-w-5xl flex-col overflow-hidden rounded-soft border border-white/10 bg-black/70 shadow-2xl"
+            >
+              <div className="flex items-center justify-between px-6 py-4 text-white">
+                <div className="text-sm text-white/70">
+                  Изображение {activeIndex + 1} из {items.length}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="rounded-full bg-white/10 px-3 py-1 text-sm text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
+                    onClick={showPrev}
+                  >
+                    Назад
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-full bg-white/10 px-3 py-1 text-sm text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
+                    onClick={showNext}
+                  >
+                    Далее
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
+                    onClick={closeViewer}
+                    aria-label="Закрыть просмотр"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+                      <path
+                        fillRule="evenodd"
+                        d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 0 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="rounded-full bg-white/10 px-3 py-1 text-sm text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    showPrev();
-                  }}
-                >
-                  Назад
-                </button>
-                <button
-                  type="button"
-                  className="rounded-full bg-white/10 px-3 py-1 text-sm text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    showNext();
-                  }}
-                >
-                  Далее
-                </button>
-                <button
-                  type="button"
-                  className="rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    closeViewer();
-                  }}
-                  aria-label="Закрыть просмотр"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-                    <path
-                      fillRule="evenodd"
-                      d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 0 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
+              <div className="flex flex-1 items-center justify-center px-4 pb-6">
+                <img
+                  src={items[activeIndex].imageUrl}
+                  alt="Концепт-арт"
+                  className="max-h-[85vh] max-w-[95vw] object-contain"
+                />
               </div>
-            </div>
-            <div className="flex flex-1 items-center justify-center px-4 pb-6">
-              <img
-                src={items[activeIndex].imageUrl}
-                alt="Концепт-арт"
-                className="max-h-[85vh] max-w-[95vw] object-contain"
-                onClick={(event) => event.stopPropagation()}
-              />
             </div>
           </div>,
           document.body,
