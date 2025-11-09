@@ -1,17 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../lib/api';
-import {
-  GenresChart,
-  YearsChart,
-  RatingsChart,
-  FilmsVsSeriesChart,
-  MonthlyChart,
-  AvgRatingByGenreChart,
-  StatusesChart,
-  DirectorsChart,
-} from '../components/StatsCharts';
+
+const ProfileCharts = lazy(() => import('../components/ProfileCharts'));
 
 export function Profile() {
   const [data, setData] = useState<any | null>(null);
@@ -203,7 +195,7 @@ export function Profile() {
                     <div className="text-sm text-textMuted mt-1">С мнением</div>
                   </div>
                   <div className="card p-4 text-center">
-                <div className="text-3xl font-semibold text-text">
+                    <div className="text-3xl font-semibold text-text">
                       {formatMinutes(data.stats?.filmsDurationMinutes)}
                     </div>
                     <div className="text-sm text-textMuted mt-1">Хронометраж</div>
@@ -234,7 +226,7 @@ export function Profile() {
                     <div className="text-3xl font-semibold text-text">{data.stats?.totalEpisodes ?? 0}</div>
                     <div className="text-sm text-textMuted mt-1">Эпизоды</div>
                   </div>
-                  <div className="card p-4 text-center">
+                  <div className="card п-4 text-center">
                     <div className="text-3xl font-semibold text-text">
                       {formatMinutes(data.stats?.seriesDurationMinutes)}
                     </div>
@@ -248,31 +240,9 @@ export function Profile() {
             {statsLoading ? (
               <StatsSkeleton />
             ) : detailedStats ? (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <GenresChart data={detailedStats.genres || []} />
-                  <YearsChart data={detailedStats.years || []} />
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <RatingsChart data={detailedStats.ratings || []} />
-                  <FilmsVsSeriesChart films={detailedStats.filmsVsSeries?.films ?? 0} series={detailedStats.filmsVsSeries?.series ?? 0} />
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <MonthlyChart data={detailedStats.monthly || []} />
-                  <AvgRatingByGenreChart data={detailedStats.avgRatingByGenre || []} />
-                </div>
-                {detailedStats.statuses && detailedStats.statuses.length > 0 && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <StatusesChart data={detailedStats.statuses} />
-                    {detailedStats.directors && detailedStats.directors.length > 0 && (
-                      <DirectorsChart data={detailedStats.directors} />
-                    )}
-                  </div>
-                )}
-                {detailedStats.directors && detailedStats.directors.length > 0 && (!detailedStats.statuses || detailedStats.statuses.length === 0) && (
-                  <DirectorsChart data={detailedStats.directors} />
-                )}
-              </div>
+              <Suspense fallback={<StatsSkeleton />}>
+                <ProfileCharts stats={detailedStats} />
+              </Suspense>
             ) : (
               <div className="card p-6 text-center text-textMuted">
                 {statsError ?? 'Недостаточно данных для отображения статистики.'}

@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-import { randomUUID } from 'crypto';
 import type {
   AuthRepository,
   PasswordHasher,
@@ -9,24 +8,6 @@ import type {
 } from '../../domain/auth/auth.types.js';
 import { env } from '../../config/env.js';
 import type { OAuth2Client } from 'google-auth-library';
-
-interface YandexTokenResponse {
-  access_token: string;
-  expires_in: number;
-  refresh_token?: string;
-  token_type: string;
-}
-
-interface YandexUserInfo {
-  id?: string;
-  default_email?: string;
-  emails?: string[];
-  display_name?: string;
-  real_name?: string;
-  first_name?: string;
-  last_name?: string;
-  default_avatar_id?: string;
-}
 
 export class AuthService {
   constructor(
