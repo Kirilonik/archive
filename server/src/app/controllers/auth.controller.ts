@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import { z } from 'zod';
 import { AuthService } from '../../application/auth/auth.service.js';
 import { env } from '../../config/env.js';
@@ -82,6 +83,79 @@ export class AuthController {
         return res.status(400).json({ error: error.message });
       }
       next(error);
+    }
+  };
+
+  loginWithGoogle = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const schema = z.object({
+        credential: z.string().min(10),
+      });
+      const { credential } = schema.parse(req.body);
+      const result = await this.authService.loginWithGoogle(credential);
+      setRefreshCookie(res, result.tokens.refreshToken);
+      setAccessCookie(res, result.tokens.accessToken);
+      res.json({ user: toApiUser(result.user) });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.message });
+      }
+      if ((error as any)?.status === 401) {
+        return res.status(401).json({ error: 'Не удалось подтвердить Google аккаунт' });
+      }
+      next(error);
+    }
+  };
+
+  yandexStart = (req: Request, res: Response) => {
+    const state = crypto.randomBytes(16).toString('hex');
+    res.cookie('ya_oauth_state', state, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: env.NODE_ENV === 'production',
+      path: '/api/auth/yandex',
+      maxAge: 10 * 60 * 1000,
+    });
+
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: env.YANDEX_CLIENT_ID,
+      redirect_uri: env.YANDEX_REDIRECT_URI,
+      state,
+      scope: 'login:email login:info',
+    });
+
+    res.redirect(`https://oauth.yandex.ru/authorize?${params.toString()}`);
+  };
+
+  yandexCallback = async (req: Request, res: Response) => {
+    const { code, state, error } = req.query;
+    const expectedState = (req.cookies?.ya_oauth_state ?? (req as any).cookies?.ya_oauth_state) as string | undefined;
+    if (expectedState) {
+      res.clearCookie('ya_oauth_state', { path: '/api/auth/yandex' });
+    }
+
+    const redirectUrl = new URL(env.FRONTEND_URL ?? 'http://localhost:5173');
+
+    if (error) {
+      redirectUrl.searchParams.set('auth_error', String(error));
+      return res.redirect(redirectUrl.toString());
+    }
+
+    if (!code || typeof code !== 'string' || !state || state !== expectedState) {
+      redirectUrl.searchParams.set('auth_error', 'invalid_state');
+      return res.redirect(redirectUrl.toString());
+    }
+
+    try {
+      const result = await this.authService.loginWithYandex(code);
+      setRefreshCookie(res, result.tokens.refreshToken);
+      setAccessCookie(res, result.tokens.accessToken);
+      redirectUrl.searchParams.set('auth_success', 'yandex');
+      return res.redirect(redirectUrl.toString());
+    } catch (err: any) {
+      redirectUrl.searchParams.set('auth_error', err?.message ?? 'yandex_failed');
+      return res.redirect(redirectUrl.toString());
     }
   };
 

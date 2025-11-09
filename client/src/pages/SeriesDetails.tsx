@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { MarkdownEditor } from '../components/MarkdownEditor';
-import { apiFetch } from '../lib/api';
+import { apiFetch, apiJson } from '../lib/api';
+import { ConceptArtCarousel, ConceptArtItem } from '../components/ConceptArtCarousel';
 
 export function SeriesDetails() {
   const { id } = useParams();
@@ -21,6 +22,12 @@ export function SeriesDetails() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [conceptArtItems, setConceptArtItems] = useState<ConceptArtItem[]>([]);
+  const [conceptLoading, setConceptLoading] = useState(false);
+  const [conceptError, setConceptError] = useState<string | null>(null);
+  const [posterItems, setPosterItems] = useState<ConceptArtItem[]>([]);
+  const [posterLoading, setPosterLoading] = useState(false);
+  const [posterError, setPosterError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -64,6 +71,90 @@ export function SeriesDetails() {
     }
 
     loadSeasons();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) {
+      setConceptArtItems([]);
+      setConceptLoading(false);
+      setConceptError(null);
+      return;
+    }
+    let cancelled = false;
+
+    async function loadConceptArt() {
+      setConceptLoading(true);
+      setConceptError(null);
+      try {
+        const payload = await apiJson<{ items?: ConceptArtItem[] | any[] }>(`/api/series/${id}/concept-art`);
+        if (cancelled) return;
+        const items: ConceptArtItem[] = Array.isArray(payload?.items)
+          ? payload.items
+              .filter((item: any) => typeof item?.previewUrl === 'string' && typeof item?.imageUrl === 'string')
+              .map((item: any) => ({
+                previewUrl: item.previewUrl,
+                imageUrl: item.imageUrl,
+              }))
+          : [];
+        setConceptArtItems(items);
+      } catch {
+        if (!cancelled) {
+          setConceptArtItems([]);
+          setConceptError('Не удалось загрузить концепт-арты');
+        }
+      } finally {
+        if (!cancelled) {
+          setConceptLoading(false);
+        }
+      }
+    }
+
+    loadConceptArt();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) {
+      setPosterItems([]);
+      setPosterLoading(false);
+      setPosterError(null);
+      return;
+    }
+    let cancelled = false;
+
+    async function loadPosters() {
+      setPosterLoading(true);
+      setPosterError(null);
+      try {
+        const payload = await apiJson<{ items?: ConceptArtItem[] | any[] }>(`/api/series/${id}/posters`);
+        if (cancelled) return;
+        const items: ConceptArtItem[] = Array.isArray(payload?.items)
+          ? payload.items
+              .filter((item: any) => typeof item?.previewUrl === 'string' && typeof item?.imageUrl === 'string')
+              .map((item: any) => ({
+                previewUrl: item.previewUrl,
+                imageUrl: item.imageUrl,
+              }))
+          : [];
+        setPosterItems(items);
+      } catch {
+        if (!cancelled) {
+          setPosterItems([]);
+          setPosterError('Не удалось загрузить постеры');
+        }
+      } finally {
+        if (!cancelled) {
+          setPosterLoading(false);
+        }
+      }
+    }
+
+    loadPosters();
     return () => {
       cancelled = true;
     };
@@ -457,28 +548,63 @@ export function SeriesDetails() {
         )}
       </div>
 
+      <div className="card mt-6">
+        <div className="flex items-center justify-between">
+          <div className="text-xl font-semibold text-text">Концепт-арты</div>
+          {conceptLoading && <div className="text-sm text-textMuted">Загрузка…</div>}
+        </div>
+        {!conceptLoading && conceptError ? (
+          <div className="mt-3 text-sm text-red-300">{conceptError}</div>
+        ) : null}
+        {!conceptLoading && !conceptError && conceptArtItems.length === 0 ? (
+          <div className="mt-3 text-sm text-textMuted">Нет доступных концепт-артов.</div>
+        ) : null}
+        {conceptArtItems.length > 0 ? (
+          <div className="mt-4">
+            <ConceptArtCarousel items={conceptArtItems} />
+          </div>
+        ) : null}
+      </div>
+
+      <div className="card mt-6">
+        <div className="flex items-center justify-between">
+          <div className="text-xl font-semibold text-text">Постеры</div>
+          {posterLoading && <div className="text-sm text-textMuted">Загрузка…</div>}
+        </div>
+        {!posterLoading && posterError ? (
+          <div className="mt-3 text-sm text-red-300">{posterError}</div>
+        ) : null}
+        {!posterLoading && !posterError && posterItems.length === 0 ? (
+          <div className="mt-3 text-sm text-textMuted">Нет доступных постеров.</div>
+        ) : null}
+        {posterItems.length > 0 ? (
+          <div className="mt-4">
+            <ConceptArtCarousel items={posterItems} />
+          </div>
+        ) : null}
+      </div>
+
       <div className="mt-6">
         <h2 className="text-xl font-semibold text-text mb-4">Сезоны и эпизоды</h2>
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="flex gap-2 overflow-x-auto overflow-y-visible pb-2 pt-1">
           {seasons.map((s) => (
-            <div key={s.id} className="flex flex-col gap-2">
+            <div key={s.id} className="flex flex-col items-center gap-2">
               <button
                 onClick={() => setActiveSeason(s.id)}
-                className={`soft-button px-3 py-1 whitespace-nowrap ${activeSeason === s.id ? 'bg-primary/30 shadow-[0_0_20px_rgba(0,191,255,0.4)] border-primary/60' : ''}`}
+                className={`soft-button px-3 py-1 whitespace-nowrap ${
+                  activeSeason === s.id ? 'bg-primary/25 border-primary/60' : ''
+                }`}
+                style={{ boxShadow: 'none' }}
               >
                 Сезон {s.number}
               </button>
-              <button
-                onClick={() => markSeasonWatched(s.id, !s.watched)}
-                className={`text-xs px-2 py-1 rounded-lg border transition-colors ${
-                  s.watched 
-                    ? 'bg-green-500/20 border-green-500/50 text-green-300' 
-                    : 'bg-white/5 border-white/10 text-textMuted hover:bg-white/10'
-                }`}
+              <input
+                type="checkbox"
+                checked={Boolean(s.watched)}
+                onChange={(event) => markSeasonWatched(s.id, event.target.checked)}
+                className="peer size-6 cursor-pointer appearance-none rounded-full border border-white/25 bg-white/10 transition-all duration-200 hover:border-white/50 checked:bg-emerald-400/80 checked:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
                 title={s.watched ? 'Снять отметку' : 'Отметить как просмотренный'}
-              >
-                {s.watched ? '✓ Просмотрен' : 'Не просмотрен'}
-              </button>
+              />
             </div>
           ))}
         </div>
@@ -497,16 +623,13 @@ export function SeriesDetails() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <span className="font-medium text-text">Серия {e.number}</span>
-                          <button
-                            onClick={() => markEpisodeWatched(e.id, !e.watched)}
-                            className={`text-xs px-2 py-1 rounded-lg border transition-colors ${
-                              e.watched 
-                                ? 'bg-green-500/20 border-green-500/50 text-green-300' 
-                                : 'bg-white/5 border-white/10 text-textMuted hover:bg-white/10'
-                            }`}
-                          >
-                            {e.watched ? '✓ Просмотрен' : 'Не просмотрен'}
-                          </button>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(e.watched)}
+                            onChange={(event) => markEpisodeWatched(e.id, event.target.checked)}
+                            className="peer size-6 cursor-pointer appearance-none rounded-full border border-white/25 bg-white/10 transition-all duration-200 hover:border-white/50 checked:bg-emerald-400/80 checked:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
+                            title={e.watched ? 'Снять отметку' : 'Отметить как просмотренный'}
+                          />
                         </div>
                         {e.title && (
                           <div className="text-text font-medium mb-2">{e.title}</div>

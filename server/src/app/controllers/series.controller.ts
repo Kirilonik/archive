@@ -57,6 +57,28 @@ export class SeriesController {
     }
   };
 
+  getConceptArt = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as any).user?.id as number | undefined;
+      const payload = await this.seriesService.getSeriesConceptArt(Number(req.params.id), userId);
+      if (!payload) return res.status(404).json({ error: 'Not found' });
+      res.json(payload);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getPosters = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = (req as any).user?.id as number | undefined;
+      const payload = await this.seriesService.getSeriesPosters(Number(req.params.id), userId);
+      if (!payload) return res.status(404).json({ error: 'Not found' });
+      res.json(payload);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = (req as any).user?.id as number | undefined;

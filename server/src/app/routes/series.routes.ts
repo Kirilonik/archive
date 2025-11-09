@@ -6,6 +6,8 @@ import { authMiddleware } from '../../middlewares/auth.js';
 export function createSeriesRouter(controller: SeriesController) {
   const router = Router();
   router.get('/', authMiddleware, controller.list);
+  router.get('/:id/concept-art', authMiddleware, controller.getConceptArt);
+  router.get('/:id/posters', authMiddleware, controller.getPosters);
   router.get('/:id', authMiddleware, controller.get);
   router.post('/', authMiddleware, controller.create);
   router.put('/:id', authMiddleware, controller.update);

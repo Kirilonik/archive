@@ -1,5 +1,14 @@
 import { pool } from '../../../config/db.js';
-import type { AuthRepository, AuthUser, AuthUserWithPassword, RegisterUserInput } from '../../../domain/auth/auth.types.js';
+import type {
+  AttachGoogleAccountInput,
+  AuthRepository,
+  AuthUser,
+  AuthUserWithPassword,
+  CreateGoogleUserInput,
+  CreateYandexUserInput,
+  AttachYandexAccountInput,
+  RegisterUserInput,
+} from '../../../domain/auth/auth.types.js';
 
 function mapRow(row: any): AuthUser {
   return {
@@ -7,6 +16,9 @@ function mapRow(row: any): AuthUser {
     email: row.email,
     name: row.name,
     avatarUrl: row.avatar_url,
+    authProvider: row.auth_provider ?? 'local',
+    googleId: row.google_id ?? null,
+    yandexId: row.yandex_id ?? null,
   };
 }
 
@@ -20,17 +32,87 @@ function mapRowWithPassword(row: any): AuthUserWithPassword {
 export class AuthPgRepository implements AuthRepository {
   async findByEmail(email: string): Promise<AuthUserWithPassword | null> {
     const { rows } = await pool.query(
-      'SELECT id, email, name, avatar_url, password_hash FROM users WHERE lower(email)=lower($1)',
+      'SELECT id, email, name, avatar_url, password_hash, auth_provider, google_id, yandex_id FROM users WHERE lower(email)=lower($1)',
       [email],
     );
     if (!rows[0]) return null;
     return mapRowWithPassword(rows[0]);
   }
 
+  async findByGoogleId(googleId: string): Promise<AuthUser | null> {
+    const { rows } = await pool.query(
+      'SELECT id, email, name, avatar_url, auth_provider, google_id, yandex_id FROM users WHERE google_id = $1',
+      [googleId],
+    );
+    if (!rows[0]) return null;
+    return mapRow(rows[0]);
+  }
+
+  async findByYandexId(yandexId: string): Promise<AuthUser | null> {
+    const { rows } = await pool.query(
+      'SELECT id, email, name, avatar_url, auth_provider, google_id, yandex_id FROM users WHERE yandex_id = $1',
+      [yandexId],
+    );
+    if (!rows[0]) return null;
+    return mapRow(rows[0]);
+  }
+
   async createUser(input: RegisterUserInput): Promise<AuthUser> {
     const { rows } = await pool.query(
-      'INSERT INTO users (name, email, password_hash) VALUES ($1,$2,$3) RETURNING id, name, email, avatar_url',
+      `INSERT INTO users (name, email, password_hash, auth_provider)
+       VALUES ($1,$2,$3,'local')
+       RETURNING id, name, email, avatar_url, auth_provider, google_id, yandex_id`,
       [input.name, input.email, input.passwordHash],
+    );
+    return mapRow(rows[0]);
+  }
+
+  async createUserFromGoogle(input: CreateGoogleUserInput): Promise<AuthUser> {
+    const { rows } = await pool.query(
+      `INSERT INTO users (name, email, avatar_url, google_id, auth_provider)
+       VALUES ($1,$2,$3,$4,'google')
+       RETURNING id, name, email, avatar_url, auth_provider, google_id, yandex_id`,
+      [input.name, input.email, input.avatarUrl, input.googleId],
+    );
+    return mapRow(rows[0]);
+  }
+
+  async attachGoogleAccount(input: AttachGoogleAccountInput): Promise<AuthUser> {
+    const { rows } = await pool.query(
+      `UPDATE users
+         SET google_id = $2,
+             auth_provider = 'google',
+             name = COALESCE(name, $3),
+             email = COALESCE(email, $4, email),
+             avatar_url = COALESCE($5, avatar_url)
+       WHERE id = $1
+       RETURNING id, name, email, avatar_url, auth_provider, google_id, yandex_id`,
+      [input.userId, input.googleId, input.name, input.email, input.avatarUrl],
+    );
+    return mapRow(rows[0]);
+  }
+
+  async createUserFromYandex(input: CreateYandexUserInput): Promise<AuthUser> {
+    const { rows } = await pool.query(
+      `INSERT INTO users (name, email, avatar_url, yandex_id, auth_provider)
+       VALUES ($1,$2,$3,$4,'yandex')
+       RETURNING id, name, email, avatar_url, auth_provider, google_id, yandex_id`,
+      [input.name, input.email, input.avatarUrl, input.yandexId],
+    );
+    return mapRow(rows[0]);
+  }
+
+  async attachYandexAccount(input: AttachYandexAccountInput): Promise<AuthUser> {
+    const { rows } = await pool.query(
+      `UPDATE users
+         SET yandex_id = $2,
+             auth_provider = 'yandex',
+             name = COALESCE(name, $3),
+             email = COALESCE(email, $4, email),
+             avatar_url = COALESCE($5, avatar_url)
+       WHERE id = $1
+       RETURNING id, name, email, avatar_url, auth_provider, google_id, yandex_id`,
+      [input.userId, input.yandexId, input.name, input.email, input.avatarUrl],
     );
     return mapRow(rows[0]);
   }

@@ -19,6 +19,7 @@ type AuthContextValue = {
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -75,6 +76,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     toast.success('Вход выполнен успешно!');
   }, []);
 
+  const loginWithGoogle = useCallback(async (credential: string) => {
+    const resp = await fetch('/api/auth/google', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential }),
+    });
+    if (!resp.ok) {
+      const data = await readJsonSafely(resp);
+      const message = data?.error ?? 'Не удалось войти через Google';
+      throw new Error(message);
+    }
+    const data = await resp.json();
+    setUser(data.user ?? null);
+    toast.success('Вход через Google выполнен!');
+  }, []);
+
   const register = useCallback(async ({ name, email, password }: RegisterPayload) => {
     const resp = await fetch('/api/auth/register', {
       method: 'POST',
@@ -105,8 +123,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       logout,
       refresh,
+      loginWithGoogle,
     }),
-    [user, loading, login, register, logout, refresh],
+    [user, loading, login, register, logout, refresh, loginWithGoogle],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

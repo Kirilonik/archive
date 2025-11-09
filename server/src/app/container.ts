@@ -1,3 +1,4 @@
+import { OAuth2Client } from 'google-auth-library';
 import { UsersPgRepository } from '../infrastructure/database/repositories/users.pg.repository.js';
 import { SharpAvatarProcessor } from '../infrastructure/media/sharp-avatar-processor.js';
 import { UserService } from '../application/users/user.service.js';
@@ -21,6 +22,7 @@ import { EpisodeService } from '../application/episodes/episode.service.js';
 import { EpisodesController } from './controllers/episodes.controller.js';
 import { StatsPgRepository } from '../infrastructure/database/repositories/stats.pg.repository.js';
 import { StatsService } from '../application/stats/stats.service.js';
+import { env } from '../config/env.js';
 
 const usersRepository = new UsersPgRepository();
 const avatarProcessor = new SharpAvatarProcessor();
@@ -31,7 +33,8 @@ const usersController = new UsersController(userService, statsService);
 
 const authRepository = new AuthPgRepository();
 const passwordHasher = new BcryptPasswordHasher();
-const authService = new AuthService(authRepository, passwordHasher);
+const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
+const authService = new AuthService(authRepository, passwordHasher, googleClient);
 const authController = new AuthController(authService, (userId) => userService.getUserById(userId));
 
 const kinopoiskClient = new KinopoiskHttpClient();

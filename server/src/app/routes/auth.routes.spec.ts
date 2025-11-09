@@ -14,6 +14,9 @@ const user: AuthUser = {
   email: 'user@example.com',
   name: 'Tester',
   avatarUrl: null,
+  authProvider: 'local',
+  googleId: null,
+  yandexId: null,
 };
 
 function buildApp(authOverrides: Partial<AuthService>, userOverrides: Partial<UserService>) {

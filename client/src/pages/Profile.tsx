@@ -28,6 +28,7 @@ export function Profile() {
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
+    const userId = user.id;
 
     async function load() {
       setProfileLoading(true);
@@ -35,8 +36,8 @@ export function Profile() {
       setStatsError(null);
       try {
         const [profileResp, statsResp] = await Promise.all([
-          apiFetch(`/api/users/${user.id}`),
-          apiFetch(`/api/users/${user.id}/stats/detailed`),
+          apiFetch(`/api/users/${userId}`),
+          apiFetch(`/api/users/${userId}/stats/detailed`),
         ]);
 
         if (!profileResp.ok) throw new Error();
@@ -118,15 +119,8 @@ export function Profile() {
 
   function formatMinutes(total?: number | null): string {
     if (!total || total <= 0) return '—';
-    const hours = Math.floor(total / 60);
-    const minutes = total % 60;
-    if (hours > 0 && minutes > 0) {
-      return `${hours} ч ${minutes} мин`;
-    }
-    if (hours > 0) {
-      return `${hours} ч`;
-    }
-    return `${minutes} мин`;
+    const hours = Math.round(total / 60);
+    return `${hours} ч`;
   }
 
   return (
@@ -163,74 +157,90 @@ export function Profile() {
               </div>
               <div className="flex-1 min-w-0">
                 <label className="block text-sm text-textMuted mb-1">Имя</label>
-                <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2">
+                  <input className="input sm:flex-1" value={name} onChange={(e) => setName(e.target.value)} />
+                  <div className="flex gap-2 sm:justify-end">
+                    <button
+                      className="btn px-3 py-1"
+                      onClick={() => {
+                        setName(data.profile?.name ?? '');
+                        setAvatarUrl(data.profile?.avatar_url ?? null);
+                      }}
+                    >
+                      Отменить
+                    </button>
+                    <button className="btn btn-primary px-3 py-1" disabled={saving} onClick={saveProfile}>
+                      Сохранить
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-2 text-sm text-textMuted">
+                  <div className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-1 text-text">
+                    <span>Email:</span>
+                    <span>{user?.email ?? '—'}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-
-            <div className="flex justify-end gap-2 mt-4">
-              <button className="btn px-3 py-1" onClick={() => {
-                setName(data.profile?.name ?? '');
-                setAvatarUrl(data.profile?.avatar_url ?? null);
-              }}>Отменить</button>
-              <button className="btn btn-primary px-3 py-1" disabled={saving} onClick={saveProfile}>Сохранить</button>
             </div>
           </div>
 
           {/* Статистика */}
           <div className="space-y-6">
-            {/* Основные метрики */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
-              <div className="card p-4 text-center">
-                <div className="text-3xl font-semibold text-text">{data.stats?.films ?? 0}</div>
-                <div className="text-sm text-textMuted mt-1">Фильмы</div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="card p-4 space-y-4">
+                <div className="text-lg font-semibold text-text">Фильмы</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div className="card p-4 text-center">
+                    <div className="text-3xl font-semibold text-text">{data.stats?.films ?? 0}</div>
+                    <div className="text-sm text-textMuted mt-1">Фильмы</div>
+                  </div>
+                  <div className="card p-4 text-center">
+                    <div className="text-3xl font-semibold text-text">{data.stats?.filmsWithRating ?? 0}</div>
+                    <div className="text-sm text-textMuted mt-1">С оценкой</div>
+                  </div>
+                  <div className="card p-4 text-center">
+                    <div className="text-3xl font-semibold text-text">{data.stats?.filmsWithOpinion ?? 0}</div>
+                    <div className="text-sm text-textMuted mt-1">С мнением</div>
+                  </div>
+                  <div className="card p-4 text-center">
+                <div className="text-3xl font-semibold text-text">
+                      {formatMinutes(data.stats?.filmsDurationMinutes)}
+                    </div>
+                    <div className="text-sm text-textMuted mt-1">Хронометраж</div>
+                  </div>
+                </div>
               </div>
-              <div className="card p-4 text-center">
-                <div className="text-3xl font-semibold text-text">{data.stats?.series ?? 0}</div>
-                <div className="text-sm text-textMuted mt-1">Сериалы</div>
-              </div>
-              <div className="card p-4 text-center">
-                <div className="text-3xl font-semibold text-text">{data.stats?.avgRating ?? '—'}</div>
-                <div className="text-sm text-textMuted mt-1">Средняя оценка</div>
-              </div>
-              <div className="card p-4 text-center">
-                <div className="text-3xl font-semibold text-text">{data.stats?.watchedEpisodes ?? 0}</div>
-                <div className="text-sm text-textMuted mt-1">Просмотрено эпизодов</div>
-              </div>
-              <div className="card p-4 text-center">
-                <div className="text-3xl font-semibold text-text">{data.stats?.totalSeasons ?? 0}</div>
-                <div className="text-sm text-textMuted mt-1">Всего сезонов</div>
-              </div>
-            <div className="card p-4 text-center">
-              <div className="text-3xl font-semibold text-text">
-                {formatMinutes(data.stats?.filmsDurationMinutes)}
-              </div>
-              <div className="text-sm text-textMuted mt-1">Хронометраж фильмов</div>
-            </div>
-            <div className="card p-4 text-center">
-              <div className="text-3xl font-semibold text-text">
-                {formatMinutes(data.stats?.seriesDurationMinutes)}
-              </div>
-              <div className="text-sm text-textMuted mt-1">Хронометраж сериалов</div>
-            </div>
-            </div>
 
-            {/* Дополнительные метрики */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="card p-4 text-center">
-                <div className="text-2xl font-semibold text-text">{data.stats?.totalEpisodes ?? 0}</div>
-                <div className="text-sm text-textMuted mt-1">Всего эпизодов</div>
-              </div>
-              <div className="card p-4 text-center">
-                <div className="text-2xl font-semibold text-text">{data.stats?.filmsWithRating ?? 0}</div>
-                <div className="text-sm text-textMuted mt-1">Фильмов с оценкой</div>
-              </div>
-              <div className="card p-4 text-center">
-                <div className="text-2xl font-semibold text-text">{data.stats?.seriesWithRating ?? 0}</div>
-                <div className="text-sm text-textMuted mt-1">Сериалов с оценкой</div>
-              </div>
-              <div className="card p-4 text-center">
-                <div className="text-2xl font-semibold text-text">{(data.stats?.filmsWithOpinion ?? 0) + (data.stats?.seriesWithOpinion ?? 0)}</div>
-                <div className="text-sm text-textMuted mt-1">С мнением</div>
+              <div className="card p-4 space-y-4">
+                <div className="text-lg font-semibold text-text">Сериалы</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div className="card p-4 text-center">
+                    <div className="text-3xl font-semibold text-text">{data.stats?.series ?? 0}</div>
+                    <div className="text-sm text-textMuted mt-1">Сериалы</div>
+                  </div>
+                  <div className="card p-4 text-center">
+                    <div className="text-3xl font-semibold text-text">{data.stats?.seriesWithRating ?? 0}</div>
+                    <div className="text-sm text-textMuted mt-1">С оценкой</div>
+                  </div>
+                  <div className="card p-4 text-center">
+                    <div className="text-3xl font-semibold text-text">{data.stats?.seriesWithOpinion ?? 0}</div>
+                    <div className="text-sm text-textMuted mt-1">С мнением</div>
+                  </div>
+                  <div className="card p-4 text-center">
+                    <div className="text-3xl font-semibold text-text">{data.stats?.totalSeasons ?? 0}</div>
+                    <div className="text-sm text-textMuted mt-1">Сезоны</div>
+                  </div>
+                  <div className="card p-4 text-center">
+                    <div className="text-3xl font-semibold text-text">{data.stats?.totalEpisodes ?? 0}</div>
+                    <div className="text-sm text-textMuted mt-1">Эпизоды</div>
+                  </div>
+                  <div className="card p-4 text-center">
+                    <div className="text-3xl font-semibold text-text">
+                      {formatMinutes(data.stats?.seriesDurationMinutes)}
+                    </div>
+                    <div className="text-sm text-textMuted mt-1">Хронометраж</div>
+                  </div>
+                </div>
               </div>
             </div>
 

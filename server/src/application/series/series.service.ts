@@ -84,6 +84,14 @@ export class SeriesService {
     return mapRowToResponse(row, userId);
   }
 
+  async getSeriesConceptArt(userSeriesId: number, userId?: number) {
+    return this.getSeriesImagesByType(userSeriesId, userId, 'CONCEPT');
+  }
+
+  async getSeriesPosters(userSeriesId: number, userId?: number) {
+    return this.getSeriesImagesByType(userSeriesId, userId, 'POSTER');
+  }
+
   private async loadKpDataForCreate(input: SeriesCreateDto): Promise<KpEnriched> {
     if (input.kp_id) {
       return this.kinopoiskClient.fetchFilmDetails(input.kp_id);
@@ -204,6 +212,27 @@ export class SeriesService {
   async deleteSeries(userSeriesId: number, userId?: number) {
     if (!userId) return;
     await this.repository.deleteUserSeries(userSeriesId, userId);
+  }
+
+  private async getSeriesImagesByType(userSeriesId: number, userId: number | undefined, type: string) {
+    if (!userId) return null;
+    const row = await this.repository.getUserSeries(userSeriesId, userId);
+    if (!row) return null;
+    if (!row.kp_id) {
+      return { items: [] };
+    }
+    const response = await this.kinopoiskClient.fetchFilmImages(row.kp_id, type, 1);
+    const items =
+      response?.items
+        ?.filter(
+          (item): item is { imageUrl: string; previewUrl: string } =>
+            typeof item?.imageUrl === 'string' && typeof item?.previewUrl === 'string',
+        )
+        .map((item) => ({
+          imageUrl: item.imageUrl,
+          previewUrl: item.previewUrl,
+        })) ?? [];
+    return { items };
   }
 }
 
