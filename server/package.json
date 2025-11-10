@@ -11,6 +11,7 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
+    "@media/shared": "file:../shared",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
