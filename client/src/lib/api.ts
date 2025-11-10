@@ -1,4 +1,31 @@
-const API_BASE_URL = typeof __API_BASE_URL__ !== 'undefined' ? __API_BASE_URL__ : '';
+const rawApiBaseUrl = typeof __API_BASE_URL__ !== 'undefined' ? __API_BASE_URL__ : '';
+
+function resolveBrowserApiBaseUrl(): string {
+  if (typeof window === 'undefined' || !rawApiBaseUrl) {
+    return rawApiBaseUrl;
+  }
+
+  try {
+    const url = new URL(rawApiBaseUrl);
+    const hostname = url.hostname.toLowerCase();
+    const isResolvableHostname =
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '0.0.0.0' ||
+      hostname.includes('.') ||
+      /^[\d:]+$/.test(hostname);
+
+    if (isResolvableHostname) {
+      return url.toString();
+    }
+
+    return window.location.origin;
+  } catch {
+    return rawApiBaseUrl;
+  }
+}
+
+const API_BASE_URL = resolveBrowserApiBaseUrl();
 
 function resolveRequestInput(input: RequestInfo | URL): RequestInfo | URL {
   if (typeof input === 'string') {
