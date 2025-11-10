@@ -23,8 +23,8 @@ services:
       PGUSER: ${PGUSER:-postgres}
       PGPASSWORD: ${PGPASSWORD:-postgres}
       PGDATABASE: ${PGDATABASE:-media_archive}
-      JWT_SECRET: ${JWT_SECRET:-dev-access-secret-change-me}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-change-me}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       ACCESS_TOKEN_TTL_MINUTES: ${ACCESS_TOKEN_TTL_MINUTES:-15}
       REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-30}
       KINOPOISK_API_KEY: ${KINOPOISK_API_KEY:-}

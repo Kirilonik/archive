@@ -27,6 +27,44 @@ function resolveBrowserApiBaseUrl(): string {
 
 const API_BASE_URL = resolveBrowserApiBaseUrl();
 
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE']);
+
+function getCsrfTokenFromDocument(): string | null {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+  const match = document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith('csrf_token='));
+  if (!match) {
+    return null;
+  }
+  try {
+    return decodeURIComponent(match.split('=').slice(1).join('='));
+  } catch {
+    return null;
+  }
+}
+
+function createHeaders(init?: RequestInit): Headers {
+  if (init?.headers instanceof Headers) {
+    return new Headers(init.headers);
+  }
+  return new Headers(init?.headers ?? undefined);
+}
+
+function attachCsrfHeader(headers: Headers, method: string): Headers {
+  if (SAFE_METHODS.has(method) || headers.has('x-csrf-token')) {
+    return headers;
+  }
+  const token = getCsrfTokenFromDocument();
+  if (token) {
+    headers.set('x-csrf-token', token);
+  }
+  return headers;
+}
+
 function resolveRequestInput(input: RequestInfo | URL): RequestInfo | URL {
   if (typeof input === 'string') {
     if (API_BASE_URL && input.startsWith('/')) {
@@ -52,11 +90,13 @@ function resolveRequestInput(input: RequestInfo | URL): RequestInfo | URL {
 
 export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const resolvedInput = resolveRequestInput(input);
+  const method = init?.method ? init.method.toUpperCase() : 'GET';
+  const headers = attachCsrfHeader(createHeaders(init), method);
   const doFetch = () =>
     fetch(resolvedInput, {
       ...init,
       credentials: 'include',
-      headers: init?.headers instanceof Headers ? init.headers : new Headers(init?.headers),
+      headers,
     });
 
   let response = await doFetch();

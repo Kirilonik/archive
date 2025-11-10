@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import { resolveAppConfig } from '@media/shared';
 
+function parseCorsOrigins(value: string | undefined): string[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
 const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -29,6 +37,9 @@ const envSchema = z
     GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required'),
     API_BASE_URL: z.string().optional(),
     FRONTEND_URL: z.string().optional(),
+    CORS_ALLOWED_ORIGINS: z.string().optional(),
+    SWAGGER_USER: z.string().optional(),
+    SWAGGER_PASSWORD: z.string().optional(),
   })
   .transform((values) => ({
     ...values,
@@ -46,10 +57,24 @@ if (!parsed.success) {
 }
 
 const appConfig = resolveAppConfig(process.env);
+const corsOriginsRaw = parseCorsOrigins(parsed.data.CORS_ALLOWED_ORIGINS);
+const corsOrigins = corsOriginsRaw.map((origin) => {
+  try {
+    return new URL(origin).toString().replace(/\/+$/, '');
+  } catch {
+    throw new Error(`CORS_ALLOWED_ORIGINS must contain valid URLs (received "${origin}")`);
+  }
+});
+
+const allowedOrigins = [appConfig.frontendUrl, ...corsOrigins].filter(
+  (origin, index, array) => array.indexOf(origin) === index,
+);
 
 export const env = {
   ...parsed.data,
   API_BASE_URL: appConfig.apiBaseUrl,
   FRONTEND_URL: appConfig.frontendUrl,
+  corsOrigins,
+  allowedOrigins,
 };
 
