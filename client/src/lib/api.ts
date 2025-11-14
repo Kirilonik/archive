@@ -67,6 +67,10 @@ function attachCsrfHeader(headers: Headers, method: string): Headers {
 
 function resolveRequestInput(input: RequestInfo | URL): RequestInfo | URL {
   if (typeof input === 'string') {
+    // Если API_BASE_URL пустой (dev режим с Vite proxy), используем относительные пути
+    if (!API_BASE_URL && input.startsWith('/')) {
+      return input;
+    }
     if (API_BASE_URL && input.startsWith('/')) {
       return `${API_BASE_URL}${input}`;
     }
@@ -125,7 +129,17 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Pr
   try {
     let response = await doFetch();
 
-    if (response.status === 401) {
+    // Не пытаемся обновлять токен для auth эндпоинтов, чтобы избежать бесконечных циклов
+    const urlString = typeof resolvedInput === 'string' 
+      ? resolvedInput 
+      : resolvedInput instanceof URL 
+        ? resolvedInput.pathname 
+        : '';
+    const isAuthEndpoint = urlString.includes('/api/auth/me') || 
+                          urlString.includes('/api/auth/refresh') ||
+                          urlString.includes('/api/auth/logout');
+
+    if (response.status === 401 && !isAuthEndpoint) {
       const refreshResponse = await fetch(resolveRequestInput('/api/auth/refresh'), {
         method: 'POST',
         credentials: 'include',

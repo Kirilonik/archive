@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${PGUSER:-postgres}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-postgres}
+      POSTGRES_DB: ${PGDATABASE:-media_archive}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./server/src/db/migrations:/docker-entrypoint-initdb.d:ro
+
+  server:
+    build:
+      context: .
+      dockerfile: ./server/Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      PORT: ${PORT:-4000}
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${PGUSER:-postgres}
+      PGPASSWORD: ${PGPASSWORD:-postgres}
+      PGDATABASE: ${PGDATABASE:-media_archive}
+      JWT_SECRET: ${JWT_SECRET:-dev-access-secret-change-me}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-change-me}
+      ACCESS_TOKEN_TTL_MINUTES: ${ACCESS_TOKEN_TTL_MINUTES:-15}
+      REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-30}
+      KINOPOISK_API_KEY: ${KINOPOISK_API_KEY:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      API_BASE_URL: ${API_BASE_URL}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    depends_on:
+      - postgres
+    ports:
+      - "4000:4000"
+    volumes:
+      # Монтируем исходный код для hot reload
+      - ./server/src:/work/server/src
+      - ./shared/src:/work/shared/src
+      - ./tsconfig.base.json:/work/tsconfig.base.json
+      - ./server/tsconfig.json:/work/server/tsconfig.json
+      - ./shared/tsconfig.json:/work/shared/tsconfig.json
+      # Исключаем node_modules и dist из монтирования
+      - /work/server/node_modules
+      - /work/shared/node_modules
+      - /work/server/dist
+
+  client:
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
+    environment:
+      # Не устанавливаем API_BASE_URL в dev - используем Vite proxy
+      # API_BASE_URL: 
+      DOCKER_ENV: 'true'
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+    links:
+      - server
+    volumes:
+      # Монтируем исходный код для hot reload Vite
+      - ./client/src:/work/client/src
+      - ./client/public:/work/client/public
+      - ./client/index.html:/work/client/index.html
+      - ./client/vite.config.ts:/work/client/vite.config.ts
+      - ./client/tailwind.config.js:/work/client/tailwind.config.js
+      - ./client/postcss.config.js:/work/client/postcss.config.js
+      - ./client/tsconfig.json:/work/client/tsconfig.json
+      - ./shared/src:/work/shared/src
+      - ./tsconfig.base.json:/work/tsconfig.base.json
+      # Исключаем node_modules из монтирования
+      - /work/client/node_modules
+
+volumes:
+  pgdata:
+

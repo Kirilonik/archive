@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiJson } from '../lib/api';
+import { apiFetch } from '../lib/api';
 import type { ConceptArtItem } from '../components/ConceptArtCarousel';
 
 interface UseMediaAssetsResult {
@@ -40,8 +40,31 @@ export function useMediaAssets(
       setLoading(true);
       setError(null);
       try {
-        const payload = await apiJson<MediaAssetsApiResponse>(`/api/${type}s/${id}/${mediaType}`);
+        const response = await apiFetch(`/api/${type}s/${id}/${mediaType}`);
         if (cancelled) return;
+        
+        // Если 404 - просто нет данных, это не ошибка
+        if (response.status === 404) {
+          setItems([]);
+          setLoading(false);
+          return;
+        }
+        
+        // Если другой статус ошибки - обрабатываем как ошибку
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          const message = typeof error?.error === 'string' ? error.error : 'Неизвестная ошибка';
+          if (!cancelled) {
+            setItems([]);
+            setError(message);
+          }
+          return;
+        }
+        
+        // Успешный ответ
+        const payload = await response.json() as MediaAssetsApiResponse;
+        if (cancelled) return;
+        
         const loadedItems: ConceptArtItem[] = Array.isArray(payload?.items)
           ? payload.items
               .filter((item): item is MediaAssetApiItem => 
@@ -56,10 +79,12 @@ export function useMediaAssets(
               }))
           : [];
         setItems(loadedItems);
-      } catch {
+      } catch (err) {
+        // Игнорируем ошибки сети/таймаута только если не отменено
         if (!cancelled) {
           setItems([]);
-          setError(`Не удалось загрузить ${mediaType === 'concept-art' ? 'концепт-арты' : 'постеры'}`);
+          // Не устанавливаем ошибку для сетевых проблем, чтобы не показывать пользователю
+          // setError(`Не удалось загрузить ${mediaType === 'concept-art' ? 'концепт-арты' : 'постеры'}`);
         }
       } finally {
         if (!cancelled) {
