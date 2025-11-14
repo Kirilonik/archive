@@ -28,20 +28,25 @@ const envSchema = z
           // Проверяем NODE_ENV из уже распарсенных значений, а не из process.env
           // чтобы избежать проблем с порядком инициализации
           const isProd = process.env.NODE_ENV === 'production';
-          if (!isProd) return true;
+          // Для миграций (когда запускается migrate.js) разрешаем дефолтные значения
+          const isMigration = process.argv[1]?.includes('migrate.js');
+          if (!isProd || isMigration) return true;
           // В продакшене проверяем, что секрет не дефолтный
           const isDefault = val === 'dev-access-secret-change-me' || val === 'postgres';
           return !isDefault && val.length >= 32;
         },
         { message: 'JWT_SECRET must be at least 32 characters long in production and not use default value' },
-      ),
+      )
+      .optional(),
     JWT_REFRESH_SECRET: z
       .string()
       .min(10, 'JWT_REFRESH_SECRET must be at least 10 characters long')
       .refine(
         (val) => {
           const isProd = process.env.NODE_ENV === 'production';
-          if (!isProd) return true;
+          // Для миграций разрешаем дефолтные значения
+          const isMigration = process.argv[1]?.includes('migrate.js');
+          if (!isProd || isMigration) return true;
           const isDefault = val === 'dev-refresh-secret-change-me' || val === 'postgres';
           return !isDefault && val.length >= 32;
         },
@@ -56,8 +61,8 @@ const envSchema = z
       .string()
       .url()
       .default('https://kinopoiskapiunofficial.tech'),
-    KINOPOISK_API_KEY: z.string().min(1, 'KINOPOISK_API_KEY is required'),
-    GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID is required'),
+    KINOPOISK_API_KEY: z.string().optional(),
+    GOOGLE_CLIENT_ID: z.string().optional(),
     API_BASE_URL: z.string().optional(),
     FRONTEND_URL: z.string().optional(),
     CORS_ALLOWED_ORIGINS: z.string().optional(),
@@ -93,11 +98,20 @@ const allowedOrigins = [appConfig.frontendUrl, ...corsOrigins].filter(
   (origin, index, array) => array.indexOf(origin) === index,
 );
 
+// Для миграций используем дефолтные значения, если переменные не установлены
+const isMigration = process.argv[1]?.includes('migrate.js');
+
 export const env = {
   ...parsed.data,
   API_BASE_URL: appConfig.apiBaseUrl,
   FRONTEND_URL: appConfig.frontendUrl,
   corsOrigins,
   allowedOrigins,
+  // Для миграций эти переменные могут быть не установлены
+  KINOPOISK_API_KEY: parsed.data.KINOPOISK_API_KEY || '',
+  GOOGLE_CLIENT_ID: parsed.data.GOOGLE_CLIENT_ID || '',
+  // Для миграций используем дефолтные значения JWT секретов
+  JWT_SECRET: parsed.data.JWT_SECRET || (isMigration ? 'migration-temp-secret-key-min-32-chars' : ''),
+  JWT_REFRESH_SECRET: parsed.data.JWT_REFRESH_SECRET || (isMigration ? 'migration-temp-refresh-secret-key-min-32-chars' : ''),
 };
 
