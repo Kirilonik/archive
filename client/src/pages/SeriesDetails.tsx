@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import MarkdownPreview from '@uiw/react-markdown-preview';
@@ -6,14 +6,16 @@ import { MarkdownEditor } from '../components/MarkdownEditor';
 import { apiFetch } from '../lib/api';
 import { ConceptArtCarousel } from '../components/ConceptArtCarousel';
 import { useMediaAssets } from '../hooks/useMediaAssets';
+import type { Series, Season, Episode } from '../types';
+import { formatDate, formatDuration } from '../lib/utils';
 
 export function SeriesDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [series, setSeries] = useState<any | null>(null);
-  const [seasons, setSeasons] = useState<any[]>([]);
+  const [series, setSeries] = useState<Series | null>(null);
+  const [seasons, setSeasons] = useState<Season[]>([]);
   const [activeSeason, setActiveSeason] = useState<number | null>(null);
-  const [episodes, setEpisodes] = useState<any[]>([]);
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
 
   // inline edit states
   const [ratingEditMode, setRatingEditMode] = useState(false);
@@ -35,7 +37,7 @@ export function SeriesDetails() {
       try {
         const resp = await apiFetch(`/api/series/${id}`);
         if (!resp.ok) throw new Error();
-        const payload = await resp.json();
+        const payload: Series = await resp.json();
         if (cancelled) return;
         setSeries(payload);
         setRatingDraft(payload?.my_rating != null ? String(payload.my_rating) : '');
@@ -59,7 +61,7 @@ export function SeriesDetails() {
       try {
         const resp = await apiFetch(`/api/seasons/${id}`);
         if (!resp.ok) throw new Error();
-        const items = await resp.json();
+        const items: Season[] = await resp.json();
         if (cancelled) return;
         setSeasons(items);
         if (items.length) setActiveSeason(items[0].id);
@@ -75,15 +77,13 @@ export function SeriesDetails() {
   }, [id]);
 
 
-  const episodesUrl = useMemo(() => {
-    return activeSeason ? `/api/episodes/${activeSeason}` : '';
-  }, [activeSeason]);
+  const episodesUrl = activeSeason ? `/api/episodes/${activeSeason}` : '';
 
-  async function fetchEpisodesData(url: string): Promise<any[]> {
+  async function fetchEpisodesData(url: string): Promise<Episode[]> {
     try {
       const resp = await apiFetch(url);
       if (!resp.ok) return [];
-      const payload = await resp.json();
+      const payload: Episode[] = await resp.json();
       return Array.isArray(payload) ? payload : [];
     } catch {
       return [];
@@ -97,7 +97,10 @@ export function SeriesDetails() {
   }
 
   useEffect(() => {
-    if (!episodesUrl) return;
+    if (!episodesUrl) {
+      setEpisodes([]);
+      return;
+    }
     let cancelled = false;
 
     fetchEpisodesData(episodesUrl)
@@ -185,25 +188,6 @@ export function SeriesDetails() {
     }
   }
 
-  function formatDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return '—';
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
-    } catch {
-      return dateStr;
-    }
-  }
-
-  function formatDuration(duration: number | null | undefined): string {
-    if (!duration) return '—';
-    const hours = Math.floor(duration / 60);
-    const minutes = duration % 60;
-    if (hours > 0) {
-      return `${hours} ч ${minutes} мин`;
-    }
-    return `${minutes} мин`;
-  }
 
   if (!series) return <main className="mx-auto max-w-5xl px-4 py-6 text-text">Загрузка...</main>;
 
@@ -376,7 +360,7 @@ export function SeriesDetails() {
                           if (!id) return;
                           try {
                             setSaving(true);
-                            const body: any = { my_rating: ratingDraft === '' ? null : Number(ratingDraft) };
+                            const body: { my_rating: number | null } = { my_rating: ratingDraft === '' ? null : Number(ratingDraft) };
                             const resp = await apiFetch(`/api/series/${id}`, {
                               method: 'PUT',
                               headers: { 'Content-Type': 'application/json' },
@@ -388,7 +372,7 @@ export function SeriesDetails() {
                             }
                             const fresh = await apiFetch(`/api/series/${id}`);
                             if (fresh.ok) {
-                              const payload = await fresh.json();
+                              const payload: Series = await fresh.json();
                               setSeries(payload);
                             }
                             setRatingEditMode(false);
@@ -434,7 +418,7 @@ export function SeriesDetails() {
                   if (!id) return;
                   try {
                     setSaving(true);
-                    const body: any = { opinion: opinionDraft };
+                    const body: { opinion: string } = { opinion: opinionDraft };
                     const resp = await apiFetch(`/api/series/${id}`, {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json' },
@@ -446,7 +430,7 @@ export function SeriesDetails() {
                     }
                     const fresh = await apiFetch(`/api/series/${id}`);
                     if (fresh.ok) {
-                      const payload = await fresh.json();
+                      const payload: Series = await fresh.json();
                       setSeries(payload);
                     }
                     setOpinionEditMode(false);

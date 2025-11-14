@@ -2,12 +2,14 @@ import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../lib/api';
+import type { UserProfileResponse } from '../types';
+import { formatMinutes } from '../lib/utils';
 
 const ProfileCharts = lazy(() => import('../components/ProfileCharts'));
 
 export function Profile() {
-  const [data, setData] = useState<any | null>(null);
-  const [detailedStats, setDetailedStats] = useState<any | null>(null);
+  const [data, setData] = useState<UserProfileResponse | null>(null);
+  const [detailedStats, setDetailedStats] = useState<unknown | null>(null);
   const [name, setName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -74,7 +76,7 @@ export function Profile() {
     try {
       setSaving(true);
       if (!user?.id) return;
-      const body: any = { name, avatar_url: avatarUrl ?? null };
+      const body: { name: string; avatar_url: string | null } = { name, avatar_url: avatarUrl ?? null };
       const resp = await apiFetch(`/api/users/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -109,11 +111,6 @@ export function Profile() {
     reader.readAsDataURL(file);
   }
 
-  function formatMinutes(total?: number | null): string {
-    if (!total || total <= 0) return '—';
-    const hours = Math.round(total / 60);
-    return `${hours} ч`;
-  }
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
@@ -196,7 +193,7 @@ export function Profile() {
                   </div>
                   <div className="card p-4 text-center">
                     <div className="text-3xl font-semibold text-text">
-                      {formatMinutes(data.stats?.filmsDurationMinutes)}
+                      {formatMinutes(data.stats?.filmsDurationMinutes, true) ?? '—'}
                     </div>
                     <div className="text-sm text-textMuted mt-1">Хронометраж</div>
                   </div>
@@ -228,7 +225,7 @@ export function Profile() {
                   </div>
                   <div className="card p-4 text-center">
                     <div className="text-3xl font-semibold text-text">
-                      {formatMinutes(data.stats?.seriesDurationMinutes)}
+                      {formatMinutes(data.stats?.seriesDurationMinutes, true) ?? '—'}
                     </div>
                     <div className="text-sm text-textMuted mt-1">Хронометраж</div>
                   </div>

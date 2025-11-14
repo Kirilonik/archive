@@ -7,11 +7,12 @@ import { apiFetch } from '../lib/api';
 import { ConceptArtCarousel } from '../components/ConceptArtCarousel';
 import { formatMinutes, formatBudget } from '../lib/utils';
 import { useMediaAssets } from '../hooks/useMediaAssets';
+import type { Film } from '../types';
 
 export function FilmDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [data, setData] = useState<any | null>(null);
+  const [data, setData] = useState<Film | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -34,7 +35,7 @@ export function FilmDetails() {
       try {
         const resp = await apiFetch(`/api/films/${id}`);
         if (!resp.ok) throw new Error();
-        const d = await resp.json();
+        const d: Film = await resp.json();
         if (cancelled) return;
         setData(d);
         setRatingDraft(d?.my_rating != null ? String(d.my_rating) : '');
@@ -249,7 +250,7 @@ export function FilmDetails() {
                   if (!id) return;
                   try {
                     setSaving(true);
-                    const body: any = { opinion: opinionDraft };
+                    const body: { opinion: string } = { opinion: opinionDraft };
                     const resp = await apiFetch(`/api/films/${id}`, {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json' },
@@ -261,7 +262,7 @@ export function FilmDetails() {
                     }
                     const fresh = await apiFetch(`/api/films/${id}`);
                     if (fresh.ok) {
-                      const payload = await fresh.json();
+                      const payload: Film = await fresh.json();
                       setData(payload);
                     }
                     setOpinionEditMode(false);
@@ -307,7 +308,7 @@ export function FilmDetails() {
                   if (!id) return;
                   try {
                     setSaving(true);
-                    const body: any = { my_rating: ratingDraft === '' ? null : Number(ratingDraft) };
+                    const body: { my_rating: number | null } = { my_rating: ratingDraft === '' ? null : Number(ratingDraft) };
                     const resp = await apiFetch(`/api/films/${id}`, {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json' },
@@ -319,7 +320,7 @@ export function FilmDetails() {
                     }
                     const fresh = await apiFetch(`/api/films/${id}`);
                     if (fresh.ok) {
-                      const payload = await fresh.json();
+                      const payload: Film = await fresh.json();
                       setData(payload);
                     }
                     setRatingEditMode(false);

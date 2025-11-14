@@ -2,15 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { MarkdownEditor } from '../components/MarkdownEditor';
 import { apiFetch } from '../lib/api';
+import type { SuggestItem } from '../types';
 
-type SuggestItem = {
-  id?: number;
-  title: string;
-  poster?: string | null;
-  year?: number | null;
-  isSeries?: boolean;
-  description?: string;
-};
 
 export function Add() {
   const [query, setQuery] = useState('');
@@ -176,7 +169,7 @@ export function Add() {
                 className="btn btn-primary px-3 py-1"
                 onClick={async () => {
                   try {
-                    const body: any = { title: selected.title };
+                    const body: { title: string; kp_id?: number; my_rating?: number; opinion?: string } = { title: selected.title };
                     // Передаем kp_id (ID с Кинопоиска) если он есть в выбранном элементе
                     if (selected.id) {
                       body.kp_id = selected.id;
