@@ -312,13 +312,13 @@ export function Home() {
             kind={it._kind}
             id={it.id}
             title={it.title}
-            poster_url={it.poster_url}
-            poster_url_preview={it.poster_url_preview}
+            poster_url={it.poster_url ?? undefined}
+            poster_url_preview={it.poster_url_preview ?? undefined}
             rating={it.rating}
-            rating_kinopoisk={it.rating_kinopoisk}
-            my_rating={it.my_rating}
-            status={it.status}
-            genres={it.genres}
+            rating_kinopoisk={it.rating_kinopoisk ?? undefined}
+            my_rating={it.my_rating ?? undefined}
+            status={it.status ?? undefined}
+            genres={it.genres ?? undefined}
           />
         ))}
       </div>

@@ -73,9 +73,9 @@ export function useMediaAssets(
                 typeof item.previewUrl === 'string' && 
                 typeof item.imageUrl === 'string'
               )
-              .map((item) => ({
-                previewUrl: item.previewUrl,
-                imageUrl: item.imageUrl,
+              .map((item): ConceptArtItem => ({
+                previewUrl: item.previewUrl!,
+                imageUrl: item.imageUrl!,
               }))
           : [];
         setItems(loadedItems);

@@ -51,14 +51,14 @@ const tooltipStyle = {
 };
 const tooltipItemStyle = { color: textColor };
 
-type TooltipFormatter = (value: unknown, name: string) => [unknown, string];
+type TooltipFormatter = (value: unknown, name: string) => [React.ReactNode, string];
 
-const countTooltipFormatter: TooltipFormatter = (value) => [value, 'Количество'];
+const countTooltipFormatter: TooltipFormatter = (value) => [String(value ?? ''), 'Количество'];
 const avgRatingTooltipFormatter: TooltipFormatter = (value) => {
   if (typeof value === 'number') {
     return [Number(value.toFixed(1)), 'Средняя оценка'];
   }
-  return [value, 'Средняя оценка'];
+  return [String(value ?? ''), 'Средняя оценка'];
 };
 
 interface GenresChartProps {
