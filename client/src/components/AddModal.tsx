@@ -159,7 +159,6 @@ export function AddModal({ isOpen, onClose, onSuccess }: AddModalProps) {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onFocus={() => items.length > 0 && setOpen(true)}
-                  autoFocus
                 />
                 {query && (
                   <button

@@ -79,7 +79,7 @@ export function useMediaAssets(
               }))
           : [];
         setItems(loadedItems);
-      } catch (err) {
+      } catch {
         // Игнорируем ошибки сети/таймаута только если не отменено
         if (!cancelled) {
           setItems([]);
