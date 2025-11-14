@@ -91,15 +91,15 @@ export function Profile() {
         await refresh();
       }
       toast.success('Профиль успешно сохранён');
-    } catch (e) {
+    } catch {
       toast.error('Ошибка при сохранении профиля');
     } finally {
       setSaving(false);
     }
   }
 
-  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
@@ -226,7 +226,7 @@ export function Profile() {
                     <div className="text-3xl font-semibold text-text">{data.stats?.totalEpisodes ?? 0}</div>
                     <div className="text-sm text-textMuted mt-1">Эпизоды</div>
                   </div>
-                  <div className="card п-4 text-center">
+                  <div className="card p-4 text-center">
                     <div className="text-3xl font-semibold text-text">
                       {formatMinutes(data.stats?.seriesDurationMinutes)}
                     </div>

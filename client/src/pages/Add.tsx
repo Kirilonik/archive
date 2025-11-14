@@ -198,7 +198,7 @@ export function Add() {
                     setSelected(null);
                     setMyRating('');
                     setOpinion('');
-                  } catch (err) {
+                  } catch {
                     toast.error('Ошибка при добавлении в библиотеку. Попробуйте еще раз.');
                   }
                 }}

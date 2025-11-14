@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { MarkdownEditor } from '../components/MarkdownEditor';
-import { apiFetch, apiJson } from '../lib/api';
-import { ConceptArtCarousel, ConceptArtItem } from '../components/ConceptArtCarousel';
+import { apiFetch } from '../lib/api';
+import { ConceptArtCarousel } from '../components/ConceptArtCarousel';
+import { useMediaAssets } from '../hooks/useMediaAssets';
 
 export function SeriesDetails() {
   const { id } = useParams();
@@ -22,12 +23,9 @@ export function SeriesDetails() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [conceptArtItems, setConceptArtItems] = useState<ConceptArtItem[]>([]);
-  const [conceptLoading, setConceptLoading] = useState(false);
-  const [conceptError, setConceptError] = useState<string | null>(null);
-  const [posterItems, setPosterItems] = useState<ConceptArtItem[]>([]);
-  const [posterLoading, setPosterLoading] = useState(false);
-  const [posterError, setPosterError] = useState<string | null>(null);
+
+  const { items: conceptArtItems, loading: conceptLoading, error: conceptError } = useMediaAssets(id, 'series', 'concept-art');
+  const { items: posterItems, loading: posterLoading, error: posterError } = useMediaAssets(id, 'series', 'posters');
 
   useEffect(() => {
     if (!id) return;
@@ -76,89 +74,6 @@ export function SeriesDetails() {
     };
   }, [id]);
 
-  useEffect(() => {
-    if (!id) {
-      setConceptArtItems([]);
-      setConceptLoading(false);
-      setConceptError(null);
-      return;
-    }
-    let cancelled = false;
-
-    async function loadConceptArt() {
-      setConceptLoading(true);
-      setConceptError(null);
-      try {
-        const payload = await apiJson<{ items?: ConceptArtItem[] | any[] }>(`/api/series/${id}/concept-art`);
-        if (cancelled) return;
-        const items: ConceptArtItem[] = Array.isArray(payload?.items)
-          ? payload.items
-              .filter((item: any) => typeof item?.previewUrl === 'string' && typeof item?.imageUrl === 'string')
-              .map((item: any) => ({
-                previewUrl: item.previewUrl,
-                imageUrl: item.imageUrl,
-              }))
-          : [];
-        setConceptArtItems(items);
-      } catch {
-        if (!cancelled) {
-          setConceptArtItems([]);
-          setConceptError('Не удалось загрузить концепт-арты');
-        }
-      } finally {
-        if (!cancelled) {
-          setConceptLoading(false);
-        }
-      }
-    }
-
-    loadConceptArt();
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
-
-  useEffect(() => {
-    if (!id) {
-      setPosterItems([]);
-      setPosterLoading(false);
-      setPosterError(null);
-      return;
-    }
-    let cancelled = false;
-
-    async function loadPosters() {
-      setPosterLoading(true);
-      setPosterError(null);
-      try {
-        const payload = await apiJson<{ items?: ConceptArtItem[] | any[] }>(`/api/series/${id}/posters`);
-        if (cancelled) return;
-        const items: ConceptArtItem[] = Array.isArray(payload?.items)
-          ? payload.items
-              .filter((item: any) => typeof item?.previewUrl === 'string' && typeof item?.imageUrl === 'string')
-              .map((item: any) => ({
-                previewUrl: item.previewUrl,
-                imageUrl: item.imageUrl,
-              }))
-          : [];
-        setPosterItems(items);
-      } catch {
-        if (!cancelled) {
-          setPosterItems([]);
-          setPosterError('Не удалось загрузить постеры');
-        }
-      } finally {
-        if (!cancelled) {
-          setPosterLoading(false);
-        }
-      }
-    }
-
-    loadPosters();
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
 
   const episodesUrl = useMemo(() => {
     return activeSeason ? `/api/episodes/${activeSeason}` : '';
@@ -214,7 +129,7 @@ export function SeriesDetails() {
         return;
       }
       toast.success(watched ? 'Эпизод отмечен как просмотренный' : 'Отметка просмотра снята');
-    } catch (e) {
+    } catch {
       // откатываем оптимистичное обновление
       setEpisodes((prev) => prev.map((e) => (e.id === epId ? { ...e, watched: !watched } : e)));
       toast.error('Ошибка при изменении статуса эпизода');
@@ -257,7 +172,7 @@ export function SeriesDetails() {
       toast.success(watched 
         ? 'Сезон и все эпизоды отмечены как просмотренные' 
         : 'Отметка просмотра снята со сезона и всех эпизодов');
-    } catch (e) {
+    } catch {
       // откатываем оптимистичное обновление
       setSeasons((prev) => prev.map((s) => (s.id === seasonId ? { ...s, watched: !watched } : s)));
       if (activeSeason === seasonId) {
@@ -307,7 +222,7 @@ export function SeriesDetails() {
       }
       toast.success('Сериал удален из библиотеки');
       navigate('/');
-    } catch (e) {
+    } catch {
       toast.error('Ошибка при удалении сериала');
     } finally {
       setDeleting(false);
@@ -478,7 +393,7 @@ export function SeriesDetails() {
                             }
                             setRatingEditMode(false);
                             toast.success('Оценка сохранена');
-                          } catch (e) {
+                          } catch {
                             toast.error('Ошибка при сохранении оценки');
                           } finally {
                             setSaving(false);
@@ -536,7 +451,7 @@ export function SeriesDetails() {
                     }
                     setOpinionEditMode(false);
                     toast.success('Мнение сохранено');
-                  } catch (e) {
+                  } catch {
                     toast.error('Ошибка при сохранении мнения');
                   } finally {
                     setSaving(false);

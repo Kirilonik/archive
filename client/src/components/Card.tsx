@@ -6,14 +6,13 @@ interface Props {
   title: string;
   poster_url?: string;
   poster_url_preview?: string;
-  rating?: number;
   rating_kinopoisk?: number;
   status?: string;
   genres?: string[];
   my_rating?: number;
 }
 
-export function Card({ kind, id, title, poster_url, poster_url_preview, rating, rating_kinopoisk, status, genres, my_rating }: Props) {
+export function Card({ kind, id, title, poster_url, poster_url_preview, rating_kinopoisk, status, genres, my_rating }: Props) {
   const href = kind === 'film' ? `/films/${id}` : `/series/${id}`;
   const imageSrc = poster_url_preview || poster_url;
   const kpRating = typeof rating_kinopoisk === 'number' ? Math.round(rating_kinopoisk * 10) / 10 : null;
