@@ -83,11 +83,19 @@ jobs:
       - name: Run database migrations
         run: node server/dist/db/migrate.js
         env:
+          NODE_ENV: production
           PGHOST: ${{ secrets.DEPLOY_PGHOST }}
           PGPORT: ${{ secrets.DEPLOY_PGPORT }}
           PGUSER: ${{ secrets.DEPLOY_PGUSER }}
           PGPASSWORD: ${{ secrets.DEPLOY_PGPASSWORD }}
           PGDATABASE: ${{ secrets.DEPLOY_PGDATABASE }}
-          NODE_ENV: production
+          JWT_SECRET: ${{ secrets.DEPLOY_JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.DEPLOY_JWT_REFRESH_SECRET }}
+          ACCESS_TOKEN_TTL_MINUTES: 15
+          REFRESH_TOKEN_TTL_DAYS: 30
+          KINOPOISK_API_KEY: ${{ secrets.DEPLOY_KINOPOISK_API_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.DEPLOY_GOOGLE_CLIENT_ID }}
+          API_BASE_URL: ${{ secrets.DEPLOY_API_BASE_URL }}
+          FRONTEND_URL: ${{ secrets.DEPLOY_FRONTEND_URL }}
 
 
