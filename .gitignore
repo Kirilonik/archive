@@ -14,4 +14,8 @@ secrets/
 .cursor/
 client/.env.local
 
+# Мониторинг
+prometheus-data/
+grafana-data/
+
 

@@ -10,6 +10,7 @@ import { runMigrations } from './db/migrate.js';
 import { env } from './config/env.js';
 import { pool } from './config/db.js';
 import { requestLogger } from './app/middlewares/request-logger.middleware.js';
+import { metricsMiddleware } from './middlewares/metrics.middleware.js';
 import { logger } from './shared/logger.js';
 import { csrfMiddleware } from './middlewares/csrf.js';
 import { originValidationMiddleware } from './middlewares/origin.js';
@@ -66,6 +67,7 @@ async function bootstrap() {
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
   app.use(cookieParser());
   app.use(requestLogger);
+  app.use(metricsMiddleware); // Сбор метрик для Prometheus
   app.use(csrfMiddleware);
   app.use(originValidationMiddleware);
 

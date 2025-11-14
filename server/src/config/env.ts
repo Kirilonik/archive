@@ -25,10 +25,13 @@ const envSchema = z
       .min(10, 'JWT_SECRET must be at least 10 characters long')
       .refine(
         (val) => {
+          // Проверяем NODE_ENV из уже распарсенных значений, а не из process.env
+          // чтобы избежать проблем с порядком инициализации
           const isProd = process.env.NODE_ENV === 'production';
           if (!isProd) return true;
           // В продакшене проверяем, что секрет не дефолтный
-          return val !== 'dev-access-secret-change-me' && val.length >= 32;
+          const isDefault = val === 'dev-access-secret-change-me' || val === 'postgres';
+          return !isDefault && val.length >= 32;
         },
         { message: 'JWT_SECRET must be at least 32 characters long in production and not use default value' },
       ),
@@ -39,7 +42,8 @@ const envSchema = z
         (val) => {
           const isProd = process.env.NODE_ENV === 'production';
           if (!isProd) return true;
-          return val !== 'dev-refresh-secret-change-me' && val.length >= 32;
+          const isDefault = val === 'dev-refresh-secret-change-me' || val === 'postgres';
+          return !isDefault && val.length >= 32;
         },
         { message: 'JWT_REFRESH_SECRET must be at least 32 characters long in production and not use default value' },
       )

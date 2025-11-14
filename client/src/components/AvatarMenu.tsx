@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -7,9 +7,27 @@ export function AvatarMenu() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Закрытие меню при клике вне его
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={menuRef}>
       <button
         className="w-9 h-9 rounded-full bg-white/10 border border-border flex items-center justify-center text-text overflow-hidden"
         onClick={() => setOpen((v) => !v)}
@@ -23,7 +41,7 @@ export function AvatarMenu() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-44 popover-panel">
+        <div className="absolute right-0 mt-2 w-44 avatar-menu-panel z-50">
           <div className="flex flex-col space-y-1">
             {user ? (
               <>

@@ -7,15 +7,6 @@ export interface AuthUser {
   email: string;
 }
 
-// Расширяем типы Express
-declare global {
-  namespace Express {
-    interface Request {
-      user?: AuthUser;
-    }
-  }
-}
-
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const header = req.headers['authorization'];

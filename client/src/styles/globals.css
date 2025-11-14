@@ -143,6 +143,9 @@ html, body, #root {
 
   /* Выпадающие панели */
   .popover-panel { @apply rounded-xl p-2 text-text border border-white/10; background: rgba(0,0,0,0.35); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
+  
+  /* Меню профиля - непрозрачный фон */
+  .avatar-menu-panel { @apply rounded-xl p-2 text-text border border-white/10; background: rgba(0,0,0,0.85); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
 
   /* Glass панель (для эпизодов) */
   .glass-panel {

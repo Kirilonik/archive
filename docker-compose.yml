@@ -17,14 +17,15 @@ services:
       context: .
       dockerfile: ./server/Dockerfile
     environment:
+      NODE_ENV: ${NODE_ENV:-development}
       PORT: ${PORT:-4000}
       PGHOST: postgres
       PGPORT: 5432
       PGUSER: ${PGUSER:-postgres}
       PGPASSWORD: ${PGPASSWORD:-postgres}
       PGDATABASE: ${PGDATABASE:-media_archive}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_SECRET: ${JWT_SECRET:-dev-access-secret-change-me}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-change-me}
       ACCESS_TOKEN_TTL_MINUTES: ${ACCESS_TOKEN_TTL_MINUTES:-15}
       REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-30}
       KINOPOISK_API_KEY: ${KINOPOISK_API_KEY:-}
