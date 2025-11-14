@@ -9,9 +9,10 @@ import {
   StatusesChart,
   DirectorsChart,
 } from './StatsCharts';
+import type { DetailedStats } from '../types';
 
 interface ProfileChartsProps {
-  stats: any;
+  stats: DetailedStats | null;
 }
 
 function ProfileChartsComponent({ stats }: ProfileChartsProps) {

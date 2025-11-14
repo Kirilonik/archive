@@ -8,6 +8,16 @@ interface UseMediaAssetsResult {
   error: string | null;
 }
 
+interface MediaAssetApiItem {
+  previewUrl?: string;
+  imageUrl?: string;
+  [key: string]: unknown;
+}
+
+interface MediaAssetsApiResponse {
+  items?: MediaAssetApiItem[];
+}
+
 export function useMediaAssets(
   id: string | undefined,
   type: 'film' | 'series',
@@ -30,12 +40,17 @@ export function useMediaAssets(
       setLoading(true);
       setError(null);
       try {
-        const payload = await apiJson<{ items?: ConceptArtItem[] | any[] }>(`/api/${type}s/${id}/${mediaType}`);
+        const payload = await apiJson<MediaAssetsApiResponse>(`/api/${type}s/${id}/${mediaType}`);
         if (cancelled) return;
         const loadedItems: ConceptArtItem[] = Array.isArray(payload?.items)
           ? payload.items
-              .filter((item: any) => typeof item?.previewUrl === 'string' && typeof item?.imageUrl === 'string')
-              .map((item: any) => ({
+              .filter((item): item is MediaAssetApiItem => 
+                typeof item === 'object' && 
+                item !== null && 
+                typeof item.previewUrl === 'string' && 
+                typeof item.imageUrl === 'string'
+              )
+              .map((item) => ({
                 previewUrl: item.previewUrl,
                 imageUrl: item.imageUrl,
               }))

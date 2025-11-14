@@ -114,3 +114,24 @@ export interface SuggestItem {
   description?: string;
 }
 
+export interface LibraryItem extends Film {
+  _kind: 'film';
+}
+
+export interface LibrarySeriesItem extends Series {
+  _kind: 'series';
+}
+
+export type LibraryItemUnion = LibraryItem | LibrarySeriesItem;
+
+export interface DetailedStats {
+  genres?: Array<{ genre: string; count: number }>;
+  years?: Array<{ year: number; count: number }>;
+  ratings?: Array<{ range: string; count: number }>;
+  filmsVsSeries?: { films: number; series: number };
+  monthly?: Array<{ month: string | null; count: number }>;
+  avgRatingByGenre?: Array<{ genre: string; avgRating: number; count: number }>;
+  statuses?: Array<{ status: string; count: number }>;
+  directors?: Array<{ director: string; count: number }>;
+}
+

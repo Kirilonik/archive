@@ -4,7 +4,6 @@ import { MarkdownEditor } from '../components/MarkdownEditor';
 import { apiFetch } from '../lib/api';
 import type { SuggestItem } from '../types';
 
-
 export function Add() {
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<SuggestItem[]>([]);

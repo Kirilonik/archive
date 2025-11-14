@@ -203,7 +203,6 @@ export function FilmDetails() {
       <RatingEditModal
         isOpen={ratingEditMode}
         title={data.title}
-        currentRating={data.my_rating}
         ratingDraft={ratingDraft}
         onRatingDraftChange={setRatingDraft}
         onSave={handleSaveRating}

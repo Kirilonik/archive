@@ -288,7 +288,6 @@ export function SeriesDetails() {
       <RatingEditModal
         isOpen={ratingEditMode}
         title={series.title}
-        currentRating={series.my_rating}
         ratingDraft={ratingDraft}
         onRatingDraftChange={setRatingDraft}
         onSave={handleSaveRating}

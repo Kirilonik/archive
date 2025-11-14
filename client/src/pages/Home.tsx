@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SearchBar } from '../components/SearchBar';
 import { Card } from '../components/Card';
 import { apiJson } from '../lib/api';
+import type { LibraryItemUnion } from '../types';
 
 const LOAD_STEP = 24;
 const PAGE_SIZE = 24;
@@ -26,7 +27,7 @@ function createPaginationState(): PaginationState {
 
 export function Home() {
   const [query, setQuery] = useState('');
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<LibraryItemUnion[]>([]);
   const [visibleCount, setVisibleCount] = useState(0);
   const [filmsState, setFilmsState] = useState<PaginationState>(createPaginationState);
   const [seriesState, setSeriesState] = useState<PaginationState>(createPaginationState);
@@ -97,8 +98,8 @@ export function Home() {
           const base = reset ? [] : prev;
           const combined = [
             ...base,
-            ...filmsData.items.map((f: any) => ({ ...f, _kind: 'film' })),
-            ...seriesData.items.map((s: any) => ({ ...s, _kind: 'series' })),
+            ...filmsData.items.map((f) => ({ ...f, _kind: 'film' as const })),
+            ...seriesData.items.map((s) => ({ ...s, _kind: 'series' as const })),
           ];
           nextLength = combined.length;
           return combined;

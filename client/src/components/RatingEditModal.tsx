@@ -1,7 +1,6 @@
 interface RatingEditModalProps {
   isOpen: boolean;
   title: string;
-  currentRating: number | null;
   ratingDraft: string;
   onRatingDraftChange: (value: string) => void;
   onSave: () => Promise<void>;
@@ -12,7 +11,6 @@ interface RatingEditModalProps {
 export function RatingEditModal({
   isOpen,
   title,
-  currentRating,
   ratingDraft,
   onRatingDraftChange,
   onSave,
