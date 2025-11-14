@@ -1,5 +1,7 @@
 version: '3.9'
 
+name: media-archive-monitoring
+
 services:
   prometheus:
     image: prom/prometheus:latest

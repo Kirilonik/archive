@@ -8,6 +8,7 @@ import type {
 } from '../../domain/auth/auth.types.js';
 import { env } from '../../config/env.js';
 import type { OAuth2Client } from 'google-auth-library';
+import { logger } from '../../shared/logger.js';
 
 export class AuthService {
   constructor(
@@ -69,22 +70,42 @@ export class AuthService {
   }
 
   verifyRefreshToken(token: string): { id: number; email: string; iat: number; exp: number } {
-    return jwt.verify(token, env.JWT_REFRESH_SECRET) as { id: number; email: string; iat: number; exp: number };
+    try {
+      // Согласно best practices: проверка токена с обработкой различных типов ошибок
+      return jwt.verify(token, env.JWT_REFRESH_SECRET) as { id: number; email: string; iat: number; exp: number };
+    } catch (error: any) {
+      // Логируем ошибки верификации для мониторинга отзыва токенов
+      if (error?.name === 'TokenExpiredError') {
+        logger.debug({ exp: error.expiredAt }, 'Refresh token expired');
+      } else if (error?.name === 'JsonWebTokenError') {
+        logger.warn({ error: error.message }, 'Invalid refresh token format');
+      }
+      throw error;
+    }
   }
 
   rotateTokens(user: Pick<AuthUser, 'id' | 'email'>): TokenPair {
+    // Согласно best practices: ротация токенов при каждом обновлении
+    // Это обеспечивает безопасность и позволяет отзывать старые токены
     return this.buildTokens(user);
   }
 
   async loginWithGoogle(idToken: string): Promise<{ user: AuthUser; tokens: TokenPair }> {
     let payload: Record<string, any> | undefined;
     try {
+      // Согласно best practices: верификация токена с указанием audience
       const ticket = await this.googleClient.verifyIdToken({
         idToken,
         audience: env.GOOGLE_CLIENT_ID,
       });
       payload = ticket.getPayload();
-    } catch (err) {
+    } catch (err: any) {
+      // Согласно best practices: логирование ошибок верификации для мониторинга
+      logger.warn({ 
+        error: err?.message, 
+        code: err?.code,
+        type: 'google_id_token_verification_error' 
+      }, 'Google ID token verification failed');
       const error: any = new Error('Не удалось проверить Google токен');
       error.status = 401;
       error.cause = err;
@@ -92,6 +113,7 @@ export class AuthService {
     }
 
     if (!payload?.sub) {
+      logger.warn({ payload: payload ? 'present but missing sub' : 'missing' }, 'Invalid Google token payload');
       const error: any = new Error('Некорректный ответ Google');
       error.status = 401;
       throw error;

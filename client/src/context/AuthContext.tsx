@@ -40,12 +40,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const resp = await apiFetch('/api/auth/me');
       if (!resp.ok) {
+        // Не показываем ошибку для 401/403 - это нормально, если пользователь не авторизован
+        if (resp.status !== 401 && resp.status !== 403) {
+          console.error('Ошибка при проверке авторизации:', resp.status, resp.statusText);
+        }
         setUser(null);
         return;
       }
       const data = await resp.json();
       setUser(data.user ?? null);
-    } catch {
+    } catch (error) {
+      // Не показываем ошибку в консоли для обычных ошибок сети
+      if (error instanceof Error && !error.message.includes('Превышено время ожидания')) {
+        console.error('Ошибка при проверке авторизации:', error);
+      }
       setUser(null);
     } finally {
       setLoading(false);
@@ -67,7 +75,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     if (!resp.ok) {
       const data = await readJsonSafely(resp);
-      const message = data?.error ?? 'Ошибка входа';
+      let message = data?.error ?? 'Ошибка входа';
+      if (resp.status === 500) {
+        message = 'Ошибка сервера. Проверьте, что сервер запущен и доступен.';
+      } else if (resp.status >= 500) {
+        message = 'Временная ошибка сервера. Попробуйте позже.';
+      }
       throw new Error(message);
     }
     const data = await resp.json();
@@ -83,7 +96,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     if (!resp.ok) {
       const data = await readJsonSafely(resp);
-      const message = data?.error ?? 'Не удалось войти через Google';
+      let message = data?.error ?? 'Не удалось войти через Google';
+      if (resp.status === 500) {
+        message = 'Ошибка сервера. Проверьте, что сервер запущен и доступен.';
+      } else if (resp.status >= 500) {
+        message = 'Временная ошибка сервера. Попробуйте позже.';
+      }
       throw new Error(message);
     }
     const data = await resp.json();

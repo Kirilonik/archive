@@ -2,24 +2,36 @@ import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { AuthService } from '../../application/auth/auth.service.js';
 import { env } from '../../config/env.js';
+import { logger } from '../../shared/logger.js';
 
+/**
+ * Устанавливает refresh token в безопасную httpOnly cookie
+ * Согласно best practices Google OAuth 2.0:
+ * - httpOnly: предотвращает доступ JavaScript к токену (защита от XSS)
+ * - secure: только HTTPS в production (защита от перехвата)
+ * - sameSite: защита от CSRF атак
+ */
 function setRefreshCookie(res: Response, token: string) {
   const isProd = env.NODE_ENV === 'production';
   res.cookie('refresh_token', token, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
+    httpOnly: true, // Согласно best practices: токены не должны быть доступны через JavaScript
+    secure: isProd, // Согласно best practices: только HTTPS в production
+    sameSite: 'lax', // Защита от CSRF
     path: '/api/auth',
     maxAge: env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,
   });
 }
 
+/**
+ * Устанавливает access token в безопасную httpOnly cookie
+ * Согласно best practices Google OAuth 2.0
+ */
 function setAccessCookie(res: Response, token: string) {
   const isProd = env.NODE_ENV === 'production';
   res.cookie('access_token', token, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'lax',
+    httpOnly: true, // Согласно best practices: токены не должны быть доступны через JavaScript
+    secure: isProd, // Согласно best practices: только HTTPS в production
+    sameSite: 'lax', // Защита от CSRF
     path: '/',
     maxAge: env.ACCESS_TOKEN_TTL_MINUTES * 60 * 1000,
   });
@@ -95,34 +107,66 @@ export class AuthController {
       setRefreshCookie(res, result.tokens.refreshToken);
       setAccessCookie(res, result.tokens.accessToken);
       res.json({ user: toApiUser(result.user) });
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.message });
       }
-      if ((error as any)?.status === 401) {
+      if (error?.status === 401) {
+        // Согласно best practices: логируем ошибки верификации Google токенов для мониторинга
+        logger.warn({ 
+          error: error.message, 
+          cause: error.cause?.message,
+          type: 'google_token_verification_failed' 
+        }, 'Google token verification failed');
         return res.status(401).json({ error: 'Не удалось подтвердить Google аккаунт' });
       }
+      // Логируем неожиданные ошибки
+      logger.error({ error: error?.message, stack: error?.stack }, 'Unexpected error in Google login');
       next(error);
     }
   };
 
   refresh = async (req: Request, res: Response) => {
     const token = (req as any).cookies?.refresh_token || req.cookies?.refresh_token;
-    if (!token) return res.status(401).json({ error: 'No refresh' });
+    if (!token) {
+      // Согласно best practices: токен не найден - пользователь должен войти заново
+      return res.status(401).json({ error: 'Refresh token not found' });
+    }
     try {
       const payload = this.authService.verifyRefreshToken(token);
       const user = await this.getProfileById(payload.id);
-      if (!user) return res.status(401).json({ error: 'Invalid refresh' });
+      if (!user) {
+        // Пользователь удален или токен недействителен - очищаем cookies
+        const isProd = env.NODE_ENV === 'production';
+        res.clearCookie('refresh_token', { path: '/api/auth', httpOnly: true, secure: isProd, sameSite: 'lax' });
+        res.clearCookie('access_token', { path: '/', httpOnly: true, secure: isProd, sameSite: 'lax' });
+        return res.status(401).json({ error: 'User not found or token invalid' });
+      }
+      // Согласно best practices: ротация токенов при каждом обновлении
       const tokens = this.authService.rotateTokens(user);
       setRefreshCookie(res, tokens.refreshToken);
       setAccessCookie(res, tokens.accessToken);
       res.json({ ok: true });
-    } catch {
-      res.status(401).json({ error: 'Invalid refresh' });
+    } catch (error: any) {
+      // Обработка истечения или отзыва токена
+      const isProd = env.NODE_ENV === 'production';
+      res.clearCookie('refresh_token', { path: '/api/auth', httpOnly: true, secure: isProd, sameSite: 'lax' });
+      res.clearCookie('access_token', { path: '/', httpOnly: true, secure: isProd, sameSite: 'lax' });
+      
+      // Различаем типы ошибок согласно best practices
+      if (error?.name === 'TokenExpiredError') {
+        return res.status(401).json({ error: 'Refresh token expired' });
+      }
+      if (error?.name === 'JsonWebTokenError') {
+        return res.status(401).json({ error: 'Invalid refresh token' });
+      }
+      return res.status(401).json({ error: 'Token verification failed' });
     }
   };
 
   logout = async (req: Request, res: Response) => {
+    // Согласно best practices: при выходе полностью удаляем токены из cookies
+    // Это обеспечивает безопасность и предотвращает повторное использование токенов
     const isProd = env.NODE_ENV === 'production';
     res.clearCookie('refresh_token', { path: '/api/auth', httpOnly: true, secure: isProd, sameSite: 'lax' });
     res.clearCookie('access_token', { path: '/', httpOnly: true, secure: isProd, sameSite: 'lax' });

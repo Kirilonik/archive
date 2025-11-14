@@ -287,8 +287,8 @@ export function SeriesDetails() {
             <div className="mt-2 text-textMuted space-y-2">
               <div className="flex flex-wrap gap-3 items-center">
                 {series.year && <span>Год: {series.year}</span>}
-                {series.kp_seasonsCount && <span>Сезонов: {series.kp_seasonsCount}</span>}
-                {series.kp_episodesCount && <span>Эпизодов: {series.kp_episodesCount}</span>}
+                {series.kp_seasons_count && <span>Сезонов: {series.kp_seasons_count}</span>}
+                {series.kp_episodes_count && <span>Эпизодов: {series.kp_episodes_count}</span>}
               </div>
               {series.director && (
                 <div>
@@ -403,6 +403,13 @@ export function SeriesDetails() {
         <div className="flex gap-2 overflow-x-auto overflow-y-visible pb-2 pt-1">
           {seasons.map((s) => (
             <div key={s.id} className="flex flex-col items-center gap-2">
+              <input
+                type="checkbox"
+                checked={Boolean(s.watched)}
+                onChange={(event) => markSeasonWatched(s.id, event.target.checked)}
+                className="peer size-6 cursor-pointer appearance-none rounded-full border-2 border-white/70 bg-white/30 transition-all duration-200 hover:border-white/90 hover:bg-white/40 checked:bg-emerald-400/90 checked:border-emerald-300 checked:shadow-lg checked:shadow-emerald-400/50 focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
+                title={s.watched ? 'Снять отметку' : 'Отметить как просмотренный'}
+              />
               <button
                 onClick={() => setActiveSeason(s.id)}
                 className={`soft-button px-3 py-1 whitespace-nowrap ${
@@ -412,13 +419,6 @@ export function SeriesDetails() {
               >
                 Сезон {s.number}
               </button>
-              <input
-                type="checkbox"
-                checked={Boolean(s.watched)}
-                onChange={(event) => markSeasonWatched(s.id, event.target.checked)}
-                className="peer size-6 cursor-pointer appearance-none rounded-full border border-white/25 bg-white/10 transition-all duration-200 hover:border-white/50 checked:bg-emerald-400/80 checked:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
-                title={s.watched ? 'Снять отметку' : 'Отметить как просмотренный'}
-              />
             </div>
           ))}
         </div>
@@ -441,7 +441,7 @@ export function SeriesDetails() {
                             type="checkbox"
                             checked={Boolean(e.watched)}
                             onChange={(event) => markEpisodeWatched(e.id, event.target.checked)}
-                            className="peer size-6 cursor-pointer appearance-none rounded-full border border-white/25 bg-white/10 transition-all duration-200 hover:border-white/50 checked:bg-emerald-400/80 checked:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
+                            className="peer size-6 cursor-pointer appearance-none rounded-full border-2 border-white/50 bg-white/20 transition-all duration-200 hover:border-white/70 hover:bg-white/30 checked:bg-emerald-400/80 checked:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
                             title={e.watched ? 'Снять отметку' : 'Отметить как просмотренный'}
                           />
                         </div>

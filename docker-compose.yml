@@ -1,4 +1,7 @@
 version: '3.9'
+
+name: media-archive
+
 services:
   postgres:
     image: postgres:16

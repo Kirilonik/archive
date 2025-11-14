@@ -42,7 +42,7 @@ html, body, #root {
     pointer-events: none;
     opacity: .02;
     mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nNScgaGVpZ2h0PSc1JyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPjZmaWx0ZXJzPjxmZUZsdW5rIEkgPSAnbi'ZmUnR1cmJ1bGVuY2UnIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nLjgnIG51bU9jdG'vYXZlcz0nNi8nIC8+PGZlQ29tcG9zaXRlIGZpbHRlcklkPSduJmZlUnR1cmJ1bGVuY2UnIG9wZXJhdG9yPSJhbHZoYSI+PC9mZUNvbXBvc2l0ZT48L2ZpbHRlcnM+PHJlY3Qgd2lkdGg9JzUnIGhlaWdodD0nNScgZmlsdGVyPSJ1cmwoI24mZmVSdHVyYnVsZW5jZSkiIG9wYWNpdHk9IjAuOCI+PC9yZWN0Pjwvc3ZnPg==");
+    background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg width=\'5\' height=\'5\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'6\'/%3E%3CfeComposite filterId=\'noise\' operator=\'alpha\'/%3E%3C/filter%3E%3Crect width=\'5\' height=\'5\' filter=\'url(%23noise)\' opacity=\'0.8\'/%3E%3C/svg%3E');
     background-size: 200px 200px;
     background-attachment: fixed;
   }

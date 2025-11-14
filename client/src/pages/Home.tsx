@@ -28,6 +28,8 @@ function createPaginationState(): PaginationState {
 
 export function Home() {
   const [query, setQuery] = useState('');
+  const [selectedGenres, setSelectedGenres] = useState<Set<string>>(new Set());
+  const [isGenresExpanded, setIsGenresExpanded] = useState(false);
   const [items, setItems] = useState<LibraryItemUnion[]>([]);
   const [visibleCount, setVisibleCount] = useState(0);
   const [filmsState, setFilmsState] = useState<PaginationState>(createPaginationState);
@@ -39,7 +41,33 @@ export function Home() {
   const loadingRef = useRef(false);
   const filmsStateRef = useRef(filmsState);
   const seriesStateRef = useRef(seriesState);
-  const visibleItems = useMemo(() => items.slice(0, visibleCount), [items, visibleCount]);
+  
+  // Собираем все уникальные жанры из библиотеки
+  const availableGenres = useMemo(() => {
+    const genresSet = new Set<string>();
+    items.forEach((item) => {
+      if (item.genres && Array.isArray(item.genres)) {
+        item.genres.forEach((genre) => genresSet.add(genre));
+      }
+    });
+    return Array.from(genresSet).sort();
+  }, [items]);
+
+  // Фильтруем элементы по выбранным жанрам
+  const filteredItems = useMemo(() => {
+    if (selectedGenres.size === 0) return items;
+    return items.filter((item) => {
+      if (!item.genres || item.genres.length === 0) return false;
+      return item.genres.some((genre) => selectedGenres.has(genre));
+    });
+  }, [items, selectedGenres]);
+
+  const visibleItems = useMemo(() => {
+    const count = visibleCount === 0 && filteredItems.length > 0 
+      ? Math.min(LOAD_STEP, filteredItems.length) 
+      : visibleCount;
+    return filteredItems.slice(0, count);
+  }, [filteredItems, visibleCount]);
   const hasMore = !filmsState.done || !seriesState.done;
 
   useEffect(() => {
@@ -142,6 +170,13 @@ export function Home() {
     loadMore(true);
   }, [query, loadMore]);
 
+  // Автоматически показываем начальные элементы при изменении фильтров
+  useEffect(() => {
+    if (filteredItems.length > 0 && visibleCount === 0) {
+      setVisibleCount(Math.min(LOAD_STEP, filteredItems.length));
+    }
+  }, [filteredItems.length, visibleCount]);
+
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
@@ -150,7 +185,7 @@ export function Home() {
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
           setVisibleCount((prev) => {
-            const next = Math.min(items.length, prev + LOAD_STEP);
+            const next = Math.min(filteredItems.length, prev + LOAD_STEP);
             return next === prev ? prev : next;
           });
         }
@@ -160,18 +195,38 @@ export function Home() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [items.length]);
+  }, [filteredItems.length]);
 
   useEffect(() => {
-    if (visibleCount >= items.length && hasMore && !isLoading) {
+    if (visibleCount >= filteredItems.length && hasMore && !isLoading) {
       loadMore(false);
     }
-  }, [visibleCount, items.length, hasMore, isLoading, loadMore]);
+  }, [visibleCount, filteredItems.length, hasMore, isLoading, loadMore]);
 
   const handleAddSuccess = useCallback(() => {
     // Перезагружаем библиотеку после успешного добавления
     loadMore(true);
   }, [loadMore]);
+
+  const toggleGenre = useCallback((genre: string) => {
+    setSelectedGenres((prev) => {
+      const next = new Set(prev);
+      if (next.has(genre)) {
+        next.delete(genre);
+      } else {
+        next.add(genre);
+      }
+      // Сбрасываем счетчик видимых элементов при изменении фильтров
+      setVisibleCount(0);
+      return next;
+    });
+  }, []);
+
+  // Сбрасываем счетчик при сбросе фильтров
+  const handleResetGenres = useCallback(() => {
+    setSelectedGenres(new Set());
+    setVisibleCount(0);
+  }, []);
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
@@ -187,6 +242,61 @@ export function Home() {
             <SearchBar value={query} onChange={setQuery} />
           </div>
         </div>
+        {availableGenres.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-black/10">
+            <button
+              type="button"
+              onClick={() => setIsGenresExpanded(!isGenresExpanded)}
+              className="flex items-center gap-2 text-sm text-textMuted hover:text-text transition-colors mb-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className={`w-4 h-4 transition-transform ${isGenresExpanded ? 'rotate-90' : ''}`}
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Фильтр по жанрам
+              {selectedGenres.size > 0 && (
+                <span className="text-xs bg-[rgba(10,132,255,0.15)] text-[rgb(10,132,255)] px-2 py-0.5 rounded-full">
+                  {selectedGenres.size}
+                </span>
+              )}
+            </button>
+            {isGenresExpanded && (
+              <div className="flex flex-wrap gap-2">
+                {selectedGenres.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleResetGenres}
+                    className="btn px-4 py-2 text-sm text-red-600 border-red-300/50 bg-red-50 hover:bg-red-100 hover:border-red-400/50"
+                  >
+                    Сбросить
+                  </button>
+                )}
+                {availableGenres.map((genre) => (
+                  <button
+                    key={genre}
+                    type="button"
+                    onClick={() => toggleGenre(genre)}
+                    className={`tag transition-all cursor-pointer ${
+                      selectedGenres.has(genre)
+                        ? 'bg-[rgba(10,132,255,0.15)] border-[rgba(10,132,255,0.3)] text-[rgb(10,132,255)]'
+                        : 'hover:bg-black/5'
+                    }`}
+                  >
+                    {genre}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <AddModal
@@ -213,7 +323,7 @@ export function Home() {
         ))}
       </div>
       <div ref={sentinelRef} className="py-6 text-center text-textMuted">
-        {isLoading ? 'Загружаем ещё...' : hasMore ? 'Показать ещё' : items.length === 0 ? 'Ничего не найдено' : 'Это всё'}
+        {isLoading ? 'Загружаем ещё...' : hasMore ? 'Показать ещё' : filteredItems.length === 0 ? 'Ничего не найдено' : 'Это всё'}
       </div>
     </main>
   );

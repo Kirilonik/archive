@@ -169,7 +169,7 @@ export function Profile() {
                 {/* Overlay с кнопкой при наведении */}
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-[20px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <button
-                    className="btn px-3 py-1.5 text-sm"
+                    className="btn px-2 py-1 text-xs"
                     onClick={() => inputRef.current?.click()}
                     onMouseDown={(e) => e.stopPropagation()}
                   >
