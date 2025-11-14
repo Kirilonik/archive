@@ -61,7 +61,7 @@ export function FilmDetails() {
                       </span>
                     )}
                     <span
-                      className="relative inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-white shadow bg-gradient-to-r from-indigo-400 via-fuchsia-500 to-pink-500 cursor-pointer group"
+                      className="relative inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-white shadow bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400 cursor-pointer group"
                       onClick={() => {
                         setRatingEditMode(true);
                         setRatingDraft(data.my_rating != null ? String(data.my_rating) : '');
@@ -81,26 +81,35 @@ export function FilmDetails() {
                       </span>
                     </span>
                     {formattedDuration && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-xs font-semibold text-textMuted">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/25 px-3 py-1 text-xs font-semibold text-textMuted bg-white/10 backdrop-blur-[20px] backdrop-saturate-[180%]">
                         {formattedDuration}
                       </span>
                     )}
                     {data.rating && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-xs text-textMuted">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/25 px-3 py-1 text-xs text-textMuted bg-white/10 backdrop-blur-[20px] backdrop-saturate-[180%]">
                         Рейтинг каталога: {data.rating}
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  {data.web_url && (
+                  {(data.web_url || data.kp_id) && (
                     <a
-                      href={data.web_url}
+                      href={data.web_url || (data.kp_id ? `https://www.kinopoisk.ru/film/${data.kp_id}/` : '#')}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn px-3 py-1 flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/20"
+                      className="btn px-3 py-1 flex items-center gap-2"
+                      title="Открыть на Кинопоиске"
                     >
-                      <img src="/kinopoisk-logo-white-on-blackbackground-rus.png" alt="Кинопоиск" className="h-5" />
+                      <img 
+                        src="/kinopoisk-logo-colored-on-whitebackground-rus.png" 
+                        alt="Кинопоиск" 
+                        className="h-5 w-auto"
+                        onError={(e) => {
+                          console.error('Failed to load Kinopoisk logo');
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
                     </a>
                   )}
                   <button
@@ -123,7 +132,7 @@ export function FilmDetails() {
               {Array.isArray(data.genres) && data.genres.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {data.genres.map((g: string, i: number) => (
-                    <span key={i} className="px-2 py-0.5 text-xs bg-white/15 border border-white/20 rounded-soft text-text">
+                    <span key={i} className="tag">
                       {g}
                     </span>
                   ))}

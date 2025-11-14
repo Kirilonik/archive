@@ -18,8 +18,8 @@ export function DeleteConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => !deleting && onCancel()}>
-      <div className="card max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[20px] px-4" onClick={() => !deleting && onCancel()}>
+      <div className="card card-modal max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
         <div className="text-lg font-semibold text-text mb-2">Удалить {itemType}</div>
         <div className="text-sm text-textMuted mb-4">
           {itemType === 'фильма' ? (

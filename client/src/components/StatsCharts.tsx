@@ -18,7 +18,7 @@ import {
 type PaletteKey = 'purple' | 'pink' | 'orange' | 'blue' | 'teal' | 'yellow';
 
 const palette: Record<PaletteKey, string> = {
-  purple: '#a855f7',
+  purple: '#3b82f6', // Заменен на синий в стиле сайта
   pink: '#ec4899',
   orange: '#f97316',
   blue: '#60a5fa',

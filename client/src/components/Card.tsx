@@ -18,7 +18,7 @@ export function Card({ kind, id, title, poster_url, poster_url_preview, rating_k
   const kpRating = typeof rating_kinopoisk === 'number' ? Math.round(rating_kinopoisk * 10) / 10 : null;
   return (
     <Link to={href} className="card overflow-hidden p-0 relative">
-      <div className="aspect-[2/3] bg-black/30 flex items-center justify-center relative">
+      <div className="aspect-[2/3] bg-black/5 flex items-center justify-center relative">
         {imageSrc ? (
           <img src={imageSrc} alt={title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
         ) : (
@@ -33,7 +33,7 @@ export function Card({ kind, id, title, poster_url, poster_url_preview, rating_k
               KP {kpRating}
             </span>
           )}
-          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full shadow bg-gradient-to-r from-indigo-400 via-fuchsia-500 to-pink-500 text-white">
+          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full shadow bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400 text-white">
             Я {typeof my_rating === 'number' ? Math.round(my_rating * 10) / 10 : '—'}
           </span>
         </div>

@@ -36,11 +36,12 @@ export function AppRouter() {
         toastOptions={{
           duration: 3000,
           style: {
-            background: 'rgba(0, 0, 0, 0.8)',
-            color: '#fff',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: 'rgba(255, 255, 255, 0.95)',
+            color: 'rgb(15, 23, 42)',
+            border: '1px solid rgba(0, 0, 0, 0.1)',
             borderRadius: '12px',
             backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
           },
           success: {
             iconTheme: {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { MarkdownEditor } from '../components/MarkdownEditor';
+import { StarRating } from '../components/StarRating';
 import { apiFetch } from '../lib/api';
 import type { SuggestItem } from '../types';
 
@@ -9,7 +10,7 @@ export function Add() {
   const [items, setItems] = useState<SuggestItem[]>([]);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<SuggestItem | null>(null);
-  const [myRating, setMyRating] = useState<string>('');
+  const [myRating, setMyRating] = useState<number>(0);
   const [opinion, setOpinion] = useState<string>('');
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -77,14 +78,14 @@ export function Add() {
 
   async function addToLibrary(item: SuggestItem) {
     setSelected(item);
-    setMyRating('');
+    setMyRating(0);
     setOpinion('');
     // Не закрываем предложения при открытии модального окна
   }
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
-      <div className="card relative">
+      <div className="card card-modal relative overflow-visible">
         <div className="mb-3 text-text font-semibold">Начните вводить название</div>
         <div className="relative" ref={searchContainerRef}>
           <div className="relative">
@@ -113,11 +114,11 @@ export function Add() {
             )}
           </div>
           {open && items.length > 0 && (
-            <div className="absolute left-0 right-0 mt-2 popover-panel max-h-[70vh] overflow-auto z-30">
-              <ul className="divide-y divide-white/10">
+            <div className="absolute left-0 right-0 mt-2 popover-panel max-h-[70vh] overflow-auto z-[100]">
+              <ul className="divide-y divide-black/10">
                 {items.map((it, idx) => (
-                  <li key={idx} className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors">
-                    <div className="w-12 h-18 shrink-0 bg-black/30 rounded-soft overflow-hidden flex items-center justify-center">
+                  <li key={idx} className="flex items-center gap-3 p-3 hover:bg-black/5 transition-colors rounded-lg">
+                    <div className="w-12 h-18 shrink-0 bg-black/5 rounded-soft overflow-hidden flex items-center justify-center">
                       {it.poster ? (
                         <img src={it.poster} alt={it.title} className="w-full h-full object-cover" />
                       ) : (
@@ -125,7 +126,7 @@ export function Add() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-text truncate">{it.title}</div>
+                      <div className="text-text truncate font-medium">{it.title}</div>
                       <div className="text-sm text-textMuted">{it.year ? `Год: ${it.year}` : ''}{it.isSeries ? (it.year ? ' · ' : '') + 'Сериал' : ''}</div>
                     </div>
                     <button className="btn btn-primary px-3 py-1" onMouseDown={(e) => e.preventDefault()} onClick={() => addToLibrary(it)}>
@@ -140,29 +141,39 @@ export function Add() {
       </div>
 
       {selected && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-40" onClick={() => setSelected(null)}>
-          <div className="card max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="text-xl font-semibold text-text mb-2">Добавить в библиотеку</div>
-            <div className="text-textMuted mb-4 truncate">{selected.title}</div>
-            <div className="space-y-3">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-[20px] flex items-center justify-center z-40" onClick={() => setSelected(null)}>
+          <div className="card card-modal max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="text-xl font-semibold text-text mb-4">Добавить в библиотеку</div>
+            
+            {/* Информация о фильме/сериале */}
+            <div className="flex items-center gap-4 mb-6 p-3 rounded-xl bg-black/5 border border-black/10">
+              <div className="w-16 h-24 shrink-0 bg-black/5 rounded-soft overflow-hidden flex items-center justify-center">
+                {selected.poster ? (
+                  <img src={selected.poster} alt={selected.title} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs text-textMuted text-center px-1">Нет постера</span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-lg font-semibold text-text truncate">{selected.title}</div>
+                <div className="text-sm text-textMuted mt-1">
+                  {selected.year ? `Год: ${selected.year}` : ''}
+                  {selected.isSeries ? (selected.year ? ' · ' : '') + 'Сериал' : ''}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm text-textMuted mb-1">Ваша оценка (0-10)</label>
-                <input
-                  type="number"
-                  min={0}
-                  max={10}
-                  step={0.1}
-                  className="input"
-                  value={myRating}
-                  onChange={(e) => setMyRating(e.target.value)}
-                />
+                <label className="block text-sm text-textMuted mb-2">Ваша оценка (0-10)</label>
+                <StarRating value={myRating} onChange={setMyRating} max={10} />
               </div>
               <div>
                 <label className="block text-sm text-textMuted mb-1">Мнение (Markdown, необязательно)</label>
                 <MarkdownEditor value={opinion} onChange={(val) => setOpinion(val)} />
               </div>
             </div>
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex justify-end gap-2 mt-6">
               <button className="btn px-3 py-1" onClick={() => setSelected(null)}>Отмена</button>
               <button
                 className="btn btn-primary px-3 py-1"
@@ -173,7 +184,7 @@ export function Add() {
                     if (selected.id) {
                       body.kp_id = selected.id;
                     }
-                    if (myRating) body.my_rating = Number(myRating);
+                    if (myRating > 0) body.my_rating = myRating;
                     if (opinion) body.opinion = opinion;
                     const url = selected.isSeries ? '/api/series' : '/api/films';
                     const resp = await apiFetch(url, {
@@ -188,7 +199,7 @@ export function Add() {
                     }
                     toast.success(selected.isSeries ? 'Сериал добавлен в библиотеку' : 'Фильм добавлен в библиотеку');
                     setSelected(null);
-                    setMyRating('');
+                    setMyRating(0);
                     setOpinion('');
                   } catch {
                     toast.error('Ошибка при добавлении в библиотеку. Попробуйте еще раз.');

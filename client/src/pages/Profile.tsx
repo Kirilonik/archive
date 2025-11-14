@@ -126,14 +126,14 @@ export function Profile() {
           {/* Блок профиля: аватарка и имя */}
           <div className="card">
             <div className="flex items-center gap-4">
-              <div className="relative size-20 aspect-square rounded-full overflow-hidden bg-white/15 border border-white/20 flex items-center justify-center group cursor-pointer shrink-0">
+              <div className="relative size-20 aspect-square rounded-full overflow-hidden bg-white/18 border border-white/25 backdrop-blur-[20px] backdrop-saturate-[180%] flex items-center justify-center group cursor-pointer shrink-0 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)]">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={name || 'avatar'} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-textMuted text-xs">Нет аватара</span>
                 )}
                 {/* Overlay с кнопкой при наведении */}
-                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-[20px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <button
                     className="btn px-3 py-1.5 text-sm"
                     onClick={() => inputRef.current?.click()}
@@ -164,7 +164,7 @@ export function Profile() {
                   </div>
                 </div>
                 <div className="mt-2 text-sm text-textMuted">
-                  <div className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-1 text-text">
+                  <div className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/15 backdrop-blur-[20px] backdrop-saturate-[180%] px-3 py-1 text-text shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.15)]">
                     <span>Email:</span>
                     <span>{user?.email ?? '—'}</span>
                   </div>

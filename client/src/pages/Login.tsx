@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
@@ -86,31 +86,36 @@ export function Login() {
             />
             <button
               type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white text-black shadow hover:shadow-lg"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white text-black shadow hover:shadow-lg disabled:opacity-50"
               onClick={() => {
                 const target = googleContainerRef.current?.querySelector('div[role="button"]') as HTMLDivElement | undefined;
                 target?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
               }}
+              disabled={googleLoading}
             >
-              <svg viewBox="0 0 48 48" className="h-6 w-6">
-                <path
-                  fill="#EA4335"
-                  d="M24 9.5c3.54 0 6.71 1.23 9.21 3.25l6.85-6.85C35.88 2.38 30.26 0 24 0 14.7 0 6.88 5.4 3.05 13.26l7.98 6.19C12.7 13.57 17.9 9.5 24 9.5z"
-                />
-                <path
-                  fill="#4285F4"
-                  d="M46.5 24.5c0-1.59-.15-3.13-.44-4.62H24v9.27h12.65c-.55 2.96-2.24 5.47-4.77 7.16l7.47 5.8C43.87 38.19 46.5 31.88 46.5 24.5z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M11.03 28.45c-.5-1.48-.79-3.06-.79-4.7s.29-3.22.79-4.7l-7.98-6.19C1.39 16.17 0 20.44 0 24.75s1.39 8.58 3.05 11.89l7.98-6.19z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M24 47.5c6.26 0 11.53-2.07 15.38-5.62l-7.47-5.8c-2.07 1.39-4.73 2.2-7.91 2.2-6.1 0-11.3-4.07-13.17-9.65l-7.98 6.19C6.88 42.6 14.7 47.5 24 47.5z"
-                />
-                <path fill="none" d="M0 0h48v48H0z" />
-              </svg>
+              {googleLoading ? (
+                <div className="h-6 w-6 border-2 border-gray-300 border-t-black rounded-full animate-spin" />
+              ) : (
+                <svg viewBox="0 0 48 48" className="h-6 w-6">
+                  <path
+                    fill="#EA4335"
+                    d="M24 9.5c3.54 0 6.71 1.23 9.21 3.25l6.85-6.85C35.88 2.38 30.26 0 24 0 14.7 0 6.88 5.4 3.05 13.26l7.98 6.19C12.7 13.57 17.9 9.5 24 9.5z"
+                  />
+                  <path
+                    fill="#4285F4"
+                    d="M46.5 24.5c0-1.59-.15-3.13-.44-4.62H24v9.27h12.65c-.55 2.96-2.24 5.47-4.77 7.16l7.47 5.8C43.87 38.19 46.5 31.88 46.5 24.5z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M11.03 28.45c-.5-1.48-.79-3.06-.79-4.7s.29-3.22.79-4.7l-7.98-6.19C1.39 16.17 0 20.44 0 24.75s1.39 8.58 3.05 11.89l7.98-6.19z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M24 47.5c6.26 0 11.53-2.07 15.38-5.62l-7.47-5.8c-2.07 1.39-4.73 2.2-7.91 2.2-6.1 0-11.3-4.07-13.17-9.65l-7.98 6.19C6.88 42.6 14.7 47.5 24 47.5z"
+                  />
+                  <path fill="none" d="M0 0h48v48H0z" />
+                </svg>
+              )}
             </button>
           </div>
         </div>

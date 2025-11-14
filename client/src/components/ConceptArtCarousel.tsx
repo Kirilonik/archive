@@ -87,37 +87,37 @@ export function ConceptArtCarousel({ items }: ConceptArtCarouselProps) {
           <div className="fixed inset-0 z-[1000] flex items-center justify-center">
             <button
               type="button"
-              className="absolute inset-0 bg-black/50 backdrop-blur-lg"
+              className="absolute inset-0 bg-black/30 backdrop-blur-[30px]"
               aria-label="Закрыть просмотр"
               onClick={closeViewer}
             />
             <div
               role="dialog"
               aria-modal="true"
-              className="relative z-[1001] flex w-full max-w-5xl flex-col overflow-hidden rounded-soft border border-white/10 bg-black/70 shadow-2xl"
+              className="relative z-[1001] flex w-full max-w-5xl flex-col overflow-hidden rounded-soft border border-black/10 bg-white/95 backdrop-blur-[40px] backdrop-saturate-[180%] shadow-[0_12px_48px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,1)]"
             >
-              <div className="flex items-center justify-between px-6 py-4 text-white">
-                <div className="text-sm text-white/70">
+              <div className="flex items-center justify-between px-6 py-4 text-text">
+                <div className="text-sm text-textMuted">
                   Изображение {activeIndex + 1} из {items.length}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    className="rounded-full bg-white/10 px-3 py-1 text-sm text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
+                    className="rounded-full bg-white/90 border border-black/10 backdrop-blur-[20px] backdrop-saturate-[180%] px-3 py-1 text-sm text-text transition-all hover:bg-white hover:border-black/15 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-black/20 shadow-[0_2px_8px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)]"
                     onClick={showPrev}
                   >
                     Назад
                   </button>
                   <button
                     type="button"
-                    className="rounded-full bg-white/10 px-3 py-1 text-sm text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
+                    className="rounded-full bg-white/90 border border-black/10 backdrop-blur-[20px] backdrop-saturate-[180%] px-3 py-1 text-sm text-text transition-all hover:bg-white hover:border-black/15 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-black/20 shadow-[0_2px_8px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)]"
                     onClick={showNext}
                   >
                     Далее
                   </button>
                   <button
                     type="button"
-                    className="rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
+                    className="rounded-full bg-white/90 border border-black/10 backdrop-blur-[20px] backdrop-saturate-[180%] p-2 text-text transition-all hover:bg-white hover:border-black/15 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-black/20 shadow-[0_2px_8px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)]"
                     onClick={closeViewer}
                     aria-label="Закрыть просмотр"
                   >
@@ -153,7 +153,7 @@ export function ConceptArtCarousel({ items }: ConceptArtCarouselProps) {
               key={`${item.previewUrl}-${index}`}
               type="button"
               onClick={() => openViewer(index)}
-              className="group relative h-48 w-80 flex-none overflow-hidden rounded-soft border border-white/10 bg-black/40 shadow-inner snap-start"
+              className="group relative h-48 w-80 flex-none overflow-hidden rounded-soft border border-black/10 bg-white/80 backdrop-blur-[20px] backdrop-saturate-[180%] shadow-[0_4px_16px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] snap-start transition-all hover:border-black/15 hover:bg-white/90"
             >
               <img
                 src={item.previewUrl}
@@ -161,7 +161,7 @@ export function ConceptArtCarousel({ items }: ConceptArtCarouselProps) {
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 loading="lazy"
               />
-              <div className="absolute inset-0 bg-black/20 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+              <div className="absolute inset-0 bg-black/10 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
             </button>
           ))}
         </div>
@@ -169,7 +169,7 @@ export function ConceptArtCarousel({ items }: ConceptArtCarouselProps) {
           <>
             <button
               type="button"
-              className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2 text-white shadow-lg transition hover:bg-black/80 focus:outline-none focus:ring-2 focus:ring-white/70"
+              className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full bg-white/90 border border-black/10 backdrop-blur-[20px] backdrop-saturate-[180%] p-2 text-text shadow-[0_4px_16px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all hover:bg-white hover:border-black/15 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-black/20"
               onClick={() => handleScroll('prev')}
               aria-label="Предыдущие изображения"
             >
@@ -183,7 +183,7 @@ export function ConceptArtCarousel({ items }: ConceptArtCarouselProps) {
             </button>
             <button
               type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2 text-white shadow-lg transition hover:bg-black/80 focus:outline-none focus:ring-2 focus:ring-white/70"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 border border-black/10 backdrop-blur-[20px] backdrop-saturate-[180%] p-2 text-text shadow-[0_4px_16px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all hover:bg-white hover:border-black/15 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-black/20"
               onClick={() => handleScroll('next')}
               aria-label="Следующие изображения"
             >
