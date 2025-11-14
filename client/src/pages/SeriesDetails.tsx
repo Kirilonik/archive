@@ -115,14 +115,26 @@ export function SeriesDetails() {
       if (!resp.ok) {
         // откатываем оптимистичное обновление
         setEpisodes((prev) => prev.map((e) => (e.id === epId ? { ...e, watched: !watched } : e)));
-        toast.error('Ошибка при изменении статуса эпизода');
+        let errorMessage = 'Ошибка при изменении статуса эпизода';
+        try {
+          const errorData = await resp.json();
+          if (errorData?.error && typeof errorData.error === 'string') {
+            errorMessage = errorData.error;
+          } else if (errorData?.message && typeof errorData.message === 'string') {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          // Если не удалось распарсить JSON, используем дефолтное сообщение
+        }
+        toast.error(errorMessage);
         return;
       }
       toast.success(watched ? 'Эпизод отмечен как просмотренный' : 'Отметка просмотра снята');
-    } catch {
+    } catch (error: any) {
       // откатываем оптимистичное обновление
       setEpisodes((prev) => prev.map((e) => (e.id === epId ? { ...e, watched: !watched } : e)));
-      toast.error('Ошибка при изменении статуса эпизода');
+      const errorMessage = error?.message || 'Ошибка при изменении статуса эпизода';
+      toast.error(errorMessage);
     }
   }
 
@@ -150,7 +162,18 @@ export function SeriesDetails() {
             reloadActiveSeasonEpisodes();
           }
         }
-        toast.error('Ошибка при изменении статуса сезона');
+        let errorMessage = 'Ошибка при изменении статуса сезона';
+        try {
+          const errorData = await resp.json();
+          if (errorData?.error && typeof errorData.error === 'string') {
+            errorMessage = errorData.error;
+          } else if (errorData?.message && typeof errorData.message === 'string') {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          // Если не удалось распарсить JSON, используем дефолтное сообщение
+        }
+        toast.error(errorMessage);
         return;
       }
       
@@ -162,7 +185,7 @@ export function SeriesDetails() {
       toast.success(watched 
         ? 'Сезон и все эпизоды отмечены как просмотренные' 
         : 'Отметка просмотра снята со сезона и всех эпизодов');
-    } catch {
+    } catch (error: any) {
       // откатываем оптимистичное обновление
       setSeasons((prev) => prev.map((s) => (s.id === seasonId ? { ...s, watched: !watched } : s)));
       if (activeSeason === seasonId) {
@@ -171,7 +194,8 @@ export function SeriesDetails() {
           reloadActiveSeasonEpisodes();
         }
       }
-      toast.error('Ошибка при изменении статуса сезона');
+      const errorMessage = error?.message || 'Ошибка при изменении статуса сезона';
+      toast.error(errorMessage);
     }
   }
 

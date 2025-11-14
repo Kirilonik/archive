@@ -107,14 +107,26 @@ export function useMediaItem<T extends MediaItem>({
         body: JSON.stringify(body),
       });
       if (!resp.ok) {
-        toast.error('Ошибка при сохранении оценки');
+        let errorMessage = 'Ошибка при сохранении оценки';
+        try {
+          const errorData = await resp.json();
+          if (errorData?.error && typeof errorData.error === 'string') {
+            errorMessage = errorData.error;
+          } else if (errorData?.message && typeof errorData.message === 'string') {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          // Если не удалось распарсить JSON, используем дефолтное сообщение
+        }
+        toast.error(errorMessage);
         return;
       }
       await refreshData();
       setRatingEditMode(false);
       toast.success('Оценка сохранена');
-    } catch {
-      toast.error('Ошибка при сохранении оценки');
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Ошибка при сохранении оценки';
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -131,14 +143,26 @@ export function useMediaItem<T extends MediaItem>({
         body: JSON.stringify(body),
       });
       if (!resp.ok) {
-        toast.error('Ошибка при сохранении мнения');
+        let errorMessage = 'Ошибка при сохранении мнения';
+        try {
+          const errorData = await resp.json();
+          if (errorData?.error && typeof errorData.error === 'string') {
+            errorMessage = errorData.error;
+          } else if (errorData?.message && typeof errorData.message === 'string') {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          // Если не удалось распарсить JSON, используем дефолтное сообщение
+        }
+        toast.error(errorMessage);
         return;
       }
       await refreshData();
       setOpinionEditMode(false);
       toast.success('Мнение сохранено');
-    } catch {
-      toast.error('Ошибка при сохранении мнения');
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Ошибка при сохранении мнения';
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -150,7 +174,18 @@ export function useMediaItem<T extends MediaItem>({
       setDeleting(true);
       const resp = await apiFetch(`${apiEndpoint}/${id}`, { method: 'DELETE' });
       if (!resp.ok) {
-        toast.error(`Ошибка при удалении ${itemName}`);
+        let errorMessage = `Ошибка при удалении ${itemName}`;
+        try {
+          const errorData = await resp.json();
+          if (errorData?.error && typeof errorData.error === 'string') {
+            errorMessage = errorData.error;
+          } else if (errorData?.message && typeof errorData.message === 'string') {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          // Если не удалось распарсить JSON, используем дефолтное сообщение
+        }
+        toast.error(errorMessage);
         return;
       }
       toast.success(`${itemName === 'фильма' ? 'Фильм' : 'Сериал'} удален из библиотеки`);
@@ -160,8 +195,9 @@ export function useMediaItem<T extends MediaItem>({
       } else {
         navigate('/');
       }
-    } catch {
-      toast.error(`Ошибка при удалении ${itemName}`);
+    } catch (error: any) {
+      const errorMessage = error?.message || `Ошибка при удалении ${itemName}`;
+      toast.error(errorMessage);
     } finally {
       setDeleting(false);
     }

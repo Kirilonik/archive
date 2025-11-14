@@ -83,7 +83,19 @@ export function Profile() {
         body: JSON.stringify(body),
       });
       if (!resp.ok) {
-        toast.error('Ошибка при сохранении профиля');
+        // Пытаемся извлечь сообщение об ошибке из ответа
+        let errorMessage = 'Ошибка при сохранении профиля';
+        try {
+          const errorData = await resp.json();
+          if (errorData?.error && typeof errorData.error === 'string') {
+            errorMessage = errorData.error;
+          } else if (errorData?.message && typeof errorData.message === 'string') {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          // Если не удалось распарсить JSON, используем дефолтное сообщение
+        }
+        toast.error(errorMessage);
         return;
       }
       const fresh = await apiFetch(`/api/users/${user.id}`);
@@ -96,8 +108,9 @@ export function Profile() {
         await refresh();
       }
       toast.success('Профиль успешно сохранён');
-    } catch {
-      toast.error('Ошибка при сохранении профиля');
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Ошибка при сохранении профиля';
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -106,7 +119,25 @@ export function Profile() {
   function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Проверка типа файла
+    if (!file.type.startsWith('image/')) {
+      toast.error('Выберите файл изображения (JPG, PNG, GIF и т.д.)');
+      return;
+    }
+
+    // Проверка размера файла (максимум 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB в байтах
+    if (file.size > maxSize) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      toast.error(`Размер файла слишком большой (${sizeMB} MB). Максимальный размер: 5 MB`);
+      return;
+    }
+
     const reader = new FileReader();
+    reader.onerror = () => {
+      toast.error('Ошибка при чтении файла. Попробуйте выбрать другой файл.');
+    };
     reader.onload = () => {
       const dataUrl = String(reader.result);
       setAvatarUrl(dataUrl);
