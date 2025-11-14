@@ -19,7 +19,7 @@ export class UsersController {
 
   getProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number;
+      const userId = req.user?.id;
       const requestedId = Number(req.params.id);
       if (!userId || userId !== requestedId) {
         return res.status(403).json({ error: 'Forbidden' });
@@ -40,7 +40,7 @@ export class UsersController {
 
   updateProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number;
+      const userId = req.user?.id as number;
       const requestedId = Number(req.params.id);
       if (!userId || userId !== requestedId) {
         return res.status(403).json({ error: 'Forbidden' });
@@ -60,7 +60,7 @@ export class UsersController {
 
   deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number;
+      const userId = req.user?.id as number;
       const requestedId = Number(req.params.id);
       if (!userId || userId !== requestedId) {
         return res.status(403).json({ error: 'Forbidden' });
@@ -74,7 +74,7 @@ export class UsersController {
 
   getDetailedStats = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number;
+      const userId = req.user?.id as number;
       const requestedId = Number(req.params.id);
       if (!userId || userId !== requestedId) {
         return res.status(403).json({ error: 'Forbidden' });

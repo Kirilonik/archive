@@ -7,6 +7,15 @@ export interface AuthUser {
   email: string;
 }
 
+// Расширяем типы Express
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthUser;
+    }
+  }
+}
+
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const header = req.headers['authorization'];
@@ -18,7 +27,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     }
     if (!token) return res.status(401).json({ error: 'Unauthorized' });
     const payload = jwt.verify(token, env.JWT_SECRET) as AuthUser;
-    (req as any).user = payload;
+    req.user = payload;
     next();
   } catch {
     return res.status(401).json({ error: 'Unauthorized' });

@@ -8,7 +8,7 @@ export class SeasonsController {
 
   list = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const items = await this.seasonService.listSeasons(Number(req.params.seriesId), userId);
       res.json(items);
     } catch (error) {
@@ -18,7 +18,7 @@ export class SeasonsController {
 
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const body = seasonCreateSchema.parse(req.body);
       const created = await this.seasonService.createSeason(body.series_id, body.number, userId);
       res.status(201).json(created);
@@ -35,7 +35,7 @@ export class SeasonsController {
 
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       await this.seasonService.deleteSeason(Number(req.params.id), userId);
       res.status(204).send();
     } catch (error: any) {
@@ -48,7 +48,7 @@ export class SeasonsController {
 
   markWatched = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const { watched } = seasonMarkSchema.parse(req.body);
       const updated = await this.seasonService.markSeasonWatched(Number(req.params.id), watched, userId);
       if (!updated) return res.status(404).json({ error: 'Not found' });

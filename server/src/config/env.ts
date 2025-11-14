@@ -20,10 +20,29 @@ const envSchema = z
     PGPASSWORD: z.string().min(1).default('postgres'),
     PGDATABASE: z.string().min(1).default('media_archive'),
 
-    JWT_SECRET: z.string().min(10, 'JWT_SECRET must be at least 10 characters long'),
+    JWT_SECRET: z
+      .string()
+      .min(10, 'JWT_SECRET must be at least 10 characters long')
+      .refine(
+        (val) => {
+          const isProd = process.env.NODE_ENV === 'production';
+          if (!isProd) return true;
+          // В продакшене проверяем, что секрет не дефолтный
+          return val !== 'dev-access-secret-change-me' && val.length >= 32;
+        },
+        { message: 'JWT_SECRET must be at least 32 characters long in production and not use default value' },
+      ),
     JWT_REFRESH_SECRET: z
       .string()
       .min(10, 'JWT_REFRESH_SECRET must be at least 10 characters long')
+      .refine(
+        (val) => {
+          const isProd = process.env.NODE_ENV === 'production';
+          if (!isProd) return true;
+          return val !== 'dev-refresh-secret-change-me' && val.length >= 32;
+        },
+        { message: 'JWT_REFRESH_SECRET must be at least 32 characters long in production and not use default value' },
+      )
       .optional(),
 
     ACCESS_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(15),

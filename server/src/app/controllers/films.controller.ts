@@ -21,7 +21,7 @@ export class FilmsController {
 
   list = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const { query, status, ratingGte, limit, offset } = listQuerySchema.parse({
         query: req.query.query,
         status: req.query.status,
@@ -48,7 +48,7 @@ export class FilmsController {
 
   get = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const film = await this.filmService.getFilm(Number(req.params.id), userId);
       if (!film) return res.status(404).json({ error: 'Not found' });
       res.json(film);
@@ -59,7 +59,7 @@ export class FilmsController {
 
   getConceptArt = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const conceptArt = await this.filmService.getFilmConceptArt(Number(req.params.id), userId);
       if (!conceptArt) return res.status(404).json({ error: 'Not found' });
       res.json(conceptArt);
@@ -70,7 +70,7 @@ export class FilmsController {
 
   getPosters = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const posters = await this.filmService.getFilmPosters(Number(req.params.id), userId);
       if (!posters) return res.status(404).json({ error: 'Not found' });
       res.json(posters);
@@ -81,7 +81,7 @@ export class FilmsController {
 
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
       const body = filmCreateSchema.parse(req.body);
       const created = await this.filmService.createFilm(body, userId);
@@ -99,7 +99,7 @@ export class FilmsController {
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const body = filmUpdateSchema.parse(req.body);
       const updated = await this.filmService.updateFilm(Number(req.params.id), body, userId);
       if (!updated) return res.status(404).json({ error: 'Not found' });
@@ -117,7 +117,7 @@ export class FilmsController {
 
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
       await this.filmService.deleteFilm(Number(req.params.id), userId);
       res.status(204).send();

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { SeriesController } from '../controllers/series.controller.js';
 import { container } from '../container.js';
 import { authMiddleware } from '../../middlewares/auth.js';
+import { writeRateLimiter } from '../../middlewares/rate-limiters.js';
 
 export function createSeriesRouter(controller: SeriesController) {
   const router = Router();
@@ -9,9 +10,9 @@ export function createSeriesRouter(controller: SeriesController) {
   router.get('/:id/concept-art', authMiddleware, controller.getConceptArt);
   router.get('/:id/posters', authMiddleware, controller.getPosters);
   router.get('/:id', authMiddleware, controller.get);
-  router.post('/', authMiddleware, controller.create);
-  router.put('/:id', authMiddleware, controller.update);
-  router.delete('/:id', authMiddleware, controller.delete);
+  router.post('/', authMiddleware, writeRateLimiter, controller.create);
+  router.put('/:id', authMiddleware, writeRateLimiter, controller.update);
+  router.delete('/:id', authMiddleware, writeRateLimiter, controller.delete);
   return router;
 }
 

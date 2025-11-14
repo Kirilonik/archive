@@ -8,7 +8,7 @@ export class EpisodesController {
 
   list = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const items = await this.episodeService.listEpisodes(Number(req.params.seasonId), userId);
       res.json(items);
     } catch (error) {
@@ -18,7 +18,7 @@ export class EpisodesController {
 
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const body = episodeCreateSchema.parse(req.body);
       const created = await this.episodeService.createEpisode(
         body.season_id,
@@ -42,7 +42,7 @@ export class EpisodesController {
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const body = episodeUpdateSchema.parse(req.body);
       const updated = await this.episodeService.updateEpisode(Number(req.params.id), body, userId);
       if (!updated) return res.status(404).json({ error: 'Not found' });
@@ -60,7 +60,7 @@ export class EpisodesController {
 
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       await this.episodeService.deleteEpisode(Number(req.params.id), userId);
       res.status(204).send();
     } catch (error: any) {
@@ -73,7 +73,7 @@ export class EpisodesController {
 
   markWatched = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const { watched } = episodeMarkSchema.parse(req.body);
       const updated = await this.episodeService.markEpisodeWatched(Number(req.params.id), watched ?? true, userId);
       if (!updated) return res.status(404).json({ error: 'Not found' });

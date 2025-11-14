@@ -2,14 +2,15 @@ import { Router } from 'express';
 import type { EpisodesController } from '../controllers/episodes.controller.js';
 import { container } from '../container.js';
 import { authMiddleware } from '../../middlewares/auth.js';
+import { writeRateLimiter } from '../../middlewares/rate-limiters.js';
 
 export function createEpisodesRouter(controller: EpisodesController) {
   const router = Router();
   router.get('/:seasonId', authMiddleware, controller.list);
-  router.post('/', authMiddleware, controller.create);
-  router.put('/:id', authMiddleware, controller.update);
-  router.delete('/:id', authMiddleware, controller.delete);
-  router.patch('/:id/watched', authMiddleware, controller.markWatched);
+  router.post('/', authMiddleware, writeRateLimiter, controller.create);
+  router.put('/:id', authMiddleware, writeRateLimiter, controller.update);
+  router.delete('/:id', authMiddleware, writeRateLimiter, controller.delete);
+  router.patch('/:id/watched', authMiddleware, writeRateLimiter, controller.markWatched);
   return router;
 }
 

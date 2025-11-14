@@ -9,17 +9,19 @@ import { router as searchRouter } from './routes.search.js';
 import { authRouter } from '../app/routes/auth.routes.js';
 import { authMiddleware } from '../middlewares/auth.js';
 import { registerSwagger } from '../docs/swagger.js';
+import { generalRateLimiter, writeRateLimiter, searchRateLimiter } from '../middlewares/rate-limiters.js';
 
 export function registerRoutes(app: Express): void {
   registerSwagger(app);
   app.use('/api/health', healthRouter);
   app.use('/api/auth', authRouter);
+  // Rate limiting применяется на уровне отдельных роутеров для модифицирующих операций
   app.use('/api/films', filmsRouter);
   app.use('/api/series', seriesRouter);
   app.use('/api/seasons', seasonsRouter);
   app.use('/api/episodes', episodesRouter);
   app.use('/api/users', authMiddleware, usersRouter);
-  app.use('/api/search', searchRouter);
+  app.use('/api/search', searchRateLimiter, searchRouter);
 }
 
 

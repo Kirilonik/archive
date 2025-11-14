@@ -131,7 +131,7 @@ export class AuthController {
 
   me = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
       const profile = await this.getProfileById(userId);
       if (!profile) return res.status(404).json({ error: 'Не найдено' });

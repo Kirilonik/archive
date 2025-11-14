@@ -1,0 +1,37 @@
+# Production Dockerfile для клиента
+FROM node:20-alpine AS builder
+
+WORKDIR /work
+
+# Копируем shared для типов
+COPY tsconfig.base.json ./tsconfig.base.json
+COPY shared ./shared
+
+# Устанавливаем зависимости и собираем shared
+COPY shared/package.json shared/tsconfig.json ./shared/
+RUN cd shared && npm ci
+COPY shared/src ./shared/src
+RUN cd shared && npm run build
+
+# Устанавливаем зависимости клиента
+COPY client/package.json client/package-lock.json* ./client/
+RUN cd client && npm ci
+
+# Копируем исходники и собираем
+COPY client ./client
+WORKDIR /work/client
+RUN npm run build
+
+# Production stage с nginx
+FROM nginx:alpine
+
+# Копируем собранные файлы
+COPY --from=builder /work/client/dist /usr/share/nginx/html
+
+# Копируем конфигурацию nginx
+COPY client/nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+

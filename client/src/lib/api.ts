@@ -88,31 +88,64 @@ function resolveRequestInput(input: RequestInfo | URL): RequestInfo | URL {
   return input;
 }
 
+const REQUEST_TIMEOUT = 30000; // 30 секунд
+
+function createTimeoutSignal(timeoutMs: number): AbortSignal {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), timeoutMs);
+  return controller.signal;
+}
+
 export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const resolvedInput = resolveRequestInput(input);
   const method = init?.method ? init.method.toUpperCase() : 'GET';
   const headers = attachCsrfHeader(createHeaders(init), method);
+  
+  // Объединяем сигналы: пользовательский и timeout
+  const timeoutSignal = createTimeoutSignal(REQUEST_TIMEOUT);
+  const userSignal = init?.signal;
+  const combinedSignal = userSignal 
+    ? (() => {
+        const combined = new AbortController();
+        const abort = () => combined.abort();
+        timeoutSignal.addEventListener('abort', abort);
+        userSignal.addEventListener('abort', abort);
+        return combined.signal;
+      })()
+    : timeoutSignal;
+
   const doFetch = () =>
     fetch(resolvedInput, {
       ...init,
+      signal: combinedSignal,
       credentials: 'include',
       headers,
     });
 
-  let response = await doFetch();
+  try {
+    let response = await doFetch();
 
-  if (response.status === 401) {
-    const refreshResponse = await fetch(resolveRequestInput('/api/auth/refresh'), {
-      method: 'POST',
-      credentials: 'include',
-    });
+    if (response.status === 401) {
+      const refreshResponse = await fetch(resolveRequestInput('/api/auth/refresh'), {
+        method: 'POST',
+        credentials: 'include',
+        signal: createTimeoutSignal(REQUEST_TIMEOUT),
+      });
 
-    if (refreshResponse.ok) {
-      response = await doFetch();
+      if (refreshResponse.ok) {
+        response = await doFetch();
+      }
     }
-  }
 
-  return response;
+    return response;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      if (timeoutSignal.aborted) {
+        throw new Error('Превышено время ожидания ответа от сервера');
+      }
+    }
+    throw error;
+  }
 }
 
 export async function apiJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {

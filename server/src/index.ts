@@ -8,6 +8,7 @@ import { registerRoutes } from './routes/register.js';
 import { errorMiddleware } from './middlewares/error.js';
 import { runMigrations } from './db/migrate.js';
 import { env } from './config/env.js';
+import { pool } from './config/db.js';
 import { requestLogger } from './app/middlewares/request-logger.middleware.js';
 import { logger } from './shared/logger.js';
 import { csrfMiddleware } from './middlewares/csrf.js';
@@ -35,8 +36,25 @@ async function bootstrap() {
   app.use(cors(corsOptions));
   app.use(
     helmet({
-      contentSecurityPolicy: false,
+      contentSecurityPolicy: env.NODE_ENV === 'production' ? {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // TODO: убрать unsafe для продакшена
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", "data:", "https:"],
+          connectSrc: ["'self'", env.API_BASE_URL || '', ...env.allowedOrigins],
+          fontSrc: ["'self'", "data:"],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
+        },
+      } : false,
       crossOriginEmbedderPolicy: false,
+      hsts: env.NODE_ENV === 'production' ? {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      } : false,
     }),
   );
   app.use(
@@ -58,8 +76,43 @@ async function bootstrap() {
   app.use(errorMiddleware);
 
   const PORT = env.PORT ?? 4000;
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     logger.info({ port: PORT }, 'Server listening');
+  });
+
+  // Graceful shutdown
+  const shutdown = (signal: string) => {
+    logger.info({ signal }, 'Received shutdown signal, closing server gracefully');
+    server.close(() => {
+      logger.info('HTTP server closed');
+      // Закрываем соединения с БД
+      pool.end().then(() => {
+        logger.info('Database connections closed');
+        process.exit(0);
+      }).catch((err) => {
+        logger.error({ err }, 'Error closing database connections');
+        process.exit(1);
+      });
+    });
+
+    // Принудительное завершение через 10 секунд
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+
+  // Обработка необработанных ошибок
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.error({ reason, promise }, 'Unhandled Rejection');
+  });
+
+  process.on('uncaughtException', (error) => {
+    logger.error({ err: error }, 'Uncaught Exception');
+    shutdown('uncaughtException');
   });
 }
 

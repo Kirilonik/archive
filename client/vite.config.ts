@@ -9,10 +9,24 @@ export default defineConfig(({ mode }) => {
     ...env,
   });
 
+  const isProduction = mode === 'production';
+
   return {
     plugins: [react()],
     define: {
       __API_BASE_URL__: JSON.stringify(appConfig.apiBaseUrl),
+    },
+    build: {
+      sourcemap: !isProduction, // Source maps только в dev
+      minify: isProduction ? 'esbuild' : false,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            charts: ['recharts'],
+          },
+        },
+      },
     },
     server: {
       port: 5173,

@@ -21,7 +21,7 @@ export class SeriesController {
 
   list = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const { query, status, ratingGte, limit, offset } = listQuerySchema.parse({
         query: req.query.query,
         status: req.query.status,
@@ -48,7 +48,7 @@ export class SeriesController {
 
   get = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const item = await this.seriesService.getSeries(Number(req.params.id), userId);
       if (!item) return res.status(404).json({ error: 'Not found' });
       res.json(item);
@@ -59,7 +59,7 @@ export class SeriesController {
 
   getConceptArt = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const payload = await this.seriesService.getSeriesConceptArt(Number(req.params.id), userId);
       if (!payload) return res.status(404).json({ error: 'Not found' });
       res.json(payload);
@@ -70,7 +70,7 @@ export class SeriesController {
 
   getPosters = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const payload = await this.seriesService.getSeriesPosters(Number(req.params.id), userId);
       if (!payload) return res.status(404).json({ error: 'Not found' });
       res.json(payload);
@@ -81,7 +81,7 @@ export class SeriesController {
 
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
       const body = seriesCreateSchema.parse(req.body);
       const created = await this.seriesService.createSeries(body, userId);
@@ -99,7 +99,7 @@ export class SeriesController {
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       const body = seriesUpdateSchema.parse(req.body);
       const updated = await this.seriesService.updateSeries(Number(req.params.id), body, userId);
       if (!updated) return res.status(404).json({ error: 'Not found' });
@@ -117,7 +117,7 @@ export class SeriesController {
 
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.id as number | undefined;
+      const userId = req.user?.id as number | undefined;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
       await this.seriesService.deleteSeries(Number(req.params.id), userId);
       res.status(204).send();
