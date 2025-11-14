@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { MarkdownEditor } from '../components/MarkdownEditor';
+import { RatingEditModal } from '../components/RatingEditModal';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { apiFetch } from '../lib/api';
 import { ConceptArtCarousel } from '../components/ConceptArtCarousel';
 import { formatMinutes, formatBudget } from '../lib/utils';
@@ -174,28 +176,14 @@ export function FilmDetails() {
           </div>
         </div>
       </div>
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => !deleting && setShowDeleteConfirm(false)}>
-          <div className="card max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="text-lg font-semibold text-text mb-2">Удалить фильм</div>
-            <div className="text-sm text-textMuted mb-4">
-              Фильм «{data.title}» будет удалён из библиотеки. Это действие нельзя отменить.
-            </div>
-            <div className="flex justify-end gap-2">
-              <button className="btn px-3 py-1" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
-                Отмена
-              </button>
-              <button
-                className="btn px-3 py-1 bg-red-500/80 hover:bg-red-500 text-white border border-red-500/40"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting ? 'Удаление…' : 'Да, удалить'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        isOpen={showDeleteConfirm}
+        title={data.title}
+        itemType="фильма"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+        deleting={deleting}
+      />
 
       <div className="card mt-6">
         <div className="flex items-center justify-between">
@@ -278,66 +266,42 @@ export function FilmDetails() {
           </div>
         )}
       </div>
-      {ratingEditMode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => !saving && setRatingEditMode(false)}>
-          <div className="card max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="text-lg font-semibold text-text mb-2">Изменить оценку</div>
-            <div className="text-sm text-textMuted mb-4">Обновите свою оценку для фильма «{data.title}».</div>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm text-textMuted mb-1">Новая оценка (0-10)</label>
-                <input
-                  type="number"
-                  min={0}
-                  max={10}
-                  step={0.1}
-                  className="input"
-                  value={ratingDraft}
-                  onChange={(e) => setRatingDraft(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <button className="btn px-3 py-1" onClick={() => setRatingEditMode(false)} disabled={saving}>
-                Отмена
-              </button>
-              <button
-                className="btn btn-primary px-3 py-1"
-                disabled={saving}
-                onClick={async () => {
-                  if (!id) return;
-                  try {
-                    setSaving(true);
-                    const body: { my_rating: number | null } = { my_rating: ratingDraft === '' ? null : Number(ratingDraft) };
-                    const resp = await apiFetch(`/api/films/${id}`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(body),
-                    });
-                    if (!resp.ok) {
-                      toast.error('Ошибка при сохранении оценки');
-                      return;
-                    }
-                    const fresh = await apiFetch(`/api/films/${id}`);
-                    if (fresh.ok) {
-                      const payload: Film = await fresh.json();
-                      setData(payload);
-                    }
-                    setRatingEditMode(false);
-                    toast.success('Оценка сохранена');
-                  } catch {
-                    toast.error('Ошибка при сохранении оценки');
-                  } finally {
-                    setSaving(false);
-                  }
-                }}
-              >
-                Сохранить
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <RatingEditModal
+        isOpen={ratingEditMode}
+        title={data.title}
+        currentRating={data.my_rating}
+        ratingDraft={ratingDraft}
+        onRatingDraftChange={setRatingDraft}
+        onSave={async () => {
+          if (!id) return;
+          try {
+            setSaving(true);
+            const body: { my_rating: number | null } = { my_rating: ratingDraft === '' ? null : Number(ratingDraft) };
+            const resp = await apiFetch(`/api/films/${id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            if (!resp.ok) {
+              toast.error('Ошибка при сохранении оценки');
+              return;
+            }
+            const fresh = await apiFetch(`/api/films/${id}`);
+            if (fresh.ok) {
+              const payload: Film = await fresh.json();
+              setData(payload);
+            }
+            setRatingEditMode(false);
+            toast.success('Оценка сохранена');
+          } catch {
+            toast.error('Ошибка при сохранении оценки');
+          } finally {
+            setSaving(false);
+          }
+        }}
+        onCancel={() => setRatingEditMode(false)}
+        saving={saving}
+      />
     </main>
   );
 }
