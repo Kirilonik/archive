@@ -101,6 +101,26 @@ html, body, #root {
   }
 
   .card:hover {
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+    background: rgba(255, 255, 255, 0.7);
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .card:active {
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+  }
+
+  /* Интерактивные карточки (в библиотеке) с hover эффектом */
+  a.card:hover,
+  .card-interactive:hover {
     transform: translateY(-4px) scale(1.01);
     box-shadow: 
       0 16px 48px rgba(0, 0, 0, 0.12),
@@ -111,7 +131,8 @@ html, body, #root {
     border-color: rgba(0, 0, 0, 0.12);
   }
 
-  .card:active {
+  a.card:active,
+  .card-interactive:active {
     transform: translateY(-1px) scale(1);
     box-shadow: 
       0 8px 24px rgba(0, 0, 0, 0.1),

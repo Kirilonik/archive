@@ -125,10 +125,14 @@ export function FilmDetails() {
             <div className="mt-2 text-textMuted space-y-2">
               <div className="flex flex-wrap gap-3 items-center">
                 {data.year && <span>Год: {data.year}</span>}
-                {data.director && <span className="basis-full sm:basis-auto">Режиссёр: {data.director}</span>}
                 {formattedBudget && <span>Бюджет: {formattedBudget}</span>}
                 {typeof data.revenue === 'number' && <span>Сборы: {data.revenue.toLocaleString()} ₽</span>}
               </div>
+              {data.director && (
+                <div>
+                  <span>Режиссёр: {data.director}</span>
+                </div>
+              )}
               {Array.isArray(data.genres) && data.genres.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {data.genres.map((g: string, i: number) => (
@@ -153,32 +157,6 @@ export function FilmDetails() {
         onCancel={() => setShowDeleteConfirm(false)}
         deleting={deleting}
       />
-
-      <div className="card mt-6">
-        <div className="flex items-center justify-between">
-          <div className="text-xl font-semibold text-text">Концепт-арты</div>
-          {conceptLoading && <div className="text-sm text-textMuted">Загрузка…</div>}
-        </div>
-        {!conceptLoading && conceptError ? (
-          <div className="mt-3 text-sm text-red-300">{conceptError}</div>
-        ) : null}
-        {!conceptLoading && !conceptError && conceptArtItems.length === 0 ? (
-          <div className="mt-3 text-sm text-textMuted">Нет доступных концепт-артов.</div>
-        ) : null}
-        {conceptArtItems.length > 0 ? <div className="mt-4"><ConceptArtCarousel items={conceptArtItems} /></div> : null}
-      </div>
-
-      <div className="card mt-6">
-        <div className="flex items-center justify-between">
-          <div className="text-xl font-semibold text-text">Постеры</div>
-          {posterLoading && <div className="text-sm text-textMuted">Загрузка…</div>}
-        </div>
-        {!posterLoading && posterError ? <div className="mt-3 text-sm text-red-300">{posterError}</div> : null}
-        {!posterLoading && !posterError && posterItems.length === 0 ? (
-          <div className="mt-3 text-sm text-textMuted">Нет доступных постеров.</div>
-        ) : null}
-        {posterItems.length > 0 ? <div className="mt-4"><ConceptArtCarousel items={posterItems} /></div> : null}
-      </div>
 
       <div className="card mt-6">
         <div className="flex items-center justify-between mb-3">
@@ -208,6 +186,32 @@ export function FilmDetails() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="card mt-6">
+        <div className="flex items-center justify-between">
+          <div className="text-xl font-semibold text-text">Концепт-арты</div>
+          {conceptLoading && <div className="text-sm text-textMuted">Загрузка…</div>}
+        </div>
+        {!conceptLoading && conceptError ? (
+          <div className="mt-3 text-sm text-red-300">{conceptError}</div>
+        ) : null}
+        {!conceptLoading && !conceptError && conceptArtItems.length === 0 ? (
+          <div className="mt-3 text-sm text-textMuted">Нет доступных концепт-артов.</div>
+        ) : null}
+        {conceptArtItems.length > 0 ? <div className="mt-4"><ConceptArtCarousel items={conceptArtItems} /></div> : null}
+      </div>
+
+      <div className="card mt-6">
+        <div className="flex items-center justify-between">
+          <div className="text-xl font-semibold text-text">Постеры</div>
+          {posterLoading && <div className="text-sm text-textMuted">Загрузка…</div>}
+        </div>
+        {!posterLoading && posterError ? <div className="mt-3 text-sm text-red-300">{posterError}</div> : null}
+        {!posterLoading && !posterError && posterItems.length === 0 ? (
+          <div className="mt-3 text-sm text-textMuted">Нет доступных постеров.</div>
+        ) : null}
+        {posterItems.length > 0 ? <div className="mt-4"><ConceptArtCarousel items={posterItems} /></div> : null}
       </div>
       <RatingEditModal
         isOpen={ratingEditMode}

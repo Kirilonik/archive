@@ -266,8 +266,12 @@ export function SeriesDetails() {
                 {series.kp_seasonsCount && <span>Сезонов: {series.kp_seasonsCount}</span>}
                 {series.kp_episodesCount && <span>Эпизодов: {series.kp_episodesCount}</span>}
               </div>
+              {series.director && (
+                <div>
+                  <span>Режиссёр: {series.director}</span>
+                </div>
+              )}
               <div className="flex flex-wrap gap-3 items-center">
-                {series.director && <span className="basis-full sm:basis-auto">Режиссёр: {series.director}</span>}
                 {typeof series.budget === 'number' && <span>Бюджет: {series.budget.toLocaleString()} ₽</span>}
                 {typeof series.revenue === 'number' && <span>Сборы: {series.revenue.toLocaleString()} ₽</span>}
                 {episodeDuration && <span>Длительность серии: {episodeDuration}</span>}

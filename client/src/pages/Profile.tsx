@@ -90,6 +90,9 @@ export function Profile() {
       if (fresh.ok) {
         const payload = await fresh.json();
         setData(payload);
+        // Синхронизируем локальные состояния с сохраненными данными
+        setName(payload.profile?.name ?? '');
+        setAvatarUrl(payload.profile?.avatar_url ?? null);
         await refresh();
       }
       toast.success('Профиль успешно сохранён');
@@ -148,20 +151,22 @@ export function Profile() {
                 <label className="block text-sm text-textMuted mb-1">Имя</label>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2">
                   <input className="input sm:flex-1" value={name} onChange={(e) => setName(e.target.value)} />
-                  <div className="flex gap-2 sm:justify-end">
-                    <button
-                      className="btn px-3 py-1"
-                      onClick={() => {
-                        setName(data.profile?.name ?? '');
-                        setAvatarUrl(data.profile?.avatar_url ?? null);
-                      }}
-                    >
-                      Отменить
-                    </button>
-                    <button className="btn btn-primary px-3 py-1" disabled={saving} onClick={saveProfile}>
-                      Сохранить
-                    </button>
-                  </div>
+                  {(name !== (data.profile?.name ?? '') || avatarUrl !== (data.profile?.avatar_url ?? null)) && (
+                    <div className="flex gap-2 sm:justify-end">
+                      <button
+                        className="btn px-3 py-1"
+                        onClick={() => {
+                          setName(data.profile?.name ?? '');
+                          setAvatarUrl(data.profile?.avatar_url ?? null);
+                        }}
+                      >
+                        Отменить
+                      </button>
+                      <button className="btn btn-primary px-3 py-1" disabled={saving} onClick={saveProfile}>
+                        Сохранить
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-2 text-sm text-textMuted">
                   <div className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/15 backdrop-blur-[20px] backdrop-saturate-[180%] px-3 py-1 text-text shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.15)]">
