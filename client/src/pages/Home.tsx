@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SearchBar } from '../components/SearchBar';
 import { Card } from '../components/Card';
+import { AddModal } from '../components/AddModal';
 import { apiJson } from '../lib/api';
 import type { LibraryItemUnion } from '../types';
 
@@ -32,6 +33,7 @@ export function Home() {
   const [filmsState, setFilmsState] = useState<PaginationState>(createPaginationState);
   const [seriesState, setSeriesState] = useState<PaginationState>(createPaginationState);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const loadingRef = useRef(false);
@@ -166,15 +168,32 @@ export function Home() {
     }
   }, [visibleCount, items.length, hasMore, isLoading, loadMore]);
 
+  const handleAddSuccess = useCallback(() => {
+    // Перезагружаем библиотеку после успешного добавления
+    loadMore(true);
+  }, [loadMore]);
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
       <div className="card">
         <div className="flex items-center gap-3">
+          <button
+            className="btn btn-primary px-4 py-2 whitespace-nowrap"
+            onClick={() => setIsAddModalOpen(true)}
+          >
+            Добавить
+          </button>
           <div className="flex-1">
             <SearchBar value={query} onChange={setQuery} />
           </div>
         </div>
       </div>
+
+      <AddModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={handleAddSuccess}
+      />
 
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 mt-6">
         {visibleItems.map((it) => (

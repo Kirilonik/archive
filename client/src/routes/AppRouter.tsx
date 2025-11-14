@@ -5,7 +5,6 @@ import { Profile } from '../pages/Profile';
 import { FilmDetails } from '../pages/FilmDetails';
 import { SeriesDetails } from '../pages/SeriesDetails';
 import { Header } from '../components/Header';
-import { Add } from '../pages/Add';
 import { Login } from '../pages/Login';
 import { Register } from '../pages/Register';
 import { useAuth } from '../context/AuthContext';
@@ -60,7 +59,6 @@ export function AppRouter() {
       <Routes>
         <Route element={<ProtectedLayout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/add" element={<Add />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/films/:id" element={<FilmDetails />} />
           <Route path="/series/:id" element={<SeriesDetails />} />

@@ -12,17 +12,11 @@ export function Header() {
           <div className="flex items-center gap-4">
             <nav className="hidden sm:flex items-center gap-2">
               <NavLink 
-                to="/add" 
-                className={({ isActive }) => 
-                  `btn px-3 py-1 ${isActive ? 'bg-black/10 border-black/20' : ''}`
-                }
-              >
-                Добавить
-              </NavLink>
-              <NavLink 
                 to="/" 
                 className={({ isActive }) => 
-                  `btn px-3 py-1 ${isActive ? 'bg-black/10 border-black/20' : ''}`
+                  isActive 
+                    ? 'btn btn-primary px-3 py-1' 
+                    : 'btn px-3 py-1 bg-white/90 hover:bg-white border-black/15 hover:border-black/20'
                 }
               >
                 Моя библиотека
