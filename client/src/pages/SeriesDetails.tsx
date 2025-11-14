@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { MarkdownEditor } from '../components/MarkdownEditor';
@@ -8,52 +8,37 @@ import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { apiFetch } from '../lib/api';
 import { ConceptArtCarousel } from '../components/ConceptArtCarousel';
 import { useMediaAssets } from '../hooks/useMediaAssets';
+import { useMediaItem } from '../hooks/useMediaItem';
 import type { Series, Season, Episode } from '../types';
 import { formatDate, formatDuration } from '../lib/utils';
 
 export function SeriesDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const [series, setSeries] = useState<Series | null>(null);
+  const {
+    data: series,
+    saving,
+    deleting,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    ratingEditMode,
+    setRatingEditMode,
+    ratingDraft,
+    setRatingDraft,
+    opinionEditMode,
+    setOpinionEditMode,
+    opinionDraft,
+    setOpinionDraft,
+    handleSaveRating,
+    handleSaveOpinion,
+    handleDelete,
+  } = useMediaItem<Series>({ id, type: 'series' });
+
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [activeSeason, setActiveSeason] = useState<number | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
 
-  // inline edit states
-  const [ratingEditMode, setRatingEditMode] = useState(false);
-  const [ratingDraft, setRatingDraft] = useState<string>('');
-  const [opinionEditMode, setOpinionEditMode] = useState(false);
-  const [opinionDraft, setOpinionDraft] = useState<string>('');
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
   const { items: conceptArtItems, loading: conceptLoading, error: conceptError } = useMediaAssets(id, 'series', 'concept-art');
   const { items: posterItems, loading: posterLoading, error: posterError } = useMediaAssets(id, 'series', 'posters');
-
-  useEffect(() => {
-    if (!id) return;
-    let cancelled = false;
-
-    async function loadSeries() {
-      try {
-        const resp = await apiFetch(`/api/series/${id}`);
-        if (!resp.ok) throw new Error();
-        const payload: Series = await resp.json();
-        if (cancelled) return;
-        setSeries(payload);
-        setRatingDraft(payload?.my_rating != null ? String(payload.my_rating) : '');
-        setOpinionDraft(payload?.opinion ?? '');
-      } catch {
-        if (!cancelled) setSeries(null);
-      }
-    }
-
-    loadSeries();
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -197,24 +182,6 @@ export function SeriesDetails() {
   const episodeDuration = typeof series?.film_length === 'number' ? formatDuration(series.film_length) : null;
   const myRatingValue = typeof series?.my_rating === 'number' ? Math.round(series.my_rating * 10) / 10 : null;
 
-  async function handleDelete() {
-    if (!id) return;
-    try {
-      setDeleting(true);
-      const resp = await apiFetch(`/api/series/${id}`, { method: 'DELETE' });
-      if (!resp.ok) {
-        toast.error('Ошибка при удалении сериала');
-        return;
-      }
-      toast.success('Сериал удален из библиотеки');
-      navigate('/');
-    } catch {
-      toast.error('Ошибка при удалении сериала');
-    } finally {
-      setDeleting(false);
-      setShowDeleteConfirm(false);
-    }
-  }
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
@@ -324,33 +291,7 @@ export function SeriesDetails() {
         currentRating={series.my_rating}
         ratingDraft={ratingDraft}
         onRatingDraftChange={setRatingDraft}
-        onSave={async () => {
-          if (!id) return;
-          try {
-            setSaving(true);
-            const body: { my_rating: number | null } = { my_rating: ratingDraft === '' ? null : Number(ratingDraft) };
-            const resp = await apiFetch(`/api/series/${id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-            if (!resp.ok) {
-              toast.error('Ошибка при сохранении оценки');
-              return;
-            }
-            const fresh = await apiFetch(`/api/series/${id}`);
-            if (fresh.ok) {
-              const payload: Series = await fresh.json();
-              setSeries(payload);
-            }
-            setRatingEditMode(false);
-            toast.success('Оценка сохранена');
-          } catch {
-            toast.error('Ошибка при сохранении оценки');
-          } finally {
-            setSaving(false);
-          }
-        }}
+        onSave={handleSaveRating}
         onCancel={() => setRatingEditMode(false)}
         saving={saving}
       />
@@ -378,33 +319,7 @@ export function SeriesDetails() {
               <button
                 className="btn btn-primary px-3 py-1"
                 disabled={saving}
-                onClick={async () => {
-                  if (!id) return;
-                  try {
-                    setSaving(true);
-                    const body: { opinion: string } = { opinion: opinionDraft };
-                    const resp = await apiFetch(`/api/series/${id}`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(body),
-                    });
-                    if (!resp.ok) {
-                      toast.error('Ошибка при сохранении мнения');
-                      return;
-                    }
-                    const fresh = await apiFetch(`/api/series/${id}`);
-                    if (fresh.ok) {
-                      const payload: Series = await fresh.json();
-                      setSeries(payload);
-                    }
-                    setOpinionEditMode(false);
-                    toast.success('Мнение сохранено');
-                  } catch {
-                    toast.error('Ошибка при сохранении мнения');
-                  } finally {
-                    setSaving(false);
-                  }
-                }}
+                onClick={handleSaveOpinion}
               >Сохранить</button>
             </div>
           </div>

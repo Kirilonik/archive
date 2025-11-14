@@ -1,58 +1,37 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { useParams } from 'react-router-dom';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { MarkdownEditor } from '../components/MarkdownEditor';
 import { RatingEditModal } from '../components/RatingEditModal';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
-import { apiFetch } from '../lib/api';
 import { ConceptArtCarousel } from '../components/ConceptArtCarousel';
 import { formatMinutes, formatBudget } from '../lib/utils';
 import { useMediaAssets } from '../hooks/useMediaAssets';
+import { useMediaItem } from '../hooks/useMediaItem';
 import type { Film } from '../types';
 
 export function FilmDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const [data, setData] = useState<Film | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  // Inline edit states
-  const [ratingEditMode, setRatingEditMode] = useState(false);
-  const [ratingDraft, setRatingDraft] = useState<string>('');
-
-  const [opinionEditMode, setOpinionEditMode] = useState(false);
-  const [opinionDraft, setOpinionDraft] = useState<string>('');
+  const {
+    data,
+    saving,
+    deleting,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    ratingEditMode,
+    setRatingEditMode,
+    ratingDraft,
+    setRatingDraft,
+    opinionEditMode,
+    setOpinionEditMode,
+    opinionDraft,
+    setOpinionDraft,
+    handleSaveRating,
+    handleSaveOpinion,
+    handleDelete,
+  } = useMediaItem<Film>({ id, type: 'film' });
 
   const { items: conceptArtItems, loading: conceptLoading, error: conceptError } = useMediaAssets(id, 'film', 'concept-art');
   const { items: posterItems, loading: posterLoading, error: posterError } = useMediaAssets(id, 'film', 'posters');
-
-  useEffect(() => {
-    if (!id) return;
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const resp = await apiFetch(`/api/films/${id}`);
-        if (!resp.ok) throw new Error();
-        const d: Film = await resp.json();
-        if (cancelled) return;
-        setData(d);
-        setRatingDraft(d?.my_rating != null ? String(d.my_rating) : '');
-        setOpinionDraft(d?.opinion ?? '');
-      } catch {
-        if (!cancelled) setData(null);
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
-
 
   if (!data) return <main className="mx-auto max-w-5xl px-4 py-6 text-text">Загрузка...</main>;
 
@@ -60,25 +39,6 @@ export function FilmDetails() {
   const formattedDuration = formatMinutes(data.film_length);
   const formattedBudget = formatBudget(data.budget, data.budget_currency_symbol, data.budget_currency_code);
   const myRatingValue = typeof data.my_rating === 'number' ? Math.round(data.my_rating * 10) / 10 : null;
-
-  async function handleDelete() {
-    if (!id) return;
-    try {
-      setDeleting(true);
-      const resp = await apiFetch(`/api/films/${id}`, { method: 'DELETE' });
-      if (!resp.ok) {
-        toast.error('Ошибка при удалении фильма');
-        return;
-      }
-      toast.success('Фильм удален из библиотеки');
-      navigate('/');
-    } catch {
-      toast.error('Ошибка при удалении фильма');
-    } finally {
-      setDeleting(false);
-      setShowDeleteConfirm(false);
-    }
-  }
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
@@ -234,33 +194,7 @@ export function FilmDetails() {
               <button
                 className="btn btn-primary px-3 py-1"
                 disabled={saving}
-                onClick={async () => {
-                  if (!id) return;
-                  try {
-                    setSaving(true);
-                    const body: { opinion: string } = { opinion: opinionDraft };
-                    const resp = await apiFetch(`/api/films/${id}`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(body),
-                    });
-                    if (!resp.ok) {
-                      toast.error('Ошибка при сохранении мнения');
-                      return;
-                    }
-                    const fresh = await apiFetch(`/api/films/${id}`);
-                    if (fresh.ok) {
-                      const payload: Film = await fresh.json();
-                      setData(payload);
-                    }
-                    setOpinionEditMode(false);
-                    toast.success('Мнение сохранено');
-                  } catch {
-                    toast.error('Ошибка при сохранении мнения');
-                  } finally {
-                    setSaving(false);
-                  }
-                }}
+                onClick={handleSaveOpinion}
               >Сохранить</button>
             </div>
           </div>
@@ -272,33 +206,7 @@ export function FilmDetails() {
         currentRating={data.my_rating}
         ratingDraft={ratingDraft}
         onRatingDraftChange={setRatingDraft}
-        onSave={async () => {
-          if (!id) return;
-          try {
-            setSaving(true);
-            const body: { my_rating: number | null } = { my_rating: ratingDraft === '' ? null : Number(ratingDraft) };
-            const resp = await apiFetch(`/api/films/${id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-            if (!resp.ok) {
-              toast.error('Ошибка при сохранении оценки');
-              return;
-            }
-            const fresh = await apiFetch(`/api/films/${id}`);
-            if (fresh.ok) {
-              const payload: Film = await fresh.json();
-              setData(payload);
-            }
-            setRatingEditMode(false);
-            toast.success('Оценка сохранена');
-          } catch {
-            toast.error('Ошибка при сохранении оценки');
-          } finally {
-            setSaving(false);
-          }
-        }}
+        onSave={handleSaveRating}
         onCancel={() => setRatingEditMode(false)}
         saving={saving}
       />
