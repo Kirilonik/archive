@@ -127,6 +127,7 @@ GitHub Actions (`.github/workflows/ci.yml`) выполняет:
 | Экран | Превью |
 |-------|--------|
 | Главная / библиотека | ![Главная](docs/screenshots/home.png) |
+| Добавление фильма/сериала | ![Добавление](docs/screenshots/add_movie.png) |
 | Карточка фильма | ![Карточка фильма](docs/screenshots/movie.png) |
 | Статистика пользователя | ![Статистика](docs/screenshots/stats.png) |
 

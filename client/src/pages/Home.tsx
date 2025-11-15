@@ -53,6 +53,17 @@ export function Home() {
     return Array.from(genresSet).sort();
   }, [items]);
 
+  // Собираем все kp_id из библиотеки для фильтрации поиска
+  const existingKpIds = useMemo(() => {
+    const kpIdsSet = new Set<number>();
+    items.forEach((item) => {
+      if (item.kp_id !== null && item.kp_id !== undefined) {
+        kpIdsSet.add(item.kp_id);
+      }
+    });
+    return kpIdsSet;
+  }, [items]);
+
   // Фильтруем элементы по выбранным жанрам
   const filteredItems = useMemo(() => {
     if (selectedGenres.size === 0) return items;
@@ -303,6 +314,7 @@ export function Home() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={handleAddSuccess}
+        existingKpIds={existingKpIds}
       />
 
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 mt-6">

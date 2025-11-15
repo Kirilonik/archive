@@ -9,9 +9,10 @@ interface AddModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  existingKpIds?: Set<number>;
 }
 
-export function AddModal({ isOpen, onClose, onSuccess }: AddModalProps) {
+export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set() }: AddModalProps) {
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<SuggestItem[]>([]);
   const [open, setOpen] = useState(false);
@@ -60,9 +61,18 @@ export function AddModal({ isOpen, onClose, onSuccess }: AddModalProps) {
           return;
         }
         const data = await resp.json();
-        setItems(data);
+        // Фильтруем результаты: исключаем уже добавленные в библиотеку
+        const filteredData = Array.isArray(data)
+          ? data.filter((item: SuggestItem) => {
+              // Если у элемента нет id (kp_id), показываем его (на случай если kp_id не определен)
+              if (!item.id) return true;
+              // Исключаем элементы, которые уже есть в библиотеке
+              return !existingKpIds.has(item.id);
+            })
+          : [];
+        setItems(filteredData);
         // Открываем предложения только если есть результаты
-        if (Array.isArray(data) && data.length > 0) {
+        if (filteredData.length > 0) {
           setOpen(true);
         }
       } catch {
@@ -77,7 +87,7 @@ export function AddModal({ isOpen, onClose, onSuccess }: AddModalProps) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [query]);
+  }, [query, existingKpIds]);
 
   // Закрываем предложения при клике вне области поиска
   useEffect(() => {
