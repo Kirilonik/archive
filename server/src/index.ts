@@ -76,11 +76,14 @@ async function bootstrap() {
   app.use(errorMiddleware);
 
   // Запускаем сервер сразу, чтобы Railway мог подключиться
-  // Используем process.env.PORT напрямую для совместимости с Railway
-  // Railway автоматически устанавливает переменную PORT
-  const PORT = Number(process.env.PORT) || env.PORT || 4000;
+  // Railway автоматически устанавливает переменную PORT через process.env.PORT
+  // Используем process.env.PORT в приоритете, так как Railway может использовать другой порт
+  const PORT = process.env.PORT ? Number(process.env.PORT) : (env.PORT ?? 4000);
+  if (!PORT || PORT <= 0) {
+    throw new Error(`Invalid PORT: ${process.env.PORT}`);
+  }
   const server = app.listen(PORT, '0.0.0.0', () => {
-    logger.info({ port: PORT, host: '0.0.0.0', envPort: process.env.PORT }, 'Server listening');
+    logger.info({ port: PORT, host: '0.0.0.0', envPort: process.env.PORT, configPort: env.PORT }, 'Server listening');
   });
 
   // Запускаем миграции после старта сервера в фоне
