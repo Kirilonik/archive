@@ -92,10 +92,11 @@ async function bootstrap() {
   if (!PORT || PORT <= 0) {
     throw new Error(`Invalid PORT: ${process.env.PORT}`);
   }
-  // Используем '::' для прослушивания на всех интерфейсах (IPv4 и IPv6)
+  // Запускаем сервер на всех интерфейсах
+  // В Node.js, если не указать host, сервер будет слушать на всех интерфейсах (IPv4 и IPv6)
   // Это необходимо для совместимости с Railway, который может использовать IPv6 для проксирования
-  const server = app.listen(PORT, '::', () => {
-    logger.info({ port: PORT, host: ':: (all interfaces)', envPort: process.env.PORT, configPort: env.PORT }, 'Server listening');
+  const server = app.listen(PORT, () => {
+    logger.info({ port: PORT, host: 'all interfaces (IPv4 and IPv6)', envPort: process.env.PORT, configPort: env.PORT }, 'Server listening');
   });
 
   // Запускаем миграции после старта сервера в фоне
