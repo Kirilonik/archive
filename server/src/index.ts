@@ -71,15 +71,21 @@ async function bootstrap() {
   app.use(csrfMiddleware);
   app.use(originValidationMiddleware);
 
-  await runMigrations();
-
+  // Регистрируем роуты до запуска сервера, чтобы healthcheck был доступен сразу
   registerRoutes(app);
-
   app.use(errorMiddleware);
 
+  // Запускаем сервер сразу, чтобы Railway мог подключиться
   const PORT = env.PORT ?? 4000;
   const server = app.listen(PORT, '0.0.0.0', () => {
     logger.info({ port: PORT, host: '0.0.0.0' }, 'Server listening');
+  });
+
+  // Запускаем миграции после старта сервера в фоне
+  // Это позволяет Railway подключиться к серверу сразу, даже если миграции еще выполняются
+  runMigrations().catch((err) => {
+    logger.error({ err }, 'Migration failed');
+    // Не завершаем процесс при ошибке миграции, чтобы сервер продолжал работать
   });
 
   // Graceful shutdown
