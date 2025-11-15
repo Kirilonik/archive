@@ -12,6 +12,14 @@ export class SharpAvatarProcessor implements AvatarProcessor {
     const commaIdx = dataUrl.indexOf(',');
     if (commaIdx === -1) return dataUrl;
     const base64 = dataUrl.slice(commaIdx + 1);
+    
+    // Проверка размера base64 строки до декодирования (примерно 4/3 от размера бинарных данных)
+    // Максимальный размер base64 для 5MB файла: ~6.67MB
+    const MAX_BASE64_SIZE = Math.ceil(MAX_AVATAR_SIZE * 4 / 3);
+    if (base64.length > MAX_BASE64_SIZE) {
+      throw new Error(`Размер файла превышает ${MAX_AVATAR_SIZE / 1024 / 1024}MB`);
+    }
+    
     const input = Buffer.from(base64, 'base64');
 
     // Проверка размера файла

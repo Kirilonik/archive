@@ -1,7 +1,9 @@
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { filmCreateSchema, filmUpdateSchema } from '../validators/films.schema.js';
+import { validateIdParam } from '../validators/params.schema.js';
 import { FilmService } from '../../application/films/film.service.js';
+import { isErrorWithStatus } from '../../shared/error-utils.js';
 
 const listQuerySchema = z.object({
   query: z.string().optional(),
@@ -49,10 +51,14 @@ export class FilmsController {
   get = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id as number | undefined;
-      const film = await this.filmService.getFilm(Number(req.params.id), userId);
+      const id = validateIdParam(req.params.id);
+      const film = await this.filmService.getFilm(id, userId);
       if (!film) return res.status(404).json({ error: 'Not found' });
       res.json(film);
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
       next(error);
     }
   };
@@ -60,10 +66,14 @@ export class FilmsController {
   getConceptArt = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id as number | undefined;
-      const conceptArt = await this.filmService.getFilmConceptArt(Number(req.params.id), userId);
+      const id = validateIdParam(req.params.id);
+      const conceptArt = await this.filmService.getFilmConceptArt(id, userId);
       if (!conceptArt) return res.status(404).json({ error: 'Not found' });
       res.json(conceptArt);
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
       next(error);
     }
   };
@@ -71,10 +81,14 @@ export class FilmsController {
   getPosters = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id as number | undefined;
-      const posters = await this.filmService.getFilmPosters(Number(req.params.id), userId);
+      const id = validateIdParam(req.params.id);
+      const posters = await this.filmService.getFilmPosters(id, userId);
       if (!posters) return res.status(404).json({ error: 'Not found' });
       res.json(posters);
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
       next(error);
     }
   };
@@ -86,11 +100,11 @@ export class FilmsController {
       const body = filmCreateSchema.parse(req.body);
       const created = await this.filmService.createFilm(body, userId);
       res.status(201).json(created);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.message });
       }
-      if (error?.status === 409) {
+      if (isErrorWithStatus(error) && error.status === 409) {
         return res.status(409).json({ error: 'Already exists' });
       }
       next(error);
@@ -100,15 +114,19 @@ export class FilmsController {
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id as number | undefined;
+      const id = validateIdParam(req.params.id);
       const body = filmUpdateSchema.parse(req.body);
-      const updated = await this.filmService.updateFilm(Number(req.params.id), body, userId);
+      const updated = await this.filmService.updateFilm(id, body, userId);
       if (!updated) return res.status(404).json({ error: 'Not found' });
       res.json(updated);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.message });
       }
-      if (error?.status === 403) {
+      if (isErrorWithStatus(error) && error.status === 403) {
         return res.status(403).json({ error: 'Forbidden' });
       }
       next(error);
@@ -119,10 +137,14 @@ export class FilmsController {
     try {
       const userId = req.user?.id as number | undefined;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-      await this.filmService.deleteFilm(Number(req.params.id), userId);
+      const id = validateIdParam(req.params.id);
+      await this.filmService.deleteFilm(id, userId);
       res.status(204).send();
-    } catch (error: any) {
-      if (error?.status === 403) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
+      if (isErrorWithStatus(error) && error.status === 403) {
         return res.status(403).json({ error: 'Forbidden' });
       }
       next(error);

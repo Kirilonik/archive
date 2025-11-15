@@ -163,8 +163,12 @@ export function Home() {
       } catch (error) {
         if (controller.signal.aborted) return;
         console.error('Не удалось загрузить библиотеку', error);
-        setItems([]);
-        setVisibleCount(0);
+        // Не сбрасываем все данные при ошибке - сохраняем уже загруженные
+        // Только сбрасываем состояние пагинации, чтобы можно было повторить попытку
+        if (reset) {
+          setItems([]);
+          setVisibleCount(0);
+        }
         setFilmsState(createPaginationState());
         setSeriesState(createPaginationState());
       } finally {

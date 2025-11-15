@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AuthService } from '../../application/auth/auth.service.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../shared/logger.js';
+import { isErrorWithStatus, getErrorMessage } from '../../shared/error-utils.js';
 
 /**
  * Устанавливает refresh token в безопасную httpOnly cookie
@@ -107,27 +108,29 @@ export class AuthController {
       setRefreshCookie(res, result.tokens.refreshToken);
       setAccessCookie(res, result.tokens.accessToken);
       res.json({ user: toApiUser(result.user) });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.message });
       }
-      if (error?.status === 401) {
+      if (isErrorWithStatus(error) && error.status === 401) {
         // Согласно best practices: логируем ошибки верификации Google токенов для мониторинга
+        const cause = error.cause instanceof Error ? error.cause.message : undefined;
         logger.warn({ 
-          error: error.message, 
-          cause: error.cause?.message,
+          error: getErrorMessage(error), 
+          cause,
           type: 'google_token_verification_failed' 
         }, 'Google token verification failed');
         return res.status(401).json({ error: 'Не удалось подтвердить Google аккаунт' });
       }
       // Логируем неожиданные ошибки
-      logger.error({ error: error?.message, stack: error?.stack }, 'Unexpected error in Google login');
+      const stack = error instanceof Error ? error.stack : undefined;
+      logger.error({ error: getErrorMessage(error), stack }, 'Unexpected error in Google login');
       next(error);
     }
   };
 
   refresh = async (req: Request, res: Response) => {
-    const token = (req as any).cookies?.refresh_token || req.cookies?.refresh_token;
+    const token = req.cookies?.refresh_token;
     if (!token) {
       // Согласно best practices: токен не найден - пользователь должен войти заново
       return res.status(401).json({ error: 'Refresh token not found' });
@@ -147,18 +150,20 @@ export class AuthController {
       setRefreshCookie(res, tokens.refreshToken);
       setAccessCookie(res, tokens.accessToken);
       res.json({ ok: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Обработка истечения или отзыва токена
       const isProd = env.NODE_ENV === 'production';
       res.clearCookie('refresh_token', { path: '/api/auth', httpOnly: true, secure: isProd, sameSite: 'lax' });
       res.clearCookie('access_token', { path: '/', httpOnly: true, secure: isProd, sameSite: 'lax' });
       
       // Различаем типы ошибок согласно best practices
-      if (error?.name === 'TokenExpiredError') {
-        return res.status(401).json({ error: 'Refresh token expired' });
-      }
-      if (error?.name === 'JsonWebTokenError') {
-        return res.status(401).json({ error: 'Invalid refresh token' });
+      if (error && typeof error === 'object' && 'name' in error) {
+        if (error.name === 'TokenExpiredError') {
+          return res.status(401).json({ error: 'Refresh token expired' });
+        }
+        if (error.name === 'JsonWebTokenError') {
+          return res.status(401).json({ error: 'Invalid refresh token' });
+        }
       }
       return res.status(401).json({ error: 'Token verification failed' });
     }

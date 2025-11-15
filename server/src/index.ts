@@ -40,8 +40,8 @@ async function bootstrap() {
       contentSecurityPolicy: env.NODE_ENV === 'production' ? {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // TODO: убрать unsafe для продакшена
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'", "'strict-dynamic'"], // Используем strict-dynamic вместо unsafe-inline/unsafe-eval
+          styleSrc: ["'self'", "'unsafe-inline'"], // unsafe-inline для стилей допустим
           imgSrc: ["'self'", "data:", "https:"],
           connectSrc: ["'self'", env.API_BASE_URL || '', ...env.allowedOrigins],
           fontSrc: ["'self'", "data:"],

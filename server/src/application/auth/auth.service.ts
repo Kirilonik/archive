@@ -34,7 +34,7 @@ export class AuthService {
   async register(input: { name?: string | null; email: string; password: string }): Promise<{ user: AuthUser; tokens: TokenPair }> {
     const existing = await this.repository.findByEmail(input.email);
     if (existing) {
-      const err: any = new Error('User exists');
+      const err = new Error('User exists') as Error & { status: number };
       err.status = 409;
       throw err;
     }
@@ -73,12 +73,14 @@ export class AuthService {
     try {
       // Согласно best practices: проверка токена с обработкой различных типов ошибок
       return jwt.verify(token, env.JWT_REFRESH_SECRET) as { id: number; email: string; iat: number; exp: number };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Логируем ошибки верификации для мониторинга отзыва токенов
-      if (error?.name === 'TokenExpiredError') {
-        logger.debug({ exp: error.expiredAt }, 'Refresh token expired');
-      } else if (error?.name === 'JsonWebTokenError') {
-        logger.warn({ error: error.message }, 'Invalid refresh token format');
+      if (error && typeof error === 'object' && 'name' in error) {
+        if (error.name === 'TokenExpiredError' && 'expiredAt' in error) {
+          logger.debug({ exp: error.expiredAt }, 'Refresh token expired');
+        } else if (error.name === 'JsonWebTokenError' && 'message' in error) {
+          logger.warn({ error: String(error.message) }, 'Invalid refresh token format');
+        }
       }
       throw error;
     }
@@ -91,7 +93,7 @@ export class AuthService {
   }
 
   async loginWithGoogle(idToken: string): Promise<{ user: AuthUser; tokens: TokenPair }> {
-    let payload: Record<string, any> | undefined;
+    let payload: Record<string, unknown> | undefined;
     try {
       // Согласно best practices: верификация токена с указанием audience
       const ticket = await this.googleClient.verifyIdToken({
@@ -99,14 +101,16 @@ export class AuthService {
         audience: env.GOOGLE_CLIENT_ID,
       });
       payload = ticket.getPayload();
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Согласно best practices: логирование ошибок верификации для мониторинга
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorCode = err && typeof err === 'object' && 'code' in err ? String(err.code) : undefined;
       logger.warn({ 
-        error: err?.message, 
-        code: err?.code,
+        error: errorMessage, 
+        code: errorCode,
         type: 'google_id_token_verification_error' 
       }, 'Google ID token verification failed');
-      const error: any = new Error('Не удалось проверить Google токен');
+      const error = new Error('Не удалось проверить Google токен') as Error & { status: number; cause: unknown };
       error.status = 401;
       error.cause = err;
       throw error;
@@ -114,7 +118,7 @@ export class AuthService {
 
     if (!payload?.sub) {
       logger.warn({ payload: payload ? 'present but missing sub' : 'missing' }, 'Invalid Google token payload');
-      const error: any = new Error('Некорректный ответ Google');
+      const error = new Error('Некорректный ответ Google') as Error & { status: number };
       error.status = 401;
       throw error;
     }

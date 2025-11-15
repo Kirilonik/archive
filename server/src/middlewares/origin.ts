@@ -21,6 +21,7 @@ export function originValidationMiddleware(req: Request, res: Response, next: Ne
     return;
   }
 
+  // Для небезопасных методов требуем наличие валидного origin или referer
   const headerOrigin = extractOrigin(req.headers.origin as string | undefined);
   if (headerOrigin) {
     if (allowedOrigins.has(headerOrigin)) {
@@ -32,12 +33,17 @@ export function originValidationMiddleware(req: Request, res: Response, next: Ne
   }
 
   const refererOrigin = extractOrigin(req.headers.referer as string | undefined);
-  if (refererOrigin && !allowedOrigins.has(refererOrigin)) {
+  if (refererOrigin) {
+    if (allowedOrigins.has(refererOrigin)) {
+      next();
+      return;
+    }
     res.status(403).json({ error: 'Origin not allowed' });
     return;
   }
 
-  next();
+  // Если нет ни origin, ни referer для небезопасного метода - отклоняем
+  res.status(403).json({ error: 'Origin validation required for this request' });
 }
 
 

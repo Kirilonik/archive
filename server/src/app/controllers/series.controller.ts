@@ -1,7 +1,9 @@
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { seriesCreateSchema, seriesUpdateSchema } from '../validators/series.schema.js';
+import { validateIdParam } from '../validators/params.schema.js';
 import { SeriesService } from '../../application/series/series.service.js';
+import { isErrorWithStatus } from '../../shared/error-utils.js';
 
 const listQuerySchema = z.object({
   query: z.string().optional(),
@@ -49,10 +51,14 @@ export class SeriesController {
   get = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id as number | undefined;
-      const item = await this.seriesService.getSeries(Number(req.params.id), userId);
+      const id = validateIdParam(req.params.id);
+      const item = await this.seriesService.getSeries(id, userId);
       if (!item) return res.status(404).json({ error: 'Not found' });
       res.json(item);
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
       next(error);
     }
   };
@@ -60,10 +66,14 @@ export class SeriesController {
   getConceptArt = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id as number | undefined;
-      const payload = await this.seriesService.getSeriesConceptArt(Number(req.params.id), userId);
+      const id = validateIdParam(req.params.id);
+      const payload = await this.seriesService.getSeriesConceptArt(id, userId);
       if (!payload) return res.status(404).json({ error: 'Not found' });
       res.json(payload);
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
       next(error);
     }
   };
@@ -71,10 +81,14 @@ export class SeriesController {
   getPosters = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id as number | undefined;
-      const payload = await this.seriesService.getSeriesPosters(Number(req.params.id), userId);
+      const id = validateIdParam(req.params.id);
+      const payload = await this.seriesService.getSeriesPosters(id, userId);
       if (!payload) return res.status(404).json({ error: 'Not found' });
       res.json(payload);
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
       next(error);
     }
   };
@@ -86,11 +100,11 @@ export class SeriesController {
       const body = seriesCreateSchema.parse(req.body);
       const created = await this.seriesService.createSeries(body, userId);
       res.status(201).json(created);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.message });
       }
-      if (error?.status === 409) {
+      if (isErrorWithStatus(error) && error.status === 409) {
         return res.status(409).json({ error: 'Already exists' });
       }
       next(error);
@@ -100,15 +114,19 @@ export class SeriesController {
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id as number | undefined;
+      const id = validateIdParam(req.params.id);
       const body = seriesUpdateSchema.parse(req.body);
-      const updated = await this.seriesService.updateSeries(Number(req.params.id), body, userId);
+      const updated = await this.seriesService.updateSeries(id, body, userId);
       if (!updated) return res.status(404).json({ error: 'Not found' });
       res.json(updated);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.message });
       }
-      if (error?.status === 403) {
+      if (isErrorWithStatus(error) && error.status === 403) {
         return res.status(403).json({ error: 'Forbidden' });
       }
       next(error);
@@ -119,10 +137,14 @@ export class SeriesController {
     try {
       const userId = req.user?.id as number | undefined;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-      await this.seriesService.deleteSeries(Number(req.params.id), userId);
+      const id = validateIdParam(req.params.id);
+      await this.seriesService.deleteSeries(id, userId);
       res.status(204).send();
-    } catch (error: any) {
-      if (error?.status === 403) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
+      if (isErrorWithStatus(error) && error.status === 403) {
         return res.status(403).json({ error: 'Forbidden' });
       }
       next(error);

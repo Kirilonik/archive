@@ -12,7 +12,7 @@ function ensureCsrfCookie(req: Request, res: Response): string {
     token = randomUUID();
     const isProd = env.NODE_ENV === 'production';
     res.cookie(CSRF_COOKIE_NAME, token, {
-      httpOnly: false,
+      httpOnly: true, // Безопасно: токен недоступен через JavaScript
       secure: isProd,
       sameSite: 'lax',
       path: '/',
@@ -20,6 +20,12 @@ function ensureCsrfCookie(req: Request, res: Response): string {
     });
   }
   return token;
+}
+
+// Экспортируем функцию для получения токена через API
+export function getCsrfToken(req: Request, res: Response): void {
+  const token = ensureCsrfCookie(req, res);
+  res.json({ token });
 }
 
 export function csrfMiddleware(req: Request, res: Response, next: NextFunction): void {

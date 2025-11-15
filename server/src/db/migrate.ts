@@ -55,7 +55,15 @@ export async function runMigrations() {
         logger.info({ migration: name }, '[migrate] applied');
       } catch (e) {
         await client.query('ROLLBACK');
-        logger.error({ err: e, migration: name }, '[migrate] failed');
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+        const errorStack = e instanceof Error ? e.stack : undefined;
+        logger.error({ 
+          err: e, 
+          migration: name,
+          file: file,
+          error: errorMessage,
+          stack: errorStack
+        }, '[migrate] failed');
         throw e;
       }
     }

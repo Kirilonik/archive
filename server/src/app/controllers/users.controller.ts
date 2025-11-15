@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { UserService } from '../../application/users/user.service.js';
 import { StatsService } from '../../application/stats/stats.service.js';
+import { validateIdParam } from '../validators/params.schema.js';
 
 function toApiProfile(profile: { id: number; email: string; name: string | null; avatarUrl: string | null }) {
   return {
@@ -20,7 +21,7 @@ export class UsersController {
   getProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id;
-      const requestedId = Number(req.params.id);
+      const requestedId = validateIdParam(req.params.id);
       if (!userId || userId !== requestedId) {
         return res.status(403).json({ error: 'Forbidden' });
       }
@@ -34,6 +35,9 @@ export class UsersController {
         stats,
       });
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
       next(error);
     }
   };
@@ -41,7 +45,7 @@ export class UsersController {
   updateProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id as number;
-      const requestedId = Number(req.params.id);
+      const requestedId = validateIdParam(req.params.id);
       if (!userId || userId !== requestedId) {
         return res.status(403).json({ error: 'Forbidden' });
       }
@@ -54,6 +58,9 @@ export class UsersController {
       }
       res.json(toApiProfile(updated));
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
       next(error);
     }
   };
@@ -61,13 +68,16 @@ export class UsersController {
   deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id as number;
-      const requestedId = Number(req.params.id);
+      const requestedId = validateIdParam(req.params.id);
       if (!userId || userId !== requestedId) {
         return res.status(403).json({ error: 'Forbidden' });
       }
       await this.userService.deleteUser(userId);
       res.status(204).send();
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
       next(error);
     }
   };
@@ -75,7 +85,7 @@ export class UsersController {
   getDetailedStats = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id as number;
-      const requestedId = Number(req.params.id);
+      const requestedId = validateIdParam(req.params.id);
       if (!userId || userId !== requestedId) {
         return res.status(403).json({ error: 'Forbidden' });
       }
@@ -84,6 +94,9 @@ export class UsersController {
       const stats = await this.statsService.getDetailed(userId);
       res.json(stats);
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Invalid ID')) {
+        return res.status(400).json({ error: error.message });
+      }
       next(error);
     }
   };
