@@ -66,6 +66,16 @@ async function bootstrap() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
   app.use(cookieParser());
+  // Простой healthcheck endpoint БЕЗ middleware для Railway
+  // Это позволяет Railway подключиться сразу, даже если другие middleware еще не готовы
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      ok: true, 
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   app.use(requestLogger);
   app.use(metricsMiddleware); // Сбор метрик для Prometheus
   app.use(csrfMiddleware);
