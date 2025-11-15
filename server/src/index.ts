@@ -76,9 +76,11 @@ async function bootstrap() {
   app.use(errorMiddleware);
 
   // Запускаем сервер сразу, чтобы Railway мог подключиться
-  const PORT = env.PORT ?? 4000;
+  // Используем process.env.PORT напрямую для совместимости с Railway
+  // Railway автоматически устанавливает переменную PORT
+  const PORT = Number(process.env.PORT) || env.PORT || 4000;
   const server = app.listen(PORT, '0.0.0.0', () => {
-    logger.info({ port: PORT, host: '0.0.0.0' }, 'Server listening');
+    logger.info({ port: PORT, host: '0.0.0.0', envPort: process.env.PORT }, 'Server listening');
   });
 
   // Запускаем миграции после старта сервера в фоне
