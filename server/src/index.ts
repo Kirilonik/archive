@@ -78,8 +78,8 @@ async function bootstrap() {
   app.use(errorMiddleware);
 
   const PORT = env.PORT ?? 4000;
-  const server = app.listen(PORT, () => {
-    logger.info({ port: PORT }, 'Server listening');
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    logger.info({ port: PORT, host: '0.0.0.0' }, 'Server listening');
   });
 
   // Graceful shutdown
