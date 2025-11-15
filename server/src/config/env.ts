@@ -24,10 +24,9 @@ const envSchema = z
       .string()
       .min(10, 'JWT_SECRET must be at least 10 characters long')
       .refine(
-        (val, ctx) => {
-          // Используем уже распарсенные значения из контекста для проверки NODE_ENV
-          const nodeEnv = ctx.path.length > 0 ? process.env.NODE_ENV : 'development';
-          const isProd = nodeEnv === 'production';
+        (val) => {
+          // Проверяем NODE_ENV из process.env
+          const isProd = process.env.NODE_ENV === 'production';
           // Для миграций (когда запускается migrate.js) разрешаем дефолтные значения
           const isMigration = process.argv[1]?.includes('migrate.js');
           if (!isProd || isMigration) return true;
@@ -42,9 +41,8 @@ const envSchema = z
       .string()
       .min(10, 'JWT_REFRESH_SECRET must be at least 10 characters long')
       .refine(
-        (val, ctx) => {
-          const nodeEnv = ctx.path.length > 0 ? process.env.NODE_ENV : 'development';
-          const isProd = nodeEnv === 'production';
+        (val) => {
+          const isProd = process.env.NODE_ENV === 'production';
           // Для миграций разрешаем дефолтные значения
           const isMigration = process.argv[1]?.includes('migrate.js');
           if (!isProd || isMigration) return true;

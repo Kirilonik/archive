@@ -93,14 +93,14 @@ export class AuthService {
   }
 
   async loginWithGoogle(idToken: string): Promise<{ user: AuthUser; tokens: TokenPair }> {
-    let payload: Record<string, unknown> | undefined;
+    let payload: { sub?: string; email?: string; name?: string; picture?: string } | undefined;
     try {
       // Согласно best practices: верификация токена с указанием audience
       const ticket = await this.googleClient.verifyIdToken({
         idToken,
         audience: env.GOOGLE_CLIENT_ID,
       });
-      payload = ticket.getPayload();
+      payload = ticket.getPayload() as { sub?: string; email?: string; name?: string; picture?: string } | undefined;
     } catch (err: unknown) {
       // Согласно best practices: логирование ошибок верификации для мониторинга
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
