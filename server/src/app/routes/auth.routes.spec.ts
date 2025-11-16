@@ -53,7 +53,7 @@ describe('auth routes', () => {
 
     const response = await request(app)
       .post('/api/auth/register')
-      .send({ name: 'Tester', email: user.email, password: 'password' });
+      .send({ name: 'Tester', email: user.email, password: 'Password123' });
 
     expect(response.status).toBe(201);
     expect(response.body.user).toEqual({
