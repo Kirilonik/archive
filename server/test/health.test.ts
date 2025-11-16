@@ -16,7 +16,8 @@ describe('health', () => {
     const app = buildApp();
     const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ ok: true });
+    expect(res.body).toMatchObject({ ok: true, status: 'healthy' });
+    expect(res.body.timestamp).toBeDefined();
   });
 });
 

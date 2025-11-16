@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import type { SeriesRepository, UserSeriesRow } from '../../domain/series/series.types.js';
 import type { KinopoiskClient, KpEnriched } from '../../domain/integrations/kinopoisk.types.js';
 import { SeriesService } from './series.service.js';

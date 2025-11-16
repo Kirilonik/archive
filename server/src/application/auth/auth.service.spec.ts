@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import type { AuthRepository, PasswordHasher, AuthUser, AuthUserWithPassword } from '../../domain/auth/auth.types.js';
 import { AuthService } from './auth.service.js';
 

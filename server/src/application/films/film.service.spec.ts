@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import type { FilmsRepository, UserFilmRow } from '../../domain/films/film.types.js';
 import type { KinopoiskClient, KpEnriched } from '../../domain/integrations/kinopoisk.types.js';
 import { FilmService } from './film.service.js';

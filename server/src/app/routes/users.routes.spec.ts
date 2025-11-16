@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';

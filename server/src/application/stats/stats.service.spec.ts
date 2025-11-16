@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { StatsService } from './stats.service.js';
 import type { StatsRepository, UserSummaryStats, UserDetailedStats } from '../../domain/stats/stats.types.js';
 

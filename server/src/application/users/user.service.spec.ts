@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { UserService } from './user.service.js';
 import type { UsersRepository, AvatarProcessor, UserProfile } from '../../domain/users/user.types.js';
 
