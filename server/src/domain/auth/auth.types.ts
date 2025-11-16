@@ -42,7 +42,7 @@ export interface AuthRepository {
 
 export interface PasswordHasher {
   hash(password: string): Promise<string>;
-  compare(password: string, passwordHash: string): Promise<boolean>;
+  compare(password: string, passwordHash: string | null): Promise<boolean>;
 }
 
 export interface TokenPair {

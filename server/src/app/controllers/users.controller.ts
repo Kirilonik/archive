@@ -2,6 +2,23 @@ import type { Request, Response, NextFunction } from 'express';
 import { UserService } from '../../application/users/user.service.js';
 import { StatsService } from '../../application/stats/stats.service.js';
 import { validateIdParam } from '../validators/params.schema.js';
+import { logUnauthorizedAccessAttempt } from '../../middlewares/security-logger.js';
+
+/**
+ * Получение IP адреса клиента
+ */
+function getClientIp(req: Request): string {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (forwardedFor) {
+    const ips = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
+    return ips.split(',')[0].trim();
+  }
+  const realIp = req.headers['x-real-ip'];
+  if (realIp) {
+    return Array.isArray(realIp) ? realIp[0] : realIp;
+  }
+  return req.ip || 'unknown';
+}
 
 function toApiProfile(profile: { id: number; email: string; name: string | null; avatarUrl: string | null }) {
   return {
@@ -23,6 +40,8 @@ export class UsersController {
       const userId = req.user?.id;
       const requestedId = validateIdParam(req.params.id);
       if (!userId || userId !== requestedId) {
+        const ip = getClientIp(req);
+        logUnauthorizedAccessAttempt(userId, requestedId, 'user_profile', ip);
         return res.status(403).json({ error: 'Forbidden' });
       }
       const profile = await this.userService.getUserProfile(userId);
@@ -47,6 +66,8 @@ export class UsersController {
       const userId = req.user?.id as number;
       const requestedId = validateIdParam(req.params.id);
       if (!userId || userId !== requestedId) {
+        const ip = getClientIp(req);
+        logUnauthorizedAccessAttempt(userId, requestedId, 'user_profile', ip);
         return res.status(403).json({ error: 'Forbidden' });
       }
       const updated = await this.userService.updateUserProfile(userId, {
@@ -70,6 +91,8 @@ export class UsersController {
       const userId = req.user?.id as number;
       const requestedId = validateIdParam(req.params.id);
       if (!userId || userId !== requestedId) {
+        const ip = getClientIp(req);
+        logUnauthorizedAccessAttempt(userId, requestedId, 'user_delete', ip);
         return res.status(403).json({ error: 'Forbidden' });
       }
       await this.userService.deleteUser(userId);
@@ -87,6 +110,8 @@ export class UsersController {
       const userId = req.user?.id as number;
       const requestedId = validateIdParam(req.params.id);
       if (!userId || userId !== requestedId) {
+        const ip = getClientIp(req);
+        logUnauthorizedAccessAttempt(userId, requestedId, 'user_stats', ip);
         return res.status(403).json({ error: 'Forbidden' });
       }
       const profile = await this.userService.getUserProfile(userId);

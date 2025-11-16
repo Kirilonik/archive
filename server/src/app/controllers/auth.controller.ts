@@ -4,6 +4,23 @@ import { AuthService } from '../../application/auth/auth.service.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../shared/logger.js';
 import { isErrorWithStatus, getErrorMessage } from '../../shared/error-utils.js';
+import { logFailedLoginAttempt } from '../../middlewares/security-logger.js';
+
+/**
+ * Получение IP адреса клиента
+ */
+function getClientIp(req: Request): string {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (forwardedFor) {
+    const ips = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
+    return ips.split(',')[0].trim();
+  }
+  const realIp = req.headers['x-real-ip'];
+  if (realIp) {
+    return Array.isArray(realIp) ? realIp[0] : realIp;
+  }
+  return req.ip || 'unknown';
+}
 
 /**
  * Устанавливает refresh token в безопасную httpOnly cookie
@@ -53,14 +70,45 @@ export class AuthController {
     private readonly getProfileById: (userId: number) => Promise<{ id: number; email: string; name: string | null; avatarUrl: string | null } | null>,
   ) {}
 
+  /**
+   * Валидация сложности пароля
+   * Требования:
+   * - Минимум 8 символов
+   * - Хотя бы одна заглавная буква
+   * - Хотя бы одна строчная буква
+   * - Хотя бы одна цифра
+   */
+  private validatePasswordStrength(password: string): { valid: boolean; error?: string } {
+    if (password.length < 8) {
+      return { valid: false, error: 'Пароль должен содержать минимум 8 символов' };
+    }
+    if (!/[A-Z]/.test(password)) {
+      return { valid: false, error: 'Пароль должен содержать хотя бы одну заглавную букву' };
+    }
+    if (!/[a-z]/.test(password)) {
+      return { valid: false, error: 'Пароль должен содержать хотя бы одну строчную букву' };
+    }
+    if (!/[0-9]/.test(password)) {
+      return { valid: false, error: 'Пароль должен содержать хотя бы одну цифру' };
+    }
+    return { valid: true };
+  }
+
   register = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const schema = z.object({
         name: z.string().optional(),
         email: z.string().email(),
-        password: z.string().min(6),
+        password: z.string().min(8),
       });
       const { name, email, password } = schema.parse(req.body);
+      
+      // Проверка сложности пароля
+      const passwordValidation = this.validatePasswordStrength(password);
+      if (!passwordValidation.valid) {
+        return res.status(400).json({ error: passwordValidation.error });
+      }
+      
       const { user, tokens } = await this.authService.register({ name: name ?? null, email, password });
       setRefreshCookie(res, tokens.refreshToken);
       setAccessCookie(res, tokens.accessToken);
@@ -83,8 +131,11 @@ export class AuthController {
         password: z.string(),
       });
       const { email, password } = schema.parse(req.body);
+      const ip = getClientIp(req);
       const result = await this.authService.login({ email, password });
       if (!result) {
+        // Логируем неудачную попытку входа
+        logFailedLoginAttempt(email, ip, 'invalid_credentials');
         return res.status(401).json({ error: 'Неверный email или пароль' });
       }
       setRefreshCookie(res, result.tokens.refreshToken);
@@ -92,6 +143,8 @@ export class AuthController {
       res.json({ user: toApiUser(result.user) });
     } catch (error) {
       if (error instanceof z.ZodError) {
+        const ip = getClientIp(req);
+        logFailedLoginAttempt(req.body?.email || 'unknown', ip, 'validation_error');
         return res.status(400).json({ error: error.message });
       }
       next(error);

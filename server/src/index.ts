@@ -14,6 +14,8 @@ import { metricsMiddleware } from './middlewares/metrics.middleware.js';
 import { logger } from './shared/logger.js';
 import { csrfMiddleware } from './middlewares/csrf.js';
 import { originValidationMiddleware } from './middlewares/origin.js';
+import { ipRateLimiter } from './middlewares/rate-limiters.js';
+import { securityLoggerMiddleware } from './middlewares/security-logger.js';
 
 async function bootstrap() {
   const app = express();
@@ -56,6 +58,15 @@ async function bootstrap() {
         includeSubDomains: true,
         preload: true,
       } : false,
+      // Дополнительные security headers
+      referrerPolicy: {
+        policy: 'strict-origin-when-cross-origin',
+      },
+      xContentTypeOptions: true, // Предотвращает MIME type sniffing
+      xFrameOptions: { action: 'deny' }, // Защита от clickjacking
+      xDnsPrefetchControl: true, // Контроль DNS prefetch
+      xDownloadOptions: true, // Отключает автоматическое открытие файлов в IE
+      xPermittedCrossDomainPolicies: false, // Отключает cross-domain policies
     }),
   );
   app.use(
@@ -76,6 +87,12 @@ async function bootstrap() {
     });
   });
 
+  // Rate limiting на уровне IP (защита от DDoS)
+  app.use(ipRateLimiter);
+  
+  // Логирование подозрительной активности
+  app.use(securityLoggerMiddleware);
+  
   app.use(requestLogger);
   app.use(metricsMiddleware); // Сбор метрик для Prometheus
   app.use(csrfMiddleware);

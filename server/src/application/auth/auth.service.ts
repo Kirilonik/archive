@@ -53,11 +53,23 @@ export class AuthService {
     return user;
   }
 
+  /**
+   * Логин с защитой от timing attacks
+   * Всегда выполняет сравнение пароля, даже если пользователь не найден
+   */
   async login(input: { email: string; password: string }): Promise<{ user: AuthUser; tokens: TokenPair } | null> {
-    const user = this.ensureUserHasPassword(await this.repository.findByEmail(input.email));
-    if (!user) return null;
-    const ok = await this.passwordHasher.compare(input.password, user.passwordHash!);
-    if (!ok) return null;
+    const user = await this.repository.findByEmail(input.email);
+    
+    // Защита от timing attacks: всегда выполняем сравнение пароля
+    // Если пользователь не найден или не имеет пароля, используем null hash
+    const passwordHash = user?.passwordHash ?? null;
+    const ok = await this.passwordHasher.compare(input.password, passwordHash);
+    
+    // Проверяем, что пользователь существует, имеет пароль и пароль верный
+    if (!user || !user.passwordHash || !ok) {
+      return null;
+    }
+    
     const stripped: AuthUser = {
       id: user.id,
       email: user.email,
