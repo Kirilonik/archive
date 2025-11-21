@@ -1,4 +1,4 @@
-# Media Archive
+# мой-архив.рф
 
 ![](docs/screenshots/home.png)
 
