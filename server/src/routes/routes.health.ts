@@ -5,7 +5,7 @@ import { logger } from '../shared/logger.js';
 export const router = Router();
 
 router.get('/', async (req, res) => {
-  // Упрощенный healthcheck для Railway - отвечаем сразу
+  // Упрощенный healthcheck - отвечаем сразу
   // Проверка БД выполняется асинхронно, но не блокирует ответ
   res.json({ 
     ok: true, 

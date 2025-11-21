@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit';
  * Возвращает IPv4 адрес для совместимости с express-rate-limit
  */
 function getClientIp(req: { ip?: string; headers: Record<string, string | string[] | undefined> }): string {
-  // Проверяем заголовки прокси (Railway, Cloudflare и т.д.)
+  // Проверяем заголовки прокси (Cloudflare, Nginx и т.д.)
   const forwardedFor = req.headers['x-forwarded-for'];
   if (forwardedFor) {
     const ips = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;

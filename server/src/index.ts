@@ -77,8 +77,7 @@ async function bootstrap() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
   app.use(cookieParser());
-  // Простой healthcheck endpoint БЕЗ middleware для Railway
-  // Это позволяет Railway подключиться сразу, даже если другие middleware еще не готовы
+  // Простой healthcheck endpoint БЕЗ middleware для быстрой проверки доступности
   app.get('/api/health', (req, res) => {
     res.json({ 
       ok: true, 
@@ -102,15 +101,12 @@ async function bootstrap() {
   registerRoutes(app);
   app.use(errorMiddleware);
 
-  // Запускаем сервер сразу, чтобы Railway мог подключиться
-  // Railway автоматически устанавливает переменную PORT через process.env.PORT
-  // Используем process.env.PORT в приоритете, так как Railway может использовать другой порт
+  // Используем process.env.PORT в приоритете для совместимости с различными платформами развертывания
   const PORT = process.env.PORT ? Number(process.env.PORT) : (env.PORT ?? 4000);
   if (!PORT || PORT <= 0) {
     throw new Error(`Invalid PORT: ${process.env.PORT}`);
   }
   // Запускаем сервер на всех IPv4 интерфейсах
-  // Railway использует IPv4 для проксирования, поэтому используем 0.0.0.0
   // В Node.js, прослушивание на 0.0.0.0 позволяет принимать соединения со всех IPv4 интерфейсов
   const server = app.listen(PORT, '0.0.0.0', () => {
     const address = server.address();
@@ -124,7 +120,7 @@ async function bootstrap() {
   });
 
   // Запускаем миграции после старта сервера в фоне
-  // Это позволяет Railway подключиться к серверу сразу, даже если миграции еще выполняются
+  // Это позволяет серверу отвечать на запросы сразу, даже если миграции еще выполняются
   runMigrations().catch((err) => {
     logger.error({ err }, 'Migration failed');
     // Не завершаем процесс при ошибке миграции, чтобы сервер продолжал работать
