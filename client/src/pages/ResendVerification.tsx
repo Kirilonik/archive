@@ -8,12 +8,21 @@ export function ResendVerification() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [justRegistered, setJustRegistered] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Если email передан через state (из страницы логина), устанавливаем его
+    // Если email передан через state (из страницы логина или регистрации), устанавливаем его
     if (location.state?.email) {
       setEmail(location.state.email);
+    }
+    // Если пользователь только что зарегистрировался, показываем специальное сообщение
+    if (location.state?.justRegistered) {
+      setJustRegistered(true);
+      setSent(true);
+      if (location.state?.message) {
+        toast.success(location.state.message);
+      }
     }
   }, [location.state]);
 
@@ -37,7 +46,9 @@ export function ResendVerification() {
   return (
     <main className="mx-auto max-w-md px-4 py-10">
       <div className="card">
-        <h1 className="text-2xl font-semibold text-text mb-4">Повторная отправка подтверждения</h1>
+        <h1 className="text-2xl font-semibold text-text mb-4">
+          {justRegistered ? 'Подтвердите ваш email' : 'Повторная отправка подтверждения'}
+        </h1>
         
         {!sent ? (
           <>
@@ -72,15 +83,47 @@ export function ResendVerification() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <p className="text-center text-text mb-6">
-              Если email существует и не подтвержден, письмо с подтверждением было отправлено на {email}.
-              Проверьте вашу почту.
-            </p>
-            <div className="text-center">
-              <Link to="/login" className="btn btn-primary">
-                Перейти к входу
-              </Link>
-            </div>
+            {justRegistered ? (
+              <>
+                <p className="text-center text-text mb-4">
+                  Регистрация успешна! Мы отправили письмо с подтверждением на адрес <strong>{email}</strong>.
+                </p>
+                <p className="text-center text-textMuted text-sm mb-6">
+                  Пожалуйста, проверьте вашу почту и перейдите по ссылке в письме для подтверждения email адреса.
+                </p>
+                <div className="space-y-3">
+                  <div className="text-center">
+                    <Link to="/login" className="btn btn-primary">
+                      Перейти к входу
+                    </Link>
+                  </div>
+                  <div className="text-center">
+                    <button
+                      onClick={async () => {
+                        setJustRegistered(false);
+                        setSent(false);
+                        await submit();
+                      }}
+                      className="text-textMuted hover:text-text underline text-sm"
+                    >
+                      Отправить письмо повторно
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-center text-text mb-6">
+                  Если email существует и не подтвержден, письмо с подтверждением было отправлено на {email}.
+                  Проверьте вашу почту.
+                </p>
+                <div className="text-center">
+                  <Link to="/login" className="btn btn-primary">
+                    Перейти к входу
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

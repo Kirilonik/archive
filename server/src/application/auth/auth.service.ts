@@ -58,9 +58,12 @@ export class AuthService {
     
     logger.debug({ userId: user.id, email: user.email }, 'Пользователь создан, отправка email подтверждения');
     // Создаем токен подтверждения email и отправляем письмо
-    // Не ждем завершения отправки - запускаем асинхронно
-    this.sendVerificationEmail(user.id, user.email, user.name).catch((error) => {
-      logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email (не критично)');
+    // Не ждем завершения отправки - запускаем асинхронно в следующем тике event loop
+    // Это гарантирует, что ответ будет отправлен клиенту до начала отправки email
+    setImmediate(() => {
+      this.sendVerificationEmail(user.id, user.email, user.name).catch((error) => {
+        logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email (не критично)');
+      });
     });
     
     logger.debug({ userId: user.id, email: user.email }, 'Регистрация завершена');

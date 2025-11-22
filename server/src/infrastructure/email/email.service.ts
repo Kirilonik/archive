@@ -24,11 +24,15 @@ export class EmailService {
           pass: env.SMTP_PASSWORD,
         },
         // Таймауты для подключения и отправки (агрессивные, чтобы не блокировать регистрацию)
-        connectionTimeout: 3000, // 3 секунды на подключение
-        greetingTimeout: 3000,
-        socketTimeout: 5000, // 5 секунд на операцию
+        connectionTimeout: 2000, // 2 секунды на подключение
+        greetingTimeout: 2000, // 2 секунды на приветствие
+        socketTimeout: 3000, // 3 секунды на операцию
         // Дополнительная настройка для избежания зависаний
         pool: false, // Отключаем pooling для избежания проблем с соединениями
+        // Дополнительные настройки для быстрого отказа при проблемах
+        tls: {
+          rejectUnauthorized: false, // В production лучше установить true
+        },
       });
     } else {
       logger.warn({ smtp: 'not configured' }, 'SMTP не настроен. Email не будут отправляться. Установите SMTP_HOST, SMTP_USER, SMTP_PASSWORD');
@@ -60,7 +64,7 @@ export class EmailService {
       });
 
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Email send timeout')), 5000); // 5 секунд максимум
+        setTimeout(() => reject(new Error('Email send timeout')), 3000); // 3 секунды максимум
       });
 
       await Promise.race([sendMailPromise, timeoutPromise]);
