@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { env } from '../config/env.js';
+import { logger } from '../shared/logger.js';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE']);
 const allowedOrigins = new Set(env.allowedOrigins);
@@ -29,11 +30,11 @@ export function originValidationMiddleware(req: Request, res: Response, next: Ne
       return;
     }
     // Логируем для отладки
-    console.log('Origin validation failed:', {
+    logger.warn({
       headerOrigin,
       allowedOrigins: Array.from(allowedOrigins),
       referer: req.headers.referer,
-    });
+    }, 'Origin validation failed');
     res.status(403).json({ error: 'Origin not allowed', received: headerOrigin, allowed: Array.from(allowedOrigins) });
     return;
   }
@@ -45,21 +46,21 @@ export function originValidationMiddleware(req: Request, res: Response, next: Ne
       return;
     }
     // Логируем для отладки
-    console.log('Origin validation failed (referer):', {
+    logger.warn({
       refererOrigin,
       allowedOrigins: Array.from(allowedOrigins),
       origin: req.headers.origin,
-    });
+    }, 'Origin validation failed (referer)');
     res.status(403).json({ error: 'Origin not allowed', received: refererOrigin, allowed: Array.from(allowedOrigins) });
     return;
   }
 
   // Если нет ни origin, ни referer для небезопасного метода - отклоняем
-  console.log('Origin validation failed (no origin/referer):', {
+  logger.warn({
     origin: req.headers.origin,
     referer: req.headers.referer,
     allowedOrigins: Array.from(allowedOrigins),
-  });
+  }, 'Origin validation failed (no origin/referer)');
   res.status(403).json({ error: 'Origin validation required for this request' });
 }
 
