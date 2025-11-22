@@ -29,12 +29,16 @@ function getClientIp(req: Request): string {
  * - secure: только HTTPS в production (защита от перехвата)
  * - sameSite: защита от CSRF атак
  */
-function setRefreshCookie(res: Response, token: string) {
+function setRefreshCookie(res: Response, token: string, req: Request) {
   const isProd = env.NODE_ENV === 'production';
+  const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
+  // Для cross-origin запросов нужен sameSite: 'none' с secure: true (HTTPS)
+  // Для HTTP временно используем 'none' с secure: false (небезопасно, но работает)
+  const sameSite = isHttps ? 'none' : 'none';
   res.cookie('refresh_token', token, {
     httpOnly: true, // Согласно best practices: токены не должны быть доступны через JavaScript
-    secure: isProd, // Согласно best practices: только HTTPS в production
-    sameSite: 'lax', // Защита от CSRF
+    secure: isProd && isHttps, // Только для HTTPS в production
+    sameSite: sameSite as 'lax' | 'strict' | 'none',
     path: '/api/auth',
     maxAge: env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,
   });
@@ -44,12 +48,16 @@ function setRefreshCookie(res: Response, token: string) {
  * Устанавливает access token в безопасную httpOnly cookie
  * Согласно best practices Google OAuth 2.0
  */
-function setAccessCookie(res: Response, token: string) {
+function setAccessCookie(res: Response, token: string, req: Request) {
   const isProd = env.NODE_ENV === 'production';
+  const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
+  // Для cross-origin запросов нужен sameSite: 'none' с secure: true (HTTPS)
+  // Для HTTP временно используем 'none' с secure: false (небезопасно, но работает)
+  const sameSite = isHttps ? 'none' : 'none';
   res.cookie('access_token', token, {
     httpOnly: true, // Согласно best practices: токены не должны быть доступны через JavaScript
-    secure: isProd, // Согласно best practices: только HTTPS в production
-    sameSite: 'lax', // Защита от CSRF
+    secure: isProd && isHttps, // Только для HTTPS в production
+    sameSite: sameSite as 'lax' | 'strict' | 'none',
     path: '/',
     maxAge: env.ACCESS_TOKEN_TTL_MINUTES * 60 * 1000,
   });
@@ -110,8 +118,8 @@ export class AuthController {
       }
       
       const { user, tokens } = await this.authService.register({ name: name ?? null, email, password });
-      setRefreshCookie(res, tokens.refreshToken);
-      setAccessCookie(res, tokens.accessToken);
+      setRefreshCookie(res, tokens.refreshToken, req);
+      setAccessCookie(res, tokens.accessToken, req);
       res.status(201).json({ user: toApiUser(user) });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -138,8 +146,8 @@ export class AuthController {
         logFailedLoginAttempt(email, ip, 'invalid_credentials');
         return res.status(401).json({ error: 'Неверный email или пароль' });
       }
-      setRefreshCookie(res, result.tokens.refreshToken);
-      setAccessCookie(res, result.tokens.accessToken);
+      setRefreshCookie(res, result.tokens.refreshToken, req);
+      setAccessCookie(res, result.tokens.accessToken, req);
       res.json({ user: toApiUser(result.user) });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -158,8 +166,8 @@ export class AuthController {
       });
       const { credential } = schema.parse(req.body);
       const result = await this.authService.loginWithGoogle(credential);
-      setRefreshCookie(res, result.tokens.refreshToken);
-      setAccessCookie(res, result.tokens.accessToken);
+      setRefreshCookie(res, result.tokens.refreshToken, req);
+      setAccessCookie(res, result.tokens.accessToken, req);
       res.json({ user: toApiUser(result.user) });
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
@@ -200,8 +208,8 @@ export class AuthController {
       }
       // Согласно best practices: ротация токенов при каждом обновлении
       const tokens = this.authService.rotateTokens(user);
-      setRefreshCookie(res, tokens.refreshToken);
-      setAccessCookie(res, tokens.accessToken);
+      setRefreshCookie(res, tokens.refreshToken, req);
+      setAccessCookie(res, tokens.accessToken, req);
       res.json({ ok: true });
     } catch (error: unknown) {
       // Обработка истечения или отзыва токена
