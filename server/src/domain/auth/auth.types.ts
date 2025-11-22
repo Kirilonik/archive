@@ -5,6 +5,7 @@ export interface AuthUser {
   avatarUrl: string | null;
   authProvider: string;
   googleId?: string | null;
+  emailVerified: boolean;
 }
 
 export interface AuthUserWithPassword extends AuthUser {
@@ -32,12 +33,26 @@ export interface AttachGoogleAccountInput {
   avatarUrl: string | null;
 }
 
+export interface EmailVerificationToken {
+  id: number;
+  userId: number;
+  token: string;
+  expiresAt: Date;
+  createdAt: Date;
+  usedAt: Date | null;
+}
+
 export interface AuthRepository {
   findByEmail(email: string): Promise<AuthUserWithPassword | null>;
   findByGoogleId(googleId: string): Promise<AuthUser | null>;
   createUser(input: RegisterUserInput): Promise<AuthUser>;
   createUserFromGoogle(input: CreateGoogleUserInput): Promise<AuthUser>;
   attachGoogleAccount(input: AttachGoogleAccountInput): Promise<AuthUser>;
+  createEmailVerificationToken(userId: number, token: string, expiresAt: Date): Promise<EmailVerificationToken>;
+  findEmailVerificationToken(token: string): Promise<EmailVerificationToken | null>;
+  markEmailVerificationTokenAsUsed(tokenId: number): Promise<void>;
+  markUserEmailAsVerified(userId: number): Promise<void>;
+  deleteExpiredEmailVerificationTokens(): Promise<number>;
 }
 
 export interface PasswordHasher {

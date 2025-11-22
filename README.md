@@ -80,9 +80,35 @@ REFRESH_TOKEN_TTL_DAYS=30
 KINOPOISK_API_URL=https://kinopoiskapiunofficial.tech
 KINOPOISK_API_KEY=<ваш_ключ>
 GOOGLE_CLIENT_ID=<ваш_client_id>
+
+# SMTP настройки для отправки email подтверждения (см. docs/SMTP_SETUP.md)
+SMTP_HOST=smtp.yandex.ru
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=ваш_email@yandex.ru
+SMTP_PASSWORD=пароль_приложения
+SMTP_FROM=ваш_email@yandex.ru
+EMAIL_VERIFICATION_TOKEN_TTL_HOURS=24
 ```
 
 В Docker Compose часть значений подставляется автоматически (см. `docker-compose.yml`).
+
+### Настройка SMTP для отправки email
+
+Для работы системы подтверждения email необходимо настроить SMTP сервер. Подробная инструкция находится в файле [`docs/SMTP_SETUP.md`](docs/SMTP_SETUP.md).
+
+**Быстрая настройка для Яндекс.Почты** (рекомендуется для .ru доменов):
+
+1. Создайте пароль приложения на https://id.yandex.ru/security
+2. Добавьте в `.env`:
+```bash
+SMTP_HOST=smtp.yandex.ru
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=ваш_email@yandex.ru
+SMTP_PASSWORD=пароль_приложения
+SMTP_FROM=ваш_email@yandex.ru
+```
 
 ### Развертывание в продакшн
 

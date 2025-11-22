@@ -63,12 +63,13 @@ function setAccessCookie(res: Response, token: string, req: Request) {
   });
 }
 
-function toApiUser(user: { id: number; email: string; name: string | null; avatarUrl: string | null }) {
+function toApiUser(user: { id: number; email: string; name: string | null; avatarUrl: string | null; emailVerified?: boolean }) {
   return {
     id: user.id,
     email: user.email,
     name: user.name,
     avatar_url: user.avatarUrl,
+    email_verified: user.emailVerified ?? false,
   };
 }
 
@@ -117,10 +118,12 @@ export class AuthController {
         return res.status(400).json({ error: passwordValidation.error });
       }
       
-      const { user, tokens } = await this.authService.register({ name: name ?? null, email, password });
-      setRefreshCookie(res, tokens.refreshToken, req);
-      setAccessCookie(res, tokens.accessToken, req);
-      res.status(201).json({ user: toApiUser(user) });
+      const { user } = await this.authService.register({ name: name ?? null, email, password });
+      // Не выдаем токены, пользователь должен подтвердить email
+      res.status(201).json({ 
+        user: toApiUser(user),
+        message: 'Регистрация успешна. Пожалуйста, проверьте вашу почту и подтвердите email адрес.' 
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.message });
@@ -140,15 +143,26 @@ export class AuthController {
       });
       const { email, password } = schema.parse(req.body);
       const ip = getClientIp(req);
-      const result = await this.authService.login({ email, password });
-      if (!result) {
-        // Логируем неудачную попытку входа
-        logFailedLoginAttempt(email, ip, 'invalid_credentials');
-        return res.status(401).json({ error: 'Неверный email или пароль' });
+      try {
+        const result = await this.authService.login({ email, password });
+        if (!result) {
+          // Логируем неудачную попытку входа
+          logFailedLoginAttempt(email, ip, 'invalid_credentials');
+          return res.status(401).json({ error: 'Неверный email или пароль' });
+        }
+        setRefreshCookie(res, result.tokens.refreshToken, req);
+        setAccessCookie(res, result.tokens.accessToken, req);
+        res.json({ user: toApiUser(result.user) });
+      } catch (error: any) {
+        // Проверяем, требуется ли подтверждение email
+        if (error?.requiresEmailVerification) {
+          return res.status(403).json({ 
+            error: error.message,
+            requiresEmailVerification: true 
+          });
+        }
+        throw error;
       }
-      setRefreshCookie(res, result.tokens.refreshToken, req);
-      setAccessCookie(res, result.tokens.accessToken, req);
-      res.json({ user: toApiUser(result.user) });
     } catch (error) {
       if (error instanceof z.ZodError) {
         const ip = getClientIp(req);
@@ -247,6 +261,42 @@ export class AuthController {
       if (!profile) return res.status(404).json({ error: 'Не найдено' });
       res.json({ user: toApiUser(profile) });
     } catch (error) {
+      next(error);
+    }
+  };
+
+  verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const schema = z.object({
+        token: z.string().min(1),
+      });
+      const { token } = schema.parse(req.body);
+      await this.authService.verifyEmail(token);
+      res.json({ message: 'Email успешно подтвержден' });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.message });
+      }
+      if (isErrorWithStatus(error) && error.status === 400) {
+        return res.status(400).json({ error: error.message });
+      }
+      next(error);
+    }
+  };
+
+  resendVerificationEmail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const schema = z.object({
+        email: z.string().email(),
+      });
+      const { email } = schema.parse(req.body);
+      await this.authService.resendVerificationEmail(email);
+      // Всегда возвращаем успех, чтобы не раскрывать информацию о существовании пользователя
+      res.json({ message: 'Если email существует и не подтвержден, письмо с подтверждением было отправлено' });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.message });
+      }
       next(error);
     }
   };

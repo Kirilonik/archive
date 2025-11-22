@@ -78,6 +78,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!resp.ok) {
       const data = await readJsonSafely(resp);
       let message = data?.error ?? 'Ошибка входа';
+      if (resp.status === 403 && data?.requiresEmailVerification) {
+        // Email не подтвержден - показываем специальную ошибку
+        const error = new Error(message) as Error & { requiresEmailVerification?: boolean };
+        error.requiresEmailVerification = true;
+        throw error;
+      }
       if (resp.status === 500) {
         message = 'Ошибка сервера. Проверьте, что сервер запущен и доступен.';
       } else if (resp.status >= 500) {
@@ -123,8 +129,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(message);
     }
     const data = await resp.json();
-    setUser(data.user ?? null);
-    toast.success('Регистрация успешна!');
+    // Не устанавливаем пользователя, так как требуется подтверждение email
+    // setUser не вызывается - пользователь должен подтвердить email перед входом
+    toast.success(data.message || 'Регистрация успешна! Проверьте вашу почту для подтверждения email.');
   }, []);
 
   const logout = useCallback(async () => {

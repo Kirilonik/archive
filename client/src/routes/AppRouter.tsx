@@ -7,6 +7,8 @@ import { SeriesDetails } from '../pages/SeriesDetails';
 import { Header } from '../components/Header';
 import { Login } from '../pages/Login';
 import { Register } from '../pages/Register';
+import { VerifyEmail } from '../pages/VerifyEmail';
+import { ResendVerification } from '../pages/ResendVerification';
 import { useAuth } from '../context/AuthContext';
 
 function ProtectedLayout() {
@@ -65,6 +67,8 @@ export function AppRouter() {
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/resend-verification" element={<ResendVerification />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

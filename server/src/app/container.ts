@@ -5,6 +5,7 @@ import { UserService } from '../application/users/user.service.js';
 import { UsersController } from './controllers/users.controller.js';
 import { AuthPgRepository } from '../infrastructure/database/repositories/auth.pg.repository.js';
 import { BcryptPasswordHasher } from '../infrastructure/security/bcrypt-password-hasher.js';
+import { EmailService } from '../infrastructure/email/email.service.js';
 import { AuthService } from '../application/auth/auth.service.js';
 import { AuthController } from './controllers/auth.controller.js';
 import { KinopoiskHttpClient } from '../infrastructure/integrations/kinopoisk.client.js';
@@ -34,7 +35,8 @@ const usersController = new UsersController(userService, statsService);
 const authRepository = new AuthPgRepository();
 const passwordHasher = new BcryptPasswordHasher();
 const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
-const authService = new AuthService(authRepository, passwordHasher, googleClient);
+const emailService = new EmailService();
+const authService = new AuthService(authRepository, passwordHasher, googleClient, emailService);
 const authController = new AuthController(authService, (userId) => userService.getUserById(userId));
 
 const kinopoiskClient = new KinopoiskHttpClient();

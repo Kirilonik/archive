@@ -17,7 +17,9 @@ export function Register() {
       setLoading(true);
       setError(null);
       await registerUser({ name, email, password });
-      navigate('/');
+      // После успешной регистрации показываем сообщение о необходимости подтверждения
+      toast.success('Регистрация успешна! Проверьте вашу почту для подтверждения email.');
+      navigate('/login', { state: { message: 'Регистрация успешна! Пожалуйста, проверьте вашу почту и подтвердите email адрес перед входом.' } });
     } catch (e: any) {
       const message = e?.message || 'Ошибка регистрации';
       toast.error(message);

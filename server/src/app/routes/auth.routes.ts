@@ -11,6 +11,8 @@ export function createAuthRouter(controller: AuthController) {
   router.post('/google', authRateLimiter, controller.loginWithGoogle);
   router.post('/refresh', authRateLimiter, controller.refresh);
   router.post('/logout', authRateLimiter, controller.logout);
+  router.post('/verify-email', authRateLimiter, controller.verifyEmail);
+  router.post('/resend-verification', authRateLimiter, controller.resendVerificationEmail);
   router.get('/me', authMiddleware, generalRateLimiter, controller.me);
   return router;
 }

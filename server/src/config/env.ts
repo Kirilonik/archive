@@ -67,6 +67,13 @@ const envSchema = z
     CORS_ALLOWED_ORIGINS: z.string().optional(),
     SWAGGER_USER: z.string().optional(),
     SWAGGER_PASSWORD: z.string().optional(),
+    SMTP_HOST: z.string().optional(),
+    SMTP_PORT: z.coerce.number().int().positive().optional(),
+    SMTP_SECURE: z.coerce.boolean().optional(),
+    SMTP_USER: z.string().optional(),
+    SMTP_PASSWORD: z.string().optional(),
+    SMTP_FROM: z.string().email().optional(),
+    EMAIL_VERIFICATION_TOKEN_TTL_HOURS: z.coerce.number().int().positive().default(24),
   })
   .transform((values) => ({
     ...values,
@@ -117,7 +124,15 @@ export const env = {
   KINOPOISK_API_KEY: parsed.data.KINOPOISK_API_KEY || '',
   GOOGLE_CLIENT_ID: parsed.data.GOOGLE_CLIENT_ID || '',
   // Для миграций используем дефолтные значения JWT секретов
-  JWT_SECRET: parsed.data.JWT_SECRET || (isMigration ? 'migration-temp-secret-key-min-32-chars' : ''),
-  JWT_REFRESH_SECRET: parsed.data.JWT_REFRESH_SECRET || (isMigration ? 'migration-temp-refresh-secret-key-min-32-chars' : ''),
-};
+    JWT_SECRET: parsed.data.JWT_SECRET || (isMigration ? 'migration-temp-secret-key-min-32-chars' : ''),
+    JWT_REFRESH_SECRET: parsed.data.JWT_REFRESH_SECRET || (isMigration ? 'migration-temp-refresh-secret-key-min-32-chars' : ''),
+    // SMTP настройки
+    SMTP_HOST: parsed.data.SMTP_HOST || '',
+    SMTP_PORT: parsed.data.SMTP_PORT || 587,
+    SMTP_SECURE: parsed.data.SMTP_SECURE ?? false,
+    SMTP_USER: parsed.data.SMTP_USER || '',
+    SMTP_PASSWORD: parsed.data.SMTP_PASSWORD || '',
+    SMTP_FROM: parsed.data.SMTP_FROM || 'noreply@example.com',
+    EMAIL_VERIFICATION_TOKEN_TTL_HOURS: parsed.data.EMAIL_VERIFICATION_TOKEN_TTL_HOURS || 24,
+  };
 
