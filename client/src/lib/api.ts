@@ -81,6 +81,11 @@ async function attachCsrfHeader(headers: Headers, method: string): Promise<Heade
   const token = await getCsrfTokenFromApi();
   if (token) {
     headers.set('x-csrf-token', token);
+  } else {
+    // Логируем для отладки (только в dev)
+    if (typeof window !== 'undefined' && import.meta.env.DEV) {
+      console.warn('CSRF token not available for', method);
+    }
   }
   return headers;
 }

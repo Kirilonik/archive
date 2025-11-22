@@ -15,10 +15,14 @@ function ensureCsrfCookie(req: Request, res: Response): string {
     // В production используем secure только если есть HTTPS
     // Для HTTP (без домена с SSL) secure должен быть false
     const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
+    // Для cross-origin запросов нужен sameSite: 'none', но это требует secure: true
+    // Если нет HTTPS, используем 'lax' (но тогда cookie не будет отправляться в cross-origin POST)
+    // Временное решение для HTTP: используем 'none' с secure: false (небезопасно, но работает)
+    const sameSite = isHttps ? 'none' : 'none'; // Для HTTP тоже 'none', чтобы работало cross-origin
     res.cookie(CSRF_COOKIE_NAME, token, {
       httpOnly: true, // Безопасно: токен недоступен через JavaScript
       secure: isProd && isHttps, // Только для HTTPS в production
-      sameSite: 'lax',
+      sameSite: sameSite as 'lax' | 'strict' | 'none',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
