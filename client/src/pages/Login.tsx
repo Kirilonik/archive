@@ -34,7 +34,56 @@ export function Login() {
     }
   }
 
-  // Удаляем handleCustomButtonClick, так как GoogleLogin теперь кликабелен напрямую
+  const handleContainerClick = (e: React.MouseEvent) => {
+    if (googleLoading) return;
+    
+    const container = googleContainerRef.current;
+    if (!container) return;
+
+    // Ищем iframe Google внутри контейнера и программно кликаем на него
+    const iframe = container.querySelector('iframe[title*="Google"], iframe[title*="Google аккаунтом"]') as HTMLIFrameElement | null;
+    if (iframe) {
+      try {
+        // Кликаем в центре iframe
+        const rect = iframe.getBoundingClientRect();
+        const clickEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2,
+        });
+        
+        // Пробуем несколько способов клика
+        iframe.dispatchEvent(clickEvent);
+        
+        // Также пробуем напрямую кликнуть на iframe
+        if (iframe.contentWindow) {
+          try {
+            // Пробуем кликнуть через contentWindow
+            const iframeClickEvent = new MouseEvent('click', {
+              bubbles: true,
+              cancelable: true,
+              view: iframe.contentWindow!,
+              clientX: rect.width / 2,
+              clientY: rect.height / 2,
+            });
+            iframe.contentDocument?.body?.dispatchEvent(iframeClickEvent);
+          } catch (e) {
+            // Игнорируем CORS ошибки при доступе к iframe
+          }
+        }
+      } catch (e) {
+        console.error('Ошибка при клике на Google iframe:', e);
+      }
+    } else {
+      // Если iframe еще не загружен, пробуем найти любую кнопку
+      const googleButton = container.querySelector('[role="button"]') as HTMLElement | null;
+      if (googleButton) {
+        googleButton.click();
+      }
+    }
+  };
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">
@@ -59,8 +108,9 @@ export function Login() {
             ref={googleContainerRef}
             className="relative flex h-11 w-11 items-center justify-center cursor-pointer"
             title="Войти через Google"
+            onClick={handleContainerClick}
           >
-            {/* Кастомная кнопка - визуальная обертка под GoogleLogin */}
+            {/* Кастомная кнопка - визуальная обертка под GoogleLogin, не блокирует клики */}
             <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
               <div className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white text-black shadow hover:shadow-lg disabled:opacity-50">
                 {googleLoading ? (
@@ -88,14 +138,14 @@ export function Login() {
                 )}
               </div>
             </div>
-            {/* GoogleLogin - полностью функционален, но визуально скрыт, поверх кастомной кнопки */}
-            <div className="absolute inset-0" style={{ zIndex: 20 }}>
+            {/* GoogleLogin - поверх кастомной кнопки, полностью кликабелен и видим (но прозрачен) */}
+            <div className="absolute inset-0" style={{ zIndex: 20, cursor: 'pointer' }}>
               <GoogleLogin
                 containerProps={{
                   style: { 
                     width: '100%', 
                     height: '100%',
-                    opacity: 0,
+                    opacity: 0.01, // Практически невидим, но видимый достаточно для получения событий
                     pointerEvents: 'auto',
                   },
                 }}
