@@ -36,22 +36,34 @@ export class AuthService {
   }
 
   async register(input: { name?: string | null; email: string; password: string }): Promise<{ user: AuthUser }> {
+    logger.debug({ email: input.email }, 'Начало регистрации пользователя');
+    
     const existing = await this.repository.findByEmail(input.email);
     if (existing) {
+      logger.debug({ email: input.email }, 'Пользователь уже существует');
       const err = new Error('User exists') as Error & { status: number };
       err.status = 409;
       throw err;
     }
+    
+    logger.debug({ email: input.email }, 'Хеширование пароля');
     const passwordHash = await this.passwordHasher.hash(input.password);
+    
+    logger.debug({ email: input.email }, 'Создание пользователя в БД');
     const user = await this.repository.createUser({
       name: input.name ?? null,
       email: input.email,
       passwordHash,
     });
     
+    logger.debug({ userId: user.id, email: user.email }, 'Пользователь создан, отправка email подтверждения');
     // Создаем токен подтверждения email и отправляем письмо
-    await this.sendVerificationEmail(user.id, user.email, user.name);
+    // Не ждем завершения отправки - запускаем асинхронно
+    this.sendVerificationEmail(user.id, user.email, user.name).catch((error) => {
+      logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email (не критично)');
+    });
     
+    logger.debug({ userId: user.id, email: user.email }, 'Регистрация завершена');
     return { user };
   }
   
