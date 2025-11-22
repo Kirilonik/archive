@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const resp = await apiFetch('/api/auth/me');
       if (!resp.ok) {
-        // Не показываем ошибку для 401/403 - это нормально, если пользователь не авторизован
+        // 401/403 - это нормально для неавторизованных пользователей, не логируем
         if (resp.status !== 401 && resp.status !== 403) {
           console.error('Ошибка при проверке авторизации:', resp.status, resp.statusText);
         }
@@ -50,10 +50,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await resp.json();
       setUser(data.user ?? null);
     } catch (error) {
-      // Не показываем ошибку в консоли для обычных ошибок сети
-      if (error instanceof Error && !error.message.includes('Превышено время ожидания')) {
-        console.error('Ошибка при проверке авторизации:', error);
+      // Не логируем ошибки для /api/auth/me - это нормально, если пользователь не авторизован
+      // Логируем только реальные ошибки сети
+      if (error instanceof Error && error.message.includes('Превышено время ожидания')) {
+        console.warn('Таймаут при проверке авторизации');
       }
+      // Для остальных ошибок не логируем - это может быть просто отсутствие авторизации
       setUser(null);
     } finally {
       setLoading(false);
