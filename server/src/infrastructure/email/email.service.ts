@@ -33,7 +33,7 @@ export class EmailService {
         tls: {
           rejectUnauthorized: false, // В production лучше установить true
         },
-      });
+      } as any);
     } else {
       logger.warn({ smtp: 'not configured' }, 'SMTP не настроен. Email не будут отправляться. Установите SMTP_HOST, SMTP_USER, SMTP_PASSWORD');
     }
