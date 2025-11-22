@@ -126,7 +126,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!resp.ok) {
       const data = await readJsonSafely(resp);
       const message = data?.error ?? 'Ошибка регистрации';
-      throw new Error(message);
+      const error = new Error(message) as Error & { status?: number };
+      error.status = resp.status;
+      throw error;
     }
     const data = await resp.json();
     // Не устанавливаем пользователя, так как требуется подтверждение email

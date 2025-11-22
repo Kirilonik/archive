@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -9,22 +9,86 @@ export function Register() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { register: registerUser } = useAuth();
 
-  async function submit() {
+  // Валидация пароля на клиенте (соответствует серверной валидации)
+  function validatePassword(password: string): string | null {
+    if (password.length < 8) {
+      return 'Пароль должен содержать минимум 8 символов';
+    }
+    if (!/[A-Z]/.test(password)) {
+      return 'Пароль должен содержать хотя бы одну заглавную букву';
+    }
+    if (!/[a-z]/.test(password)) {
+      return 'Пароль должен содержать хотя бы одну строчную букву';
+    }
+    if (!/[0-9]/.test(password)) {
+      return 'Пароль должен содержать хотя бы одну цифру';
+    }
+    return null;
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    
+    // Очищаем предыдущие ошибки
+    setError(null);
+    setPasswordError(null);
+
+    // Валидация пароля на клиенте
+    const passwordValidationError = validatePassword(password);
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
+      toast.error(passwordValidationError);
+      return;
+    }
+
+    // Валидация email
+    if (!email || !email.includes('@')) {
+      setError('Введите корректный email адрес');
+      toast.error('Введите корректный email адрес');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      await registerUser({ name, email, password });
+      setPasswordError(null);
+      
+      await registerUser({ name: name || undefined, email, password });
+      
       // После успешной регистрации показываем сообщение о необходимости подтверждения
       toast.success('Регистрация успешна! Проверьте вашу почту для подтверждения email.');
-      navigate('/login', { state: { message: 'Регистрация успешна! Пожалуйста, проверьте вашу почту и подтвердите email адрес перед входом.' } });
+      
+      // Сбрасываем состояние загрузки перед навигацией
+      setLoading(false);
+      
+      // Навигация после небольшой задержки, чтобы пользователь увидел сообщение
+      setTimeout(() => {
+        navigate('/login', { state: { message: 'Регистрация успешна! Пожалуйста, проверьте вашу почту и подтвердите email адрес перед входом.' } });
+      }, 1000);
     } catch (e: any) {
-      const message = e?.message || 'Ошибка регистрации';
-      toast.error(message);
-      setError(message);
-    } finally {
+      let message = e?.message || 'Ошибка регистрации';
+      const status = e?.status;
+      
+      // Если пользователь уже существует (409), предлагаем войти или запросить подтверждение
+      if (status === 409 || message.includes('уже существует') || message.includes('User exists')) {
+        message = 'Пользователь с таким email уже зарегистрирован.';
+        setError(message);
+        toast.error(message + ' Вы можете войти или запросить повторное подтверждение email.');
+      } else {
+        toast.error(message);
+        setError(message);
+        
+        // Если ошибка связана с паролем, показываем её под полем пароля
+        if (message.includes('пароль') || message.includes('Пароль')) {
+          setPasswordError(message);
+        }
+      }
+      
+      // Очищаем состояние загрузки, чтобы можно было попробовать снова
       setLoading(false);
     }
   }
@@ -33,29 +97,95 @@ export function Register() {
     <main className="mx-auto max-w-md px-4 py-10">
       <div className="card">
         <h1 className="text-2xl font-semibold text-text mb-4">Регистрация</h1>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm text-textMuted mb-1">Имя</label>
-            <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm text-textMuted mb-1">Имя</label>
+              <input 
+                className="input" 
+                type="text"
+                value={name} 
+                onChange={(e) => setName(e.target.value)}
+                disabled={loading}
+                autoComplete="name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-textMuted mb-1">Email</label>
+              <input 
+                className="input" 
+                type="email"
+                value={email} 
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError(null);
+                }}
+                disabled={loading}
+                required
+                autoComplete="email"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-textMuted mb-1">Пароль</label>
+              <input 
+                type="password" 
+                className={`input ${passwordError ? 'border-red-400' : ''}`}
+                value={password} 
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setPasswordError(null);
+                  setError(null);
+                }}
+                disabled={loading}
+                required
+                autoComplete="new-password"
+              />
+              {passwordError && (
+                <p className="mt-1 text-sm text-red-400" role="alert">
+                  {passwordError}
+                </p>
+              )}
+              {!passwordError && password && (
+                <p className="mt-1 text-xs text-textMuted">
+                  Требования: минимум 8 символов, заглавная и строчная буквы, цифра
+                </p>
+              )}
+            </div>
           </div>
-          <div>
-            <label className="block text-sm text-textMuted mb-1">Email</label>
-            <input className="input" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <div className="flex items-center justify-between mt-4">
+            <button 
+              type="submit"
+              className="btn btn-primary px-4 py-2" 
+              disabled={loading}
+            >
+              {loading ? 'Создание...' : 'Создать'}
+            </button>
+            <Link className="text-textMuted hover:text-text" to="/login">У меня уже есть аккаунт</Link>
           </div>
-          <div>
-            <label className="block text-sm text-textMuted mb-1">Пароль</label>
-            <input type="password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} />
-          </div>
-        </div>
-        <div className="flex items-center justify-between mt-4">
-          <button className="btn btn-primary px-4 py-2" disabled={loading} onClick={submit}>Создать</button>
-          <Link className="text-textMuted hover:text-text" to="/login">У меня уже есть аккаунт</Link>
-        </div>
-        {error && (
-          <p className="mt-4 text-sm text-red-400" role="alert">
-            {error}
-          </p>
-        )}
+          {error && !passwordError && (
+            <div className="mt-4 text-sm text-red-400" role="alert">
+              <p className="mb-2">{error}</p>
+              {error.includes('уже зарегистрирован') && (
+                <div className="space-y-2 mt-3">
+                  <Link 
+                    to="/login" 
+                    state={{ email }}
+                    className="block text-primary hover:underline text-sm"
+                  >
+                    → Перейти к входу
+                  </Link>
+                  <Link 
+                    to="/resend-verification" 
+                    state={{ email }}
+                    className="block text-primary hover:underline text-sm"
+                  >
+                    → Запросить повторное подтверждение email
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+        </form>
       </div>
     </main>
   );
