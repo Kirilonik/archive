@@ -132,19 +132,19 @@ export class AuthService {
   /**
    * Повторно отправляет письмо подтверждения email
    */
-  async resendVerificationEmail(email: string): Promise<void> {
+  async resendVerificationEmail(email: string): Promise<{ alreadyVerified: boolean }> {
     const user = await this.repository.findByEmail(email);
     
     if (!user) {
       // Не раскрываем, существует ли пользователь (защита от перечисления)
       logger.debug({ email }, 'Попытка повторной отправки письма для несуществующего пользователя');
-      return;
+      return { alreadyVerified: false };
     }
     
     if (user.emailVerified) {
       // Email уже подтвержден
       logger.debug({ userId: user.id, email }, 'Попытка повторной отправки письма для уже подтвержденного email');
-      return;
+      return { alreadyVerified: true };
     }
     
     // Создаем новый токен и отправляем письмо
@@ -166,6 +166,8 @@ export class AuthService {
     } catch (error) {
       logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при повторной отправке письма подтверждения');
     }
+    
+    return { alreadyVerified: false };
   }
 
   private ensureUserHasPassword(user: AuthUserWithPassword | null): AuthUserWithPassword | null {

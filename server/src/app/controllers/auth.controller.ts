@@ -119,6 +119,7 @@ export class AuthController {
       }
       
       const { user } = await this.authService.register({ name: name ?? null, email, password });
+      
       // Не выдаем токены, пользователь должен подтвердить email
       res.status(201).json({ 
         user: toApiUser(user),
@@ -290,9 +291,14 @@ export class AuthController {
         email: z.string().email(),
       });
       const { email } = schema.parse(req.body);
-      await this.authService.resendVerificationEmail(email);
-      // Всегда возвращаем успех, чтобы не раскрывать информацию о существовании пользователя
-      res.json({ message: 'Если email существует и не подтвержден, письмо с подтверждением было отправлено' });
+      const result = await this.authService.resendVerificationEmail(email);
+      // Возвращаем информацию о статусе для клиента
+      res.json({ 
+        message: result.alreadyVerified 
+          ? 'Email уже подтвержден' 
+          : 'Если email существует и не подтвержден, письмо с подтверждением было отправлено',
+        alreadyVerified: result.alreadyVerified 
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.message });

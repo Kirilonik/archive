@@ -9,6 +9,7 @@ export function ResendVerification() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [justRegistered, setJustRegistered] = useState(false);
+  const [alreadyVerified, setAlreadyVerified] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,15 +28,28 @@ export function ResendVerification() {
   }, [location.state]);
 
   async function submit() {
+    if (!email) {
+      toast.error('Введите email адрес');
+      return;
+    }
+
     try {
       setLoading(true);
-      await apiJson<{ message: string }>('/api/auth/resend-verification', {
+      setAlreadyVerified(false);
+      const result = await apiJson<{ message: string; alreadyVerified?: boolean }>('/api/auth/resend-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      setSent(true);
-      toast.success('Письмо с подтверждением отправлено! Проверьте вашу почту.');
+      
+      if (result.alreadyVerified) {
+        setAlreadyVerified(true);
+        setSent(true);
+        toast.info('Email уже подтвержден. Вы можете войти в систему.');
+      } else {
+        setSent(true);
+        toast.success('Письмо с подтверждением отправлено! Проверьте вашу почту.');
+      }
     } catch (e: any) {
       toast.error(e.message || 'Ошибка отправки письма');
     } finally {
@@ -109,6 +123,22 @@ export function ResendVerification() {
                       Отправить письмо повторно
                     </button>
                   </div>
+                </div>
+              </>
+            ) : alreadyVerified ? (
+              <>
+                <div className="flex items-center justify-center mb-4">
+                  <svg className="h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="text-center text-text mb-6">
+                  Email адрес <strong>{email}</strong> уже подтвержден. Вы можете войти в систему.
+                </p>
+                <div className="text-center">
+                  <Link to="/login" className="btn btn-primary">
+                    Перейти к входу
+                  </Link>
                 </div>
               </>
             ) : (

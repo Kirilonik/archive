@@ -54,7 +54,6 @@ export class EmailService {
     }
 
     try {
-      // Добавляем таймаут для отправки email (10 секунд)
       const sendMailPromise = this.transporter.sendMail({
         from: env.SMTP_FROM,
         to: options.to,
@@ -63,14 +62,23 @@ export class EmailService {
         text: options.text || this.stripHtml(options.html),
       });
 
+      // Агрессивный таймаут - 5 секунд максимум на всю операцию
+      // Это критично, чтобы не блокировать регистрацию
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Email send timeout')), 3000); // 3 секунды максимум
+        setTimeout(() => {
+          reject(new Error('Email send timeout after 5 seconds'));
+        }, 5000);
       });
 
       await Promise.race([sendMailPromise, timeoutPromise]);
       logger.info({ to: options.to, subject: options.subject }, 'Email отправлен успешно');
-    } catch (error) {
-      logger.error({ error, to: options.to, subject: options.subject }, 'Ошибка при отправке email');
+    } catch (error: any) {
+      // Если это таймаут, логируем отдельно
+      if (error?.message?.includes('timeout') || error?.code === 'ETIMEDOUT') {
+        logger.warn({ to: options.to, subject: options.subject, error: error.message || error.code }, 'Таймаут при отправке email');
+      } else {
+        logger.error({ error, to: options.to, subject: options.subject }, 'Ошибка при отправке email');
+      }
       // Не пробрасываем ошибку дальше - регистрация не должна падать из-за проблем с email
       // В продакшне это важно для надежности
     }
