@@ -12,13 +12,9 @@ function ensureCsrfCookie(req: Request, res: Response): string {
   if (!token) {
     token = randomUUID();
     const isProd = env.NODE_ENV === 'production';
-    // В production используем secure только если есть HTTPS
-    // Для HTTP (без домена с SSL) secure должен быть false
     const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
-    // Для cross-origin запросов нужен sameSite: 'none', но это требует secure: true
-    // Если нет HTTPS, используем 'lax' (но тогда cookie не будет отправляться в cross-origin POST)
-    // Временное решение для HTTP: используем 'none' с secure: false (небезопасно, но работает)
-    const sameSite = isHttps ? 'none' : 'none'; // Для HTTP тоже 'none', чтобы работало cross-origin
+    // Теперь всё на одном домене через Nginx, поэтому можно использовать 'lax'
+    const sameSite = isHttps ? 'none' : 'lax';
     res.cookie(CSRF_COOKIE_NAME, token, {
       httpOnly: true, // Безопасно: токен недоступен через JavaScript
       secure: isProd && isHttps, // Только для HTTPS в production

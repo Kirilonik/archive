@@ -32,9 +32,9 @@ function getClientIp(req: Request): string {
 function setRefreshCookie(res: Response, token: string, req: Request) {
   const isProd = env.NODE_ENV === 'production';
   const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
-  // Для cross-origin запросов нужен sameSite: 'none' с secure: true (HTTPS)
-  // Для HTTP временно используем 'none' с secure: false (небезопасно, но работает)
-  const sameSite = isHttps ? 'none' : 'none';
+  // Теперь всё на одном домене через Nginx, поэтому можно использовать 'lax'
+  // Для HTTPS можно использовать 'none', но для HTTP 'lax' достаточно
+  const sameSite = isHttps ? 'none' : 'lax';
   res.cookie('refresh_token', token, {
     httpOnly: true, // Согласно best practices: токены не должны быть доступны через JavaScript
     secure: isProd && isHttps, // Только для HTTPS в production
@@ -51,9 +51,9 @@ function setRefreshCookie(res: Response, token: string, req: Request) {
 function setAccessCookie(res: Response, token: string, req: Request) {
   const isProd = env.NODE_ENV === 'production';
   const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
-  // Для cross-origin запросов нужен sameSite: 'none' с secure: true (HTTPS)
-  // Для HTTP временно используем 'none' с secure: false (небезопасно, но работает)
-  const sameSite = isHttps ? 'none' : 'none';
+  // Теперь всё на одном домене через Nginx, поэтому можно использовать 'lax'
+  // Для HTTPS можно использовать 'none', но для HTTP 'lax' достаточно
+  const sameSite = isHttps ? 'none' : 'lax';
   res.cookie('access_token', token, {
     httpOnly: true, // Согласно best practices: токены не должны быть доступны через JavaScript
     secure: isProd && isHttps, // Только для HTTPS в production

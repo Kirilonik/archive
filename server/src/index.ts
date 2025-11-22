@@ -94,10 +94,9 @@ async function bootstrap() {
   
   app.use(requestLogger);
   app.use(metricsMiddleware); // Сбор метрик для Prometheus
-  // Временно отключаем CSRF и origin validation для теста (пока нет HTTPS/Nginx reverse proxy)
-  // TODO: Включить обратно после настройки Nginx reverse proxy
-  // app.use(csrfMiddleware);
-  // app.use(originValidationMiddleware);
+  // Теперь всё на одном домене через Nginx, можно включить обратно
+  app.use(csrfMiddleware);
+  app.use(originValidationMiddleware);
 
   // Регистрируем роуты до запуска сервера, чтобы healthcheck был доступен сразу
   registerRoutes(app);
