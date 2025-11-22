@@ -17,10 +17,15 @@ if (!isGoogleAuthConfigured && !isProduction) {
   console.warn('VITE_GOOGLE_CLIENT_ID is not set; using default client id. Set VITE_GOOGLE_CLIENT_ID in your env for production.');
 }
 
+// Проверяем, что clientId валидный
+if (!googleClientId || googleClientId.length === 0) {
+  console.error('Google Client ID не настроен! Google OAuth не будет работать.');
+}
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <GoogleOAuthProvider clientId={googleClientId ?? ''}>
+      <GoogleOAuthProvider clientId={googleClientId}>
         <AuthProvider>
           <AppRouter />
         </AuthProvider>
