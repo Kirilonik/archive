@@ -45,7 +45,7 @@ export function ResendVerification() {
       if (result.alreadyVerified) {
         setAlreadyVerified(true);
         setSent(true);
-        toast.info('Email уже подтвержден. Вы можете войти в систему.');
+        toast.success('Email уже подтвержден. Вы можете войти в систему.');
       } else {
         setSent(true);
         toast.success('Письмо с подтверждением отправлено! Проверьте вашу почту.');
