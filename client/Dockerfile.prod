@@ -20,6 +20,9 @@ RUN cd client && npm ci || npm install
 # Копируем исходники и собираем
 COPY client ./client
 WORKDIR /work/client
+# Передаём API_BASE_URL как build argument
+ARG API_BASE_URL
+ENV API_BASE_URL=${API_BASE_URL}
 RUN npm run build
 
 # Production stage с nginx

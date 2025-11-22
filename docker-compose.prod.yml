@@ -59,6 +59,8 @@ services:
     build:
       context: .
       dockerfile: ./client/Dockerfile.prod
+      args:
+        API_BASE_URL: ${API_BASE_URL}
     environment:
       API_BASE_URL: ${API_BASE_URL}
       FRONTEND_URL: ${FRONTEND_URL}
