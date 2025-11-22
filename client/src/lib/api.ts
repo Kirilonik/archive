@@ -92,7 +92,9 @@ function resolveRequestInput(input: RequestInfo | URL): RequestInfo | URL {
       return input;
     }
     if (API_BASE_URL && input.startsWith('/')) {
-      return `${API_BASE_URL}${input}`;
+      // Убираем trailing slash из API_BASE_URL, если есть
+      const baseUrl = API_BASE_URL.replace(/\/+$/, '');
+      return `${baseUrl}${input}`;
     }
     return input;
   }
