@@ -23,6 +23,12 @@ export class EmailService {
           user: env.SMTP_USER,
           pass: env.SMTP_PASSWORD,
         },
+        // Таймауты для подключения и отправки (агрессивные, чтобы не блокировать регистрацию)
+        connectionTimeout: 3000, // 3 секунды на подключение
+        greetingTimeout: 3000,
+        socketTimeout: 5000, // 5 секунд на операцию
+        // Дополнительная настройка для избежания зависаний
+        pool: false, // Отключаем pooling для избежания проблем с соединениями
       });
     } else {
       logger.warn({ smtp: 'not configured' }, 'SMTP не настроен. Email не будут отправляться. Установите SMTP_HOST, SMTP_USER, SMTP_PASSWORD');
@@ -44,17 +50,25 @@ export class EmailService {
     }
 
     try {
-      await this.transporter.sendMail({
+      // Добавляем таймаут для отправки email (10 секунд)
+      const sendMailPromise = this.transporter.sendMail({
         from: env.SMTP_FROM,
         to: options.to,
         subject: options.subject,
         html: options.html,
         text: options.text || this.stripHtml(options.html),
       });
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Email send timeout')), 5000); // 5 секунд максимум
+      });
+
+      await Promise.race([sendMailPromise, timeoutPromise]);
       logger.info({ to: options.to, subject: options.subject }, 'Email отправлен успешно');
     } catch (error) {
       logger.error({ error, to: options.to, subject: options.subject }, 'Ошибка при отправке email');
-      throw error;
+      // Не пробрасываем ошибку дальше - регистрация не должна падать из-за проблем с email
+      // В продакшне это важно для надежности
     }
   }
 
