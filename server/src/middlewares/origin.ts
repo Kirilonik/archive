@@ -28,7 +28,13 @@ export function originValidationMiddleware(req: Request, res: Response, next: Ne
       next();
       return;
     }
-    res.status(403).json({ error: 'Origin not allowed' });
+    // Логируем для отладки
+    console.log('Origin validation failed:', {
+      headerOrigin,
+      allowedOrigins: Array.from(allowedOrigins),
+      referer: req.headers.referer,
+    });
+    res.status(403).json({ error: 'Origin not allowed', received: headerOrigin, allowed: Array.from(allowedOrigins) });
     return;
   }
 
@@ -38,11 +44,22 @@ export function originValidationMiddleware(req: Request, res: Response, next: Ne
       next();
       return;
     }
-    res.status(403).json({ error: 'Origin not allowed' });
+    // Логируем для отладки
+    console.log('Origin validation failed (referer):', {
+      refererOrigin,
+      allowedOrigins: Array.from(allowedOrigins),
+      origin: req.headers.origin,
+    });
+    res.status(403).json({ error: 'Origin not allowed', received: refererOrigin, allowed: Array.from(allowedOrigins) });
     return;
   }
 
   // Если нет ни origin, ни referer для небезопасного метода - отклоняем
+  console.log('Origin validation failed (no origin/referer):', {
+    origin: req.headers.origin,
+    referer: req.headers.referer,
+    allowedOrigins: Array.from(allowedOrigins),
+  });
   res.status(403).json({ error: 'Origin validation required for this request' });
 }
 
