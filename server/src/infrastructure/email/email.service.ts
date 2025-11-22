@@ -25,20 +25,20 @@ export class EmailService {
         },
       });
     } else {
-      logger.warn('SMTP не настроен. Email не будут отправляться. Установите SMTP_HOST, SMTP_USER, SMTP_PASSWORD');
+      logger.warn({ smtp: 'not configured' }, 'SMTP не настроен. Email не будут отправляться. Установите SMTP_HOST, SMTP_USER, SMTP_PASSWORD');
     }
   }
 
   async sendEmail(options: EmailOptions): Promise<void> {
     if (!this.transporter) {
-      logger.warn('Попытка отправить email, но SMTP не настроен', { to: options.to, subject: options.subject });
+      logger.warn({ to: options.to, subject: options.subject }, 'Попытка отправить email, но SMTP не настроен');
       // В dev режиме логируем email вместо отправки
       if (env.NODE_ENV === 'development') {
-        logger.info('DEV MODE: Email был бы отправлен', {
+        logger.info({
           to: options.to,
           subject: options.subject,
           html: options.html.substring(0, 200) + '...',
-        });
+        }, 'DEV MODE: Email был бы отправлен');
       }
       return;
     }
@@ -51,7 +51,7 @@ export class EmailService {
         html: options.html,
         text: options.text || this.stripHtml(options.html),
       });
-      logger.info('Email отправлен успешно', { to: options.to, subject: options.subject });
+      logger.info({ to: options.to, subject: options.subject }, 'Email отправлен успешно');
     } catch (error) {
       logger.error({ error, to: options.to, subject: options.subject }, 'Ошибка при отправке email');
       throw error;
