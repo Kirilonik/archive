@@ -20,6 +20,17 @@ import { securityLoggerMiddleware } from './middlewares/security-logger.js';
 async function bootstrap() {
   const app = express();
 
+  // Настройка trust proxy для работы за Nginx/proxy
+  // Это необходимо для корректной работы rate limiting и определения реального IP адреса
+  // express-rate-limit требует, чтобы Express доверял заголовкам X-Forwarded-For
+  if (env.NODE_ENV === 'production') {
+    // В продакшне доверяем первому proxy (Nginx)
+    app.set('trust proxy', 1);
+  } else {
+    // В dev режиме также включаем trust proxy для совместимости
+    app.set('trust proxy', true);
+  }
+
   const allowedOrigins = new Set<string>(env.allowedOrigins);
   const corsOptions: CorsOptions = {
     credentials: true,
