@@ -61,6 +61,7 @@ services:
       dockerfile: ./client/Dockerfile.prod
       args:
         API_BASE_URL: ${API_BASE_URL}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     environment:
       API_BASE_URL: ${API_BASE_URL}
       FRONTEND_URL: ${FRONTEND_URL}
