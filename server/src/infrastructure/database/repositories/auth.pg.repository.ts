@@ -190,8 +190,6 @@ export class AuthPgRepository implements AuthRepository {
   }
 
   async updateUserPassword(userId: number, passwordHash: string): Promise<void> {
-    // Обновляем пароль и устанавливаем auth_provider как 'local', если его еще нет
-    // Это важно для пользователей, которые регистрировались через Google, но потом сбросили пароль
     await pool.query(
       `UPDATE users
        SET password_hash = $2, auth_provider = 'local'

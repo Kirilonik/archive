@@ -18,12 +18,5 @@ pool.on('error', (err) => {
   logger.error({ err }, 'Unexpected error on idle client');
 });
 
-pool.on('connect', () => {
-  logger.debug('New database connection established');
-});
-
-pool.on('remove', () => {
-  logger.debug('Database connection removed');
-});
 
 

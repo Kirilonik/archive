@@ -22,45 +22,28 @@ function getClientIp(req: Request): string {
   return req.ip || 'unknown';
 }
 
-/**
- * Устанавливает refresh token в безопасную httpOnly cookie
- * Согласно best practices Google OAuth 2.0:
- * - httpOnly: предотвращает доступ JavaScript к токену (защита от XSS)
- * - secure: только HTTPS в production (защита от перехвата)
- * - sameSite: защита от CSRF атак
- */
 function setRefreshCookie(res: Response, token: string, req: Request) {
-  const isProd = env.NODE_ENV === 'production';
   const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
-  // Для sameSite: 'none' обязательно нужен secure: true
-  // Если HTTPS, используем 'none', иначе 'lax'
   const sameSite = isHttps ? 'none' : 'lax';
-  const secure = isHttps; // Для sameSite: 'none' всегда нужен secure: true
+  const secure = isHttps;
   
   res.cookie('refresh_token', token, {
-    httpOnly: true, // Согласно best practices: токены не должны быть доступны через JavaScript
-    secure: secure, // Обязательно true для sameSite: 'none', иначе false
+    httpOnly: true,
+    secure: secure,
     sameSite: sameSite as 'lax' | 'strict' | 'none',
     path: '/api/auth',
     maxAge: env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,
   });
 }
 
-/**
- * Устанавливает access token в безопасную httpOnly cookie
- * Согласно best practices Google OAuth 2.0
- */
 function setAccessCookie(res: Response, token: string, req: Request) {
-  const isProd = env.NODE_ENV === 'production';
   const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
-  // Для sameSite: 'none' обязательно нужен secure: true
-  // Если HTTPS, используем 'none', иначе 'lax'
   const sameSite = isHttps ? 'none' : 'lax';
-  const secure = isHttps; // Для sameSite: 'none' всегда нужен secure: true
+  const secure = isHttps;
   
   res.cookie('access_token', token, {
-    httpOnly: true, // Согласно best practices: токены не должны быть доступны через JavaScript
-    secure: secure, // Обязательно true для sameSite: 'none', иначе false
+    httpOnly: true,
+    secure: secure,
     sameSite: sameSite as 'lax' | 'strict' | 'none',
     path: '/',
     maxAge: env.ACCESS_TOKEN_TTL_MINUTES * 60 * 1000,
@@ -193,7 +176,6 @@ export class AuthController {
         return res.status(400).json({ error: error.message });
       }
       if (isErrorWithStatus(error) && error.status === 401) {
-        // Согласно best practices: логируем ошибки верификации Google токенов для мониторинга
         const cause = error.cause instanceof Error ? error.cause.message : undefined;
         logger.warn({ 
           error: getErrorMessage(error), 
@@ -212,7 +194,6 @@ export class AuthController {
   refresh = async (req: Request, res: Response) => {
     const token = req.cookies?.refresh_token;
     if (!token) {
-      // Согласно best practices: токен не найден - пользователь должен войти заново
       return res.status(401).json({ error: 'Refresh token not found' });
     }
     try {
@@ -225,7 +206,6 @@ export class AuthController {
         res.clearCookie('access_token', { path: '/', httpOnly: true, secure: isProd, sameSite: 'lax' });
         return res.status(401).json({ error: 'User not found or token invalid' });
       }
-      // Согласно best practices: ротация токенов при каждом обновлении
       const tokens = this.authService.rotateTokens(user);
       setRefreshCookie(res, tokens.refreshToken, req);
       setAccessCookie(res, tokens.accessToken, req);
@@ -236,7 +216,6 @@ export class AuthController {
       res.clearCookie('refresh_token', { path: '/api/auth', httpOnly: true, secure: isProd, sameSite: 'lax' });
       res.clearCookie('access_token', { path: '/', httpOnly: true, secure: isProd, sameSite: 'lax' });
       
-      // Различаем типы ошибок согласно best practices
       if (error && typeof error === 'object' && 'name' in error) {
         if (error.name === 'TokenExpiredError') {
           return res.status(401).json({ error: 'Refresh token expired' });
@@ -250,8 +229,6 @@ export class AuthController {
   };
 
   logout = async (req: Request, res: Response) => {
-    // Согласно best practices: при выходе полностью удаляем токены из cookies
-    // Это обеспечивает безопасность и предотвращает повторное использование токенов
     const isProd = env.NODE_ENV === 'production';
     res.clearCookie('refresh_token', { path: '/api/auth', httpOnly: true, secure: isProd, sameSite: 'lax' });
     res.clearCookie('access_token', { path: '/', httpOnly: true, secure: isProd, sameSite: 'lax' });

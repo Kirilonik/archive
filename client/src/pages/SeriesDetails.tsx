@@ -268,7 +268,6 @@ export function SeriesDetails() {
                         alt="Кинопоиск" 
                         className="h-5 w-auto"
                         onError={(e) => {
-                          console.error('Failed to load Kinopoisk logo');
                           e.currentTarget.style.display = 'none';
                         }}
                       />

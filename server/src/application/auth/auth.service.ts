@@ -36,37 +36,26 @@ export class AuthService {
   }
 
   async register(input: { name?: string | null; email: string; password: string }): Promise<{ user: AuthUser }> {
-    logger.debug({ email: input.email }, 'Начало регистрации пользователя');
-    
     const existing = await this.repository.findByEmail(input.email);
     if (existing) {
-      logger.debug({ email: input.email }, 'Пользователь уже существует');
       const err = new Error('User exists') as Error & { status: number };
       err.status = 409;
       throw err;
     }
     
-    logger.debug({ email: input.email }, 'Хеширование пароля');
     const passwordHash = await this.passwordHasher.hash(input.password);
-    
-    logger.debug({ email: input.email }, 'Создание пользователя в БД');
     const user = await this.repository.createUser({
       name: input.name ?? null,
       email: input.email,
       passwordHash,
     });
     
-    logger.debug({ userId: user.id, email: user.email }, 'Пользователь создан, отправка email подтверждения');
-    // Создаем токен подтверждения email и отправляем письмо
-    // Запускаем полностью асинхронно без ожидания - используем process.nextTick для гарантии
-    // что ответ будет отправлен клиенту до начала отправки email
     process.nextTick(() => {
       this.sendVerificationEmail(user.id, user.email, user.name).catch((error) => {
-        logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email (не критично)');
+        logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email');
       });
     });
     
-    logger.debug({ userId: user.id, email: user.email }, 'Регистрация завершена');
     return { user };
   }
   
@@ -91,7 +80,6 @@ export class AuthService {
       logger.info({ userId, email }, 'Письмо подтверждения email отправлено');
     } catch (error) {
       logger.error({ error, userId, email }, 'Ошибка при отправке письма подтверждения');
-      // Не пробрасываем ошибку, чтобы регистрация не провалилась из-за проблем с email
     }
   }
   
@@ -183,14 +171,10 @@ export class AuthService {
 
   verifyRefreshToken(token: string): { id: number; email: string; iat: number; exp: number } {
     try {
-      // Согласно best practices: проверка токена с обработкой различных типов ошибок
       return jwt.verify(token, env.JWT_REFRESH_SECRET) as { id: number; email: string; iat: number; exp: number };
     } catch (error: unknown) {
-      // Логируем ошибки верификации для мониторинга отзыва токенов
       if (error && typeof error === 'object' && 'name' in error) {
-        if (error.name === 'TokenExpiredError' && 'expiredAt' in error) {
-          logger.debug({ exp: error.expiredAt }, 'Refresh token expired');
-        } else if (error.name === 'JsonWebTokenError' && 'message' in error) {
+        if (error.name === 'JsonWebTokenError' && 'message' in error) {
           logger.warn({ error: String(error.message) }, 'Invalid refresh token format');
         }
       }
@@ -199,22 +183,18 @@ export class AuthService {
   }
 
   rotateTokens(user: Pick<AuthUser, 'id' | 'email'>): TokenPair {
-    // Согласно best practices: ротация токенов при каждом обновлении
-    // Это обеспечивает безопасность и позволяет отзывать старые токены
     return this.buildTokens(user);
   }
 
   async loginWithGoogle(idToken: string): Promise<{ user: AuthUser; tokens: TokenPair }> {
     let payload: { sub?: string; email?: string; name?: string; picture?: string } | undefined;
     try {
-      // Согласно best practices: верификация токена с указанием audience
       const ticket = await this.googleClient.verifyIdToken({
         idToken,
         audience: env.GOOGLE_CLIENT_ID,
       });
       payload = ticket.getPayload() as { sub?: string; email?: string; name?: string; picture?: string } | undefined;
     } catch (err: unknown) {
-      // Согласно best practices: логирование ошибок верификации для мониторинга
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       const errorCode = err && typeof err === 'object' && 'code' in err ? String(err.code) : undefined;
       logger.warn({ 
@@ -273,22 +253,13 @@ export class AuthService {
    * Отправляет email с токеном для сброса пароля
    */
   async requestPasswordReset(email: string): Promise<void> {
-    logger.debug({ email }, 'Запрос сброса пароля');
-    
     const user = await this.repository.findByEmail(email);
     
-    // Для безопасности не сообщаем, существует ли пользователь
-    // Но логируем для отладки
     if (!user) {
-      logger.debug({ email }, 'Пользователь не найден при запросе сброса пароля');
-      // Возвращаем успех, чтобы не раскрывать информацию о существовании пользователя
       return;
     }
 
-    // Проверяем, что у пользователя есть пароль (не только Google auth)
     if (!user.passwordHash || user.authProvider !== 'local') {
-      logger.debug({ email, authProvider: user.authProvider }, 'У пользователя нет локального пароля');
-      // Возвращаем успех для безопасности
       return;
     }
 
@@ -310,7 +281,7 @@ export class AuthService {
         subject: 'Сброс пароля',
         html: createPasswordResetTemplate(resetUrl, user.name),
       }).catch((error) => {
-        logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email сброса пароля (не критично)');
+        logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email сброса пароля');
       });
     });
 
@@ -321,7 +292,6 @@ export class AuthService {
    * Сбрасывает пароль пользователя по токену
    */
   async resetPassword(token: string, newPassword: string): Promise<void> {
-    logger.debug({ token: token.substring(0, 8) + '...' }, 'Сброс пароля по токену');
 
     const tokenRecord = await this.repository.findPasswordResetToken(token);
 

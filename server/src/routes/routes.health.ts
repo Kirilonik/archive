@@ -5,8 +5,6 @@ import { logger } from '../shared/logger.js';
 export const router = Router();
 
 router.get('/', async (req, res) => {
-  // Упрощенный healthcheck - отвечаем сразу
-  // Проверка БД выполняется асинхронно, но не блокирует ответ
   res.json({ 
     ok: true, 
     status: 'healthy',
@@ -14,10 +12,7 @@ router.get('/', async (req, res) => {
     database: 'checking',
   });
   
-  // Проверяем БД в фоне для логирования, но не блокируем ответ
-  pool.query('SELECT 1').then(() => {
-    logger.debug('Database health check passed');
-  }).catch((err) => {
+  pool.query('SELECT 1').catch((err) => {
     logger.warn({ err }, 'Database health check failed');
   });
 });
