@@ -32,12 +32,14 @@ function getClientIp(req: Request): string {
 function setRefreshCookie(res: Response, token: string, req: Request) {
   const isProd = env.NODE_ENV === 'production';
   const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
-  // Теперь всё на одном домене через Nginx, поэтому можно использовать 'lax'
-  // Для HTTPS можно использовать 'none', но для HTTP 'lax' достаточно
+  // Для sameSite: 'none' обязательно нужен secure: true
+  // Если HTTPS, используем 'none', иначе 'lax'
   const sameSite = isHttps ? 'none' : 'lax';
+  const secure = isHttps; // Для sameSite: 'none' всегда нужен secure: true
+  
   res.cookie('refresh_token', token, {
     httpOnly: true, // Согласно best practices: токены не должны быть доступны через JavaScript
-    secure: isProd && isHttps, // Только для HTTPS в production
+    secure: secure, // Обязательно true для sameSite: 'none', иначе false
     sameSite: sameSite as 'lax' | 'strict' | 'none',
     path: '/api/auth',
     maxAge: env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,
@@ -51,12 +53,14 @@ function setRefreshCookie(res: Response, token: string, req: Request) {
 function setAccessCookie(res: Response, token: string, req: Request) {
   const isProd = env.NODE_ENV === 'production';
   const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
-  // Теперь всё на одном домене через Nginx, поэтому можно использовать 'lax'
-  // Для HTTPS можно использовать 'none', но для HTTP 'lax' достаточно
+  // Для sameSite: 'none' обязательно нужен secure: true
+  // Если HTTPS, используем 'none', иначе 'lax'
   const sameSite = isHttps ? 'none' : 'lax';
+  const secure = isHttps; // Для sameSite: 'none' всегда нужен secure: true
+  
   res.cookie('access_token', token, {
     httpOnly: true, // Согласно best practices: токены не должны быть доступны через JavaScript
-    secure: isProd && isHttps, // Только для HTTPS в production
+    secure: secure, // Обязательно true для sameSite: 'none', иначе false
     sameSite: sameSite as 'lax' | 'strict' | 'none',
     path: '/',
     maxAge: env.ACCESS_TOKEN_TTL_MINUTES * 60 * 1000,

@@ -101,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ credential }),
+      credentials: 'include', // Важно: отправляем cookies с запросом
     });
     if (!resp.ok) {
       const data = await readJsonSafely(resp);
@@ -114,8 +115,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     const data = await resp.json();
     setUser(data.user ?? null);
+    // Вызываем refresh для проверки, что cookies установлены и пользователь авторизован
+    await refresh();
     toast.success('Вход через Google выполнен!');
-  }, []);
+  }, [refresh]);
 
   const register = useCallback(async ({ name, email, password }: RegisterPayload) => {
     const resp = await apiFetch('/api/auth/register', {

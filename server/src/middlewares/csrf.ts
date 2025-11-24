@@ -11,13 +11,15 @@ function ensureCsrfCookie(req: Request, res: Response): string {
   let token = req.cookies?.[CSRF_COOKIE_NAME] as string | undefined;
   if (!token) {
     token = randomUUID();
-    const isProd = env.NODE_ENV === 'production';
     const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
-    // Теперь всё на одном домене через Nginx, поэтому можно использовать 'lax'
+    // Для sameSite: 'none' обязательно нужен secure: true
+    // Если HTTPS, используем 'none', иначе 'lax'
     const sameSite = isHttps ? 'none' : 'lax';
+    const secure = isHttps; // Для sameSite: 'none' всегда нужен secure: true
+    
     res.cookie(CSRF_COOKIE_NAME, token, {
       httpOnly: true, // Безопасно: токен недоступен через JavaScript
-      secure: isProd && isHttps, // Только для HTTPS в production
+      secure: secure, // Обязательно true для sameSite: 'none', иначе false
       sameSite: sameSite as 'lax' | 'strict' | 'none',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
