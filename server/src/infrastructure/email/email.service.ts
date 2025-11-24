@@ -17,6 +17,7 @@ export class EmailService {
     if (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASSWORD) {
       // Проверка совпадения SMTP_FROM и SMTP_USER (критично для Yandex)
       const isYandex = env.SMTP_HOST.includes('yandex');
+      const isGmail = env.SMTP_HOST.includes('gmail');
       if (isYandex && env.SMTP_FROM !== env.SMTP_USER) {
         logger.error({
           smtp_user: env.SMTP_USER,
@@ -84,6 +85,13 @@ export class EmailService {
         transporterConfig.secure = false;
         transporterConfig.requireTLS = true;
         logger.info({ port: 587, method: 'STARTTLS' }, 'Используется порт 587 с STARTTLS для Yandex');
+      }
+
+      // Для Gmail: если порт 587, используем STARTTLS
+      if (isGmail && env.SMTP_PORT === 587) {
+        transporterConfig.secure = false;
+        transporterConfig.requireTLS = true;
+        logger.info({ port: 587, method: 'STARTTLS' }, 'Используется порт 587 с STARTTLS для Gmail');
       }
 
       this.transporter = nodemailer.createTransport(transporterConfig);
@@ -158,12 +166,27 @@ export class EmailService {
           helpMessage += '   SMTP_PORT=587\n';
           helpMessage += '   SMTP_SECURE=false\n';
         } else if (isGmail) {
-          helpMessage += '\n📧 Для Gmail необходимо использовать ПАРОЛЬ ПРИЛОЖЕНИЯ!\n';
-          helpMessage += 'Инструкция:\n';
-          helpMessage += '1. Включите двухфакторную аутентификацию в Google аккаунте\n';
-          helpMessage += '2. Перейдите на https://myaccount.google.com/apppasswords\n';
-          helpMessage += '3. Создайте пароль приложения для "Почта"\n';
-          helpMessage += '4. Используйте этот пароль в переменной SMTP_PASSWORD\n';
+          helpMessage += '\n📧 Для Gmail необходимо использовать ПАРОЛЬ ПРИЛОЖЕНИЯ!\n\n';
+          helpMessage += '📝 Пошаговая инструкция:\n';
+          helpMessage += '1. Включите двухфакторную аутентификацию (2FA) в Google аккаунте:\n';
+          helpMessage += '   - Откройте https://myaccount.google.com/security\n';
+          helpMessage += '   - Найдите "Двухэтапная аутентификация" и включите её\n\n';
+          helpMessage += '2. Создайте пароль приложения:\n';
+          helpMessage += '   - Откройте https://myaccount.google.com/apppasswords\n';
+          helpMessage += '   - Выберите "Почта" в первом списке\n';
+          helpMessage += '   - Выберите "Другое устройство" во втором списке\n';
+          helpMessage += '   - Введите название: "Media Archive SMTP"\n';
+          helpMessage += '   - Нажмите "Создать"\n';
+          helpMessage += '   - Скопируйте 16-символьный пароль (показывается только один раз!)\n\n';
+          helpMessage += '3. Настройте переменные окружения:\n';
+          helpMessage += '   SMTP_HOST=smtp.gmail.com\n';
+          helpMessage += '   SMTP_PORT=587\n';
+          helpMessage += '   SMTP_SECURE=false\n';
+          helpMessage += '   SMTP_USER=ваш_email@gmail.com\n';
+          helpMessage += '   SMTP_PASSWORD=пароль_приложения_16_символов\n';
+          helpMessage += '   SMTP_FROM=ваш_email@gmail.com\n\n';
+          helpMessage += '4. Перезапустите контейнер:\n';
+          helpMessage += '   docker compose -f docker-compose.prod.yml restart server\n';
         } else {
           helpMessage += '\nПроверьте правильность SMTP_USER и SMTP_PASSWORD\n';
         }

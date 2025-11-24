@@ -97,10 +97,25 @@ EMAIL_VERIFICATION_TOKEN_TTL_HOURS=24
 
 Для работы системы подтверждения email необходимо настроить SMTP сервер. Подробная инструкция находится в файле [`docs/SMTP_SETUP.md`](docs/SMTP_SETUP.md).
 
-**Быстрая настройка для Яндекс.Почты** (рекомендуется для .ru доменов):
+**Быстрая настройка для Gmail** (рекомендуется для продакшна):
 
-1. Создайте пароль приложения на https://id.yandex.ru/security
-2. Добавьте в `.env`:
+1. Включите двухфакторную аутентификацию (2FA) в Google аккаунте
+2. Создайте пароль приложения на https://myaccount.google.com/apppasswords
+3. Добавьте в `.env`:
+```bash
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=ваш_email@gmail.com
+SMTP_PASSWORD=пароль_приложения_16_символов
+SMTP_FROM=ваш_email@gmail.com
+```
+
+**Альтернатива: Яндекс.Почта** (для .ru доменов):
+
+1. Включите доступ почтовых клиентов в настройках Яндекс.Почты
+2. Создайте пароль приложения на https://id.yandex.ru/security
+3. Добавьте в `.env`:
 ```bash
 SMTP_HOST=smtp.yandex.ru
 SMTP_PORT=465
