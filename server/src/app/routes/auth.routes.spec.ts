@@ -61,6 +61,7 @@ describe('auth routes', () => {
       email: 'user@example.com',
       name: 'Tester',
       avatar_url: null,
+      email_verified: false, // При регистрации email не подтвержден
     });
   });
 

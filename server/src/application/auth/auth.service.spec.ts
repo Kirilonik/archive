@@ -9,6 +9,7 @@ const baseUser: AuthUser = {
   avatarUrl: null,
   authProvider: 'local',
   googleId: null,
+  emailVerified: true, // Для тестов используем подтвержденный email
 };
 
 function createRepositoryMock(overrides: Partial<AuthRepository> = {}): AuthRepository {
@@ -17,7 +18,7 @@ function createRepositoryMock(overrides: Partial<AuthRepository> = {}): AuthRepo
       ...baseUser,
       passwordHash: 'hash',
     } as AuthUserWithPassword) as AuthRepository['findByEmail'],
-    createUser: jest.fn().mockResolvedValue(baseUser) as AuthRepository['createUser'],
+    createUser: jest.fn().mockResolvedValue({ ...baseUser, emailVerified: false }) as AuthRepository['createUser'],
     findByGoogleId: jest.fn().mockResolvedValue(null),
     createUserFromGoogle: jest.fn().mockResolvedValue({
       ...baseUser,
@@ -52,15 +53,13 @@ function createGoogleClientMock(overrides: Partial<{ verifyIdToken: jest.Mock }>
 }
 
 describe('AuthService', () => {
-  it('регистрирует нового пользователя и возвращает токены', async () => {
+  it('регистрирует нового пользователя', async () => {
     const repository = createRepositoryMock({ findByEmail: jest.fn().mockResolvedValue(null) });
     const passwordHasher = createPasswordHasherMock();
     const service = new AuthService(repository, passwordHasher, createGoogleClientMock() as any);
 
     const result = await service.register({ name: 'User', email: baseUser.email, password: 'password' });
-    expect(result.user).toEqual(baseUser);
-    expect(result.tokens.accessToken).toBeTruthy();
-    expect(result.tokens.refreshToken).toBeTruthy();
+    expect(result.user).toEqual({ ...baseUser, emailVerified: false }); // При регистрации email не подтвержден
     expect(repository.createUser).toHaveBeenCalledWith({
       name: 'User',
       email: baseUser.email,
