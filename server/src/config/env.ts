@@ -105,12 +105,6 @@ const allowedOrigins = [appConfig.frontendUrl, ...corsOrigins].filter(
   (origin, index, array) => array.indexOf(origin) === index,
 );
 
-// Логируем для отладки
-if (process.env.NODE_ENV === 'production') {
-  console.log('Allowed origins:', allowedOrigins);
-  console.log('Frontend URL:', appConfig.frontendUrl);
-  console.log('CORS origins:', corsOrigins);
-}
 
 // Для миграций используем дефолтные значения, если переменные не установлены
 const isMigration = process.argv[1]?.includes('migrate.js');

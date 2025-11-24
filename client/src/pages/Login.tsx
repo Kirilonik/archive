@@ -77,7 +77,7 @@ export function Login() {
           }
         }
       } catch (_e) {
-        console.error('Ошибка при клике на Google iframe:', _e);
+        // Игнорируем ошибки при клике на Google iframe
       }
     } else {
       // Если iframe еще не загружен, пробуем найти любую кнопку

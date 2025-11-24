@@ -337,26 +337,12 @@ export class AuthService {
       throw error;
     }
 
-    // Хешируем новый пароль
     const passwordHash = await this.passwordHasher.hash(newPassword);
-    logger.debug({ 
-      userId: tokenRecord.userId,
-      passwordHashLength: passwordHash.length,
-      passwordHashPrefix: passwordHash.substring(0, 15) + '...'
-    }, 'Пароль захеширован для сброса');
-
-    // Обновляем пароль пользователя и убеждаемся, что auth_provider установлен как 'local'
     await this.repository.updateUserPassword(tokenRecord.userId, passwordHash);
-    
-    // Подтверждаем email при сбросе пароля
-    // Это безопасно, так как пользователь уже подтвердил доступ к email при запросе сброса пароля
-    // Это важно, чтобы пользователь мог войти после сброса пароля
     await this.repository.markUserEmailAsVerified(tokenRecord.userId);
-
-    // Отмечаем токен как использованный
     await this.repository.markPasswordResetTokenAsUsed(tokenRecord.id);
 
-    logger.info({ userId: tokenRecord.userId }, 'Пароль успешно сброшен, email подтвержден');
+    logger.info({ userId: tokenRecord.userId }, 'Пароль успешно сброшен');
   }
 }
 
