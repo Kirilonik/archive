@@ -42,8 +42,6 @@ jobs:
     needs: ci
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    environment:
-      name: production
 
     steps:
       - name: Checkout code
