@@ -15,12 +15,44 @@ export class EmailService {
   constructor() {
     // Инициализируем transporter только если SMTP настроен
     if (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASSWORD) {
+      // Проверка совпадения SMTP_FROM и SMTP_USER (критично для Yandex)
+      const isYandex = env.SMTP_HOST.includes('yandex');
+      if (isYandex && env.SMTP_FROM !== env.SMTP_USER) {
+        logger.error({
+          smtp_user: env.SMTP_USER,
+          smtp_from: env.SMTP_FROM,
+        }, '⚠️ КРИТИЧНО: SMTP_FROM не совпадает с SMTP_USER! Для Yandex они должны быть одинаковыми. Это может быть причиной ошибки аутентификации.');
+      }
+
+      // Диагностика пароля (без самого пароля)
+      const passwordLength = env.SMTP_PASSWORD.length;
+      const hasSpaces = env.SMTP_PASSWORD.includes(' ');
+      const hasNewlines = env.SMTP_PASSWORD.includes('\n') || env.SMTP_PASSWORD.includes('\r');
+      
+      if (hasSpaces || hasNewlines) {
+        logger.warn({
+          passwordLength,
+          hasSpaces,
+          hasNewlines,
+        }, '⚠️ ВНИМАНИЕ: В пароле обнаружены пробелы или переносы строк! Это может быть причиной ошибки аутентификации. Убедитесь, что пароль скопирован без лишних символов.');
+      }
+
+      // Для Yandex пароль приложения обычно 16 символов
+      if (isYandex && passwordLength !== 16) {
+        logger.warn({
+          passwordLength,
+          expectedLength: 16,
+        }, '⚠️ ВНИМАНИЕ: Пароль приложения Yandex обычно состоит из 16 символов. Текущая длина: ' + passwordLength + '. Убедитесь, что вы используете именно пароль приложения.');
+      }
+
       logger.info({ 
         host: env.SMTP_HOST, 
         port: env.SMTP_PORT, 
         secure: env.SMTP_SECURE,
         user: env.SMTP_USER,
-        from: env.SMTP_FROM
+        from: env.SMTP_FROM,
+        passwordLength,
+        fromMatchesUser: env.SMTP_FROM === env.SMTP_USER,
       }, 'Инициализация SMTP транспорта');
       
       this.transporter = nodemailer.createTransport({
@@ -72,13 +104,37 @@ export class EmailService {
         let helpMessage = 'Ошибка аутентификации SMTP при проверке соединения.\n';
         
         if (isYandex) {
-          helpMessage += '\n📧 Для Yandex необходимо использовать ПАРОЛЬ ПРИЛОЖЕНИЯ, а не обычный пароль!\n';
-          helpMessage += 'Инструкция:\n';
-          helpMessage += '1. Перейдите на https://id.yandex.ru/security\n';
+          const fromMatchesUser = env.SMTP_FROM === env.SMTP_USER;
+          const passwordLength = env.SMTP_PASSWORD.length;
+          const hasSpaces = env.SMTP_PASSWORD.includes(' ');
+          
+          helpMessage += '\n❌ YANDEX: Ошибка аутентификации при проверке соединения!\n\n';
+          helpMessage += '🔍 Диагностика:\n';
+          helpMessage += `- SMTP_USER: ${env.SMTP_USER}\n`;
+          helpMessage += `- SMTP_FROM: ${env.SMTP_FROM}\n`;
+          helpMessage += `- SMTP_FROM совпадает с SMTP_USER: ${fromMatchesUser ? '✅ Да' : '❌ НЕТ (это может быть проблемой!)'}\n`;
+          helpMessage += `- Длина пароля: ${passwordLength} символов (ожидается 16 для пароля приложения)\n`;
+          helpMessage += `- Пароль содержит пробелы: ${hasSpaces ? '❌ Да (это проблема!)' : '✅ Нет'}\n\n`;
+          
+          if (!fromMatchesUser) {
+            helpMessage += '⚠️ КРИТИЧНО: SMTP_FROM не совпадает с SMTP_USER!\n';
+            helpMessage += 'Для Yandex они ДОЛЖНЫ быть одинаковыми.\n\n';
+          }
+          
+          if (hasSpaces) {
+            helpMessage += '⚠️ ПРОБЛЕМА: В пароле обнаружены пробелы!\n';
+            helpMessage += 'Убедитесь, что пароль скопирован без пробелов.\n\n';
+          }
+          
+          helpMessage += '📝 Инструкция:\n';
+          helpMessage += '1. Откройте https://id.yandex.ru/security\n';
           helpMessage += '2. Найдите раздел "Пароли приложений"\n';
-          helpMessage += '3. Создайте новый пароль приложения (например, "Media Archive SMTP")\n';
-          helpMessage += '4. Используйте этот пароль в переменной SMTP_PASSWORD\n';
-          helpMessage += '5. Убедитесь, что SMTP_FROM совпадает с SMTP_USER\n';
+          helpMessage += '3. Удалите старый пароль приложения (если есть)\n';
+          helpMessage += '4. Создайте НОВЫЙ пароль приложения (название: "Media Archive SMTP")\n';
+          helpMessage += '5. Скопируйте пароль БЕЗ пробелов (должно быть 16 символов)\n';
+          helpMessage += '6. Убедитесь, что SMTP_FROM = SMTP_USER\n';
+          helpMessage += '7. Обновите переменные в .env или docker-compose.prod.yml\n';
+          helpMessage += '8. Перезапустите: docker compose -f docker-compose.prod.yml restart server\n';
         } else if (isGmail) {
           helpMessage += '\n📧 Для Gmail необходимо использовать ПАРОЛЬ ПРИЛОЖЕНИЯ!\n';
           helpMessage += 'Инструкция:\n';
@@ -93,6 +149,10 @@ export class EmailService {
         logger.error({
           host: env.SMTP_HOST,
           user: env.SMTP_USER,
+          from: env.SMTP_FROM,
+          fromMatchesUser: env.SMTP_FROM === env.SMTP_USER,
+          passwordLength: env.SMTP_PASSWORD.length,
+          passwordHasSpaces: env.SMTP_PASSWORD.includes(' '),
           error: error.message,
           code: error.code,
           responseCode: error.responseCode,
@@ -167,19 +227,53 @@ export class EmailService {
         let errorMessage = 'Ошибка аутентификации SMTP при отправке email.\n';
         
         if (isYandex) {
-          errorMessage += '\n❌ YANDEX: Используется неправильный пароль!\n';
-          errorMessage += 'Для Yandex НЕОБХОДИМО использовать ПАРОЛЬ ПРИЛОЖЕНИЯ, а не обычный пароль аккаунта.\n\n';
-          errorMessage += '🔧 Как исправить:\n';
-          errorMessage += '1. Откройте https://id.yandex.ru/security\n';
-          errorMessage += '2. Найдите раздел "Пароли приложений"\n';
-          errorMessage += '3. Создайте новый пароль приложения (название: "Media Archive SMTP")\n';
-          errorMessage += '4. Скопируйте сгенерированный пароль (16 символов)\n';
-          errorMessage += '5. Обновите переменную SMTP_PASSWORD в docker-compose.prod.yml или .env файле\n';
-          errorMessage += '6. Перезапустите контейнер: docker compose -f docker-compose.prod.yml restart server\n\n';
+          const fromMatchesUser = env.SMTP_FROM === env.SMTP_USER;
+          const passwordLength = env.SMTP_PASSWORD.length;
+          const hasSpaces = env.SMTP_PASSWORD.includes(' ');
+          
+          errorMessage += '\n❌ YANDEX: Ошибка аутентификации!\n\n';
+          errorMessage += '🔍 Диагностика:\n';
+          errorMessage += `- SMTP_USER: ${env.SMTP_USER}\n`;
+          errorMessage += `- SMTP_FROM: ${env.SMTP_FROM}\n`;
+          errorMessage += `- SMTP_FROM совпадает с SMTP_USER: ${fromMatchesUser ? '✅ Да' : '❌ НЕТ (это может быть проблемой!)'}\n`;
+          errorMessage += `- Длина пароля: ${passwordLength} символов (ожидается 16 для пароля приложения)\n`;
+          errorMessage += `- Пароль содержит пробелы: ${hasSpaces ? '❌ Да (это проблема!)' : '✅ Нет'}\n\n`;
+          
+          errorMessage += '🔧 Возможные причины и решения:\n\n';
+          
+          if (!fromMatchesUser) {
+            errorMessage += '1. ❌ SMTP_FROM не совпадает с SMTP_USER!\n';
+            errorMessage += '   Решение: Убедитесь, что SMTP_FROM и SMTP_USER одинаковые\n';
+            errorMessage += '   Пример: SMTP_USER=noreply-archive@yandex.ru\n';
+            errorMessage += '           SMTP_FROM=noreply-archive@yandex.ru\n\n';
+          }
+          
+          if (hasSpaces) {
+            errorMessage += '2. ❌ В пароле есть пробелы!\n';
+            errorMessage += '   Решение: Убедитесь, что пароль скопирован без пробелов в начале/конце\n\n';
+          }
+          
+          if (passwordLength !== 16) {
+            errorMessage += '3. ⚠️ Длина пароля не 16 символов\n';
+            errorMessage += '   Пароль приложения Yandex обычно состоит из 16 символов\n';
+            errorMessage += '   Убедитесь, что вы используете именно пароль приложения\n\n';
+          }
+          
+          errorMessage += '4. 📝 Пошаговая инструкция:\n';
+          errorMessage += '   a) Откройте https://id.yandex.ru/security\n';
+          errorMessage += '   b) Найдите раздел "Пароли приложений"\n';
+          errorMessage += '   c) Удалите старый пароль приложения (если есть)\n';
+          errorMessage += '   d) Создайте НОВЫЙ пароль приложения (название: "Media Archive SMTP")\n';
+          errorMessage += '   e) Скопируйте пароль БЕЗ пробелов (должно быть 16 символов)\n';
+          errorMessage += '   f) Убедитесь, что SMTP_FROM = SMTP_USER\n';
+          errorMessage += '   g) Обновите переменные в .env или docker-compose.prod.yml\n';
+          errorMessage += '   h) Перезапустите: docker compose -f docker-compose.prod.yml restart server\n\n';
+          
           errorMessage += '⚠️  Важно:\n';
-          errorMessage += '- Используйте именно пароль приложения, НЕ обычный пароль от почты\n';
-          errorMessage += '- SMTP_FROM должен совпадать с SMTP_USER\n';
-          errorMessage += '- Пароль приложения показывается только один раз при создании\n';
+          errorMessage += '- Пароль приложения показывается только ОДИН раз при создании\n';
+          errorMessage += '- Если потеряли пароль - создайте новый\n';
+          errorMessage += '- НЕ используйте обычный пароль от почты\n';
+          errorMessage += '- SMTP_FROM и SMTP_USER должны быть ОДИНАКОВЫМИ\n';
         } else if (isGmail) {
           errorMessage += '\n❌ GMAIL: Используется неправильный пароль!\n';
           errorMessage += 'Для Gmail НЕОБХОДИМО использовать ПАРОЛЬ ПРИЛОЖЕНИЯ.\n\n';
