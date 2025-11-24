@@ -1,0 +1,160 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Позволяет запускать вручную
+
+jobs:
+  ci:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --workspace shared
+          npm ci --workspace server
+          npm ci --workspace client
+
+      - name: Build shared package
+        run: npm run build --workspace shared
+
+      - name: Build server
+        run: npm run build --workspace server
+
+      - name: Build client
+        run: npm run build --workspace client
+
+      - name: Check build artifacts
+        run: |
+          test -d server/dist && echo "✅ Server build successful"
+          test -d client/dist && echo "✅ Client build successful"
+
+  deploy:
+    name: Deploy to Production
+    needs: ci
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: ${{ secrets.FRONTEND_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || 22 }}
+          script: |
+            set -e  # Остановка при ошибке
+            
+            echo "🚀 Начало деплоя..."
+            echo "📦 Коммит: ${{ github.sha }}"
+            echo "👤 Автор: ${{ github.actor }}"
+            
+            # Переходим в директорию проекта
+            cd /opt/media-archive/archive || { echo "❌ Директория не найдена"; exit 1; }
+            
+            # Сохраняем текущую ветку
+            CURRENT_BRANCH=$(git branch --show-current)
+            echo "📍 Текущая ветка: $CURRENT_BRANCH"
+            
+            # Получаем последние изменения
+            echo "📥 Получение изменений из репозитория..."
+            git fetch origin main || { echo "❌ Ошибка при получении изменений"; exit 1; }
+            
+            # Переключаемся на main и обновляем
+            git checkout main || { echo "❌ Ошибка при переключении на main"; exit 1; }
+            git pull origin main || { echo "❌ Ошибка при обновлении кода"; exit 1; }
+            
+            echo "✅ Код обновлен"
+            
+            # Проверяем наличие docker-compose.prod.yml
+            if [ ! -f "docker-compose.prod.yml" ]; then
+              echo "❌ Файл docker-compose.prod.yml не найден"
+              exit 1
+            fi
+            
+            # Останавливаем старые контейнеры (graceful shutdown)
+            echo "🛑 Остановка старых контейнеров..."
+            docker compose -f docker-compose.prod.yml down --timeout 30 || true
+            
+            # Очищаем неиспользуемые образы (опционально, экономит место)
+            echo "🧹 Очистка неиспользуемых образов..."
+            docker image prune -f || true
+            
+            # Собираем и запускаем новые контейнеры
+            echo "🔨 Сборка и запуск контейнеров..."
+            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans || { 
+              echo "❌ Ошибка при сборке/запуске контейнеров"; 
+              docker compose -f docker-compose.prod.yml logs;
+              exit 1;
+            }
+            
+            # Ждем пока контейнеры запустятся
+            echo "⏳ Ожидание запуска контейнеров..."
+            sleep 10
+            
+            # Проверяем статус контейнеров
+            echo "📊 Статус контейнеров:"
+            docker compose -f docker-compose.prod.yml ps
+            
+            # Проверяем здоровье сервисов
+            echo "🏥 Проверка здоровья сервисов..."
+            
+            # Проверяем сервер (с таймаутом)
+            echo "🔍 Проверка сервера..."
+            if timeout 10 docker compose -f docker-compose.prod.yml exec -T server wget --quiet --tries=1 --spider http://localhost:4000/api/health 2>/dev/null; then
+              echo "✅ Сервер работает"
+            else
+              echo "⚠️ Сервер еще запускается, проверяем логи..."
+              docker compose -f docker-compose.prod.yml logs server --tail=30
+              # Не падаем сразу, даем еще время
+              sleep 5
+              if timeout 10 docker compose -f docker-compose.prod.yml exec -T server wget --quiet --tries=1 --spider http://localhost:4000/api/health 2>/dev/null; then
+                echo "✅ Сервер работает после ожидания"
+              else
+                echo "❌ Сервер не отвечает после ожидания"
+                docker compose -f docker-compose.prod.yml logs server --tail=50
+                exit 1
+              fi
+            fi
+            
+            # Проверяем клиент (опционально)
+            echo "🔍 Проверка клиента..."
+            if timeout 5 docker compose -f docker-compose.prod.yml exec -T client wget --quiet --tries=1 --spider http://localhost/ 2>/dev/null; then
+              echo "✅ Клиент работает"
+            else
+              echo "⚠️ Клиент еще запускается (это нормально)"
+            fi
+            
+            echo "🎉 Деплой успешно завершен!"
+            echo "📝 Последние логи сервера:"
+            docker compose -f docker-compose.prod.yml logs server --tail=20
+
+      - name: Deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Деплой успешно завершен"
+          else
+            echo "❌ Деплой завершился с ошибкой"
+            exit 1
+          fi
+

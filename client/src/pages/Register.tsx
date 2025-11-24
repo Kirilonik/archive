@@ -1,6 +1,5 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
 export function Register() {
@@ -41,14 +40,12 @@ export function Register() {
     const passwordValidationError = validatePassword(password);
     if (passwordValidationError) {
       setPasswordError(passwordValidationError);
-      toast.error(passwordValidationError);
       return;
     }
 
     // Валидация email
     if (!email || !email.includes('@')) {
       setError('Введите корректный email адрес');
-      toast.error('Введите корректный email адрес');
       return;
     }
 
@@ -59,28 +56,22 @@ export function Register() {
       
       await registerUser({ name: name || undefined, email, password });
       
-      // После успешной регистрации переходим на страницу подтверждения email
+      // После успешной регистрации переходим на страницу с информацией о подтверждении email
       setLoading(false);
       
-      // Навигация на страницу подтверждения email с информацией о регистрации
-      navigate('/resend-verification', { 
-        state: { 
-          email,
-          justRegistered: true,
-          message: 'Регистрация успешна! Письмо с подтверждением отправлено на вашу почту.' 
-        } 
+      // Переход на страницу подтверждения email
+      navigate('/check-email', { 
+        state: { email }
       });
     } catch (e: any) {
       let message = e?.message || 'Ошибка регистрации';
       const status = e?.status;
       
-      // Если пользователь уже существует (409), предлагаем войти или запросить подтверждение
+      // Если пользователь уже существует (409), предлагаем войти
       if (status === 409 || message.includes('уже существует') || message.includes('User exists')) {
         message = 'Пользователь с таким email уже зарегистрирован.';
         setError(message);
-        toast.error(message + ' Вы можете войти или запросить повторное подтверждение email.');
       } else {
-        toast.error(message);
         setError(message);
         
         // Если ошибка связана с паролем, показываем её под полем пароля
@@ -167,20 +158,13 @@ export function Register() {
             <div className="mt-4 text-sm text-red-400" role="alert">
               <p className="mb-2">{error}</p>
               {error.includes('уже зарегистрирован') && (
-                <div className="space-y-2 mt-3">
+                <div className="mt-3">
                   <Link 
                     to="/login" 
                     state={{ email }}
                     className="block text-primary hover:underline text-sm"
                   >
                     → Перейти к входу
-                  </Link>
-                  <Link 
-                    to="/resend-verification" 
-                    state={{ email }}
-                    className="block text-primary hover:underline text-sm"
-                  >
-                    → Запросить повторное подтверждение email
                   </Link>
                 </div>
               )}

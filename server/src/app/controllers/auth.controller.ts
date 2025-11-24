@@ -285,26 +285,5 @@ export class AuthController {
     }
   };
 
-  resendVerificationEmail = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const schema = z.object({
-        email: z.string().email(),
-      });
-      const { email } = schema.parse(req.body);
-      const result = await this.authService.resendVerificationEmail(email);
-      // Возвращаем информацию о статусе для клиента
-      res.json({ 
-        message: result.alreadyVerified 
-          ? 'Email уже подтвержден' 
-          : 'Если email существует и не подтвержден, письмо с подтверждением было отправлено',
-        alreadyVerified: result.alreadyVerified 
-      });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.message });
-      }
-      next(error);
-    }
-  };
 }
 

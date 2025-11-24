@@ -11,7 +11,7 @@ import { env } from '../../config/env.js';
 import type { OAuth2Client } from 'google-auth-library';
 import { logger } from '../../shared/logger.js';
 import type { EmailService } from '../../infrastructure/email/email.service.js';
-import { createEmailVerificationTemplate, createResendVerificationTemplate } from '../../infrastructure/email/email.templates.js';
+import { createEmailVerificationTemplate } from '../../infrastructure/email/email.templates.js';
 
 export class AuthService {
   constructor(
@@ -58,9 +58,9 @@ export class AuthService {
     
     logger.debug({ userId: user.id, email: user.email }, 'Пользователь создан, отправка email подтверждения');
     // Создаем токен подтверждения email и отправляем письмо
-    // Не ждем завершения отправки - запускаем асинхронно в следующем тике event loop
-    // Это гарантирует, что ответ будет отправлен клиенту до начала отправки email
-    setImmediate(() => {
+    // Запускаем полностью асинхронно без ожидания - используем process.nextTick для гарантии
+    // что ответ будет отправлен клиенту до начала отправки email
+    process.nextTick(() => {
       this.sendVerificationEmail(user.id, user.email, user.name).catch((error) => {
         logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email (не критично)');
       });
@@ -129,46 +129,6 @@ export class AuthService {
     logger.info({ userId: tokenRecord.userId }, 'Email успешно подтвержден');
   }
   
-  /**
-   * Повторно отправляет письмо подтверждения email
-   */
-  async resendVerificationEmail(email: string): Promise<{ alreadyVerified: boolean }> {
-    const user = await this.repository.findByEmail(email);
-    
-    if (!user) {
-      // Не раскрываем, существует ли пользователь (защита от перечисления)
-      logger.debug({ email }, 'Попытка повторной отправки письма для несуществующего пользователя');
-      return { alreadyVerified: false };
-    }
-    
-    if (user.emailVerified) {
-      // Email уже подтвержден
-      logger.debug({ userId: user.id, email }, 'Попытка повторной отправки письма для уже подтвержденного email');
-      return { alreadyVerified: true };
-    }
-    
-    // Создаем новый токен и отправляем письмо
-    const token = this.generateVerificationToken();
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + env.EMAIL_VERIFICATION_TOKEN_TTL_HOURS);
-    
-    await this.repository.createEmailVerificationToken(user.id, token, expiresAt);
-    
-    const verificationUrl = `${env.FRONTEND_URL}/verify-email?token=${token}`;
-    
-    try {
-      await this.emailService.sendEmail({
-        to: user.email,
-        subject: 'Подтверждение email адреса',
-        html: createResendVerificationTemplate(verificationUrl, user.name),
-      });
-      logger.info({ userId: user.id, email: user.email }, 'Повторное письмо подтверждения email отправлено');
-    } catch (error) {
-      logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при повторной отправке письма подтверждения');
-    }
-    
-    return { alreadyVerified: false };
-  }
 
   private ensureUserHasPassword(user: AuthUserWithPassword | null): AuthUserWithPassword | null {
     if (!user) return null;

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { apiJson } from '../lib/api';
 
 export function VerifyEmail() {
@@ -29,7 +28,6 @@ export function VerifyEmail() {
       });
       setStatus('success');
       setMessage('Email успешно подтвержден! Теперь вы можете войти в систему.');
-      toast.success('Email подтвержден!');
       setTimeout(() => {
         navigate('/login');
       }, 3000);
@@ -37,7 +35,6 @@ export function VerifyEmail() {
       setStatus('error');
       const errorMessage = error?.message || 'Не удалось подтвердить email';
       setMessage(errorMessage);
-      toast.error(errorMessage);
     }
   }
 
@@ -77,20 +74,10 @@ export function VerifyEmail() {
               </svg>
             </div>
             <p className="text-center text-text mb-6">{message}</p>
-            <div className="space-y-3">
-              <div className="text-center">
-                <Link to="/login" className="btn btn-primary">
-                  Перейти к входу
-                </Link>
-              </div>
-              <div className="text-center">
-                <button
-                  onClick={() => navigate('/resend-verification')}
-                  className="text-textMuted hover:text-text underline text-sm"
-                >
-                  Запросить новую ссылку подтверждения
-                </button>
-              </div>
+            <div className="text-center">
+              <Link to="/login" className="btn btn-primary">
+                Вернуться ко входу
+              </Link>
             </div>
           </div>
         )}

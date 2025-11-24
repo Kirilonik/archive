@@ -28,13 +28,8 @@ export function Login() {
       await login({ email, password });
       navigate('/');
     } catch (e: any) {
-      if (e?.requiresEmailVerification) {
-        toast.error(e.message || 'Email не подтвержден');
-        // Показываем ссылку на повторную отправку
-        setTimeout(() => {
-          navigate('/resend-verification', { state: { email } });
-        }, 2000);
-      } else {
+      // Ошибки логируются, но не показываем toast для email verification
+      if (!e?.requiresEmailVerification) {
         toast.error(e.message || 'Ошибка входа');
       }
     } finally {
