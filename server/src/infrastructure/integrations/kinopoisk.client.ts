@@ -12,10 +12,15 @@ const API_URL = env.KINOPOISK_API_URL;
 const API_KEY = env.KINOPOISK_API_KEY;
 
 function getHeaders(): Record<string, string> {
-  return {
-    'X-API-KEY': API_KEY,
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+  if (API_KEY) {
+    headers['X-API-KEY'] = API_KEY;
+  } else {
+    logger.warn('KINOPOISK_API_KEY is not set');
+  }
+  return headers;
 }
 
 type StaffItem = { staffId?: number; nameRu?: string; nameEn?: string; professionText?: string; professionKey?: string };
@@ -230,7 +235,14 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     try {
       const url = `${API_URL}/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(query)}&page=1`;
       const data = await this.fetchJson<any>(url);
+      if (!data) {
+        logger.warn({ query, url }, 'Kinopoisk suggest returned null');
+        return [];
+      }
       const films = data?.films ?? [];
+      if (films.length === 0) {
+        logger.debug({ query, url }, 'Kinopoisk suggest returned empty films array');
+      }
       return films.slice(0, 10).map((f: any) => {
         let filmId = f.kinopoiskId ?? null;
         if (!filmId) {
