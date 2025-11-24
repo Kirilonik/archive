@@ -104,7 +104,7 @@ jobs:
             
             # Ждем пока контейнеры запустятся
             echo "⏳ Ожидание запуска контейнеров..."
-            sleep 10
+            sleep 15
             
             # Проверяем статус контейнеров
             echo "📊 Статус контейнеров:"
@@ -113,27 +113,32 @@ jobs:
             # Проверяем здоровье сервисов
             echo "🏥 Проверка здоровья сервисов..."
             
-            # Проверяем сервер (с таймаутом)
+            # Проверяем сервер (извне контейнера, так надежнее)
             echo "🔍 Проверка сервера..."
-            if timeout 10 docker compose -f docker-compose.prod.yml exec -T server wget --quiet --tries=1 --spider http://localhost:4000/api/health 2>/dev/null; then
-              echo "✅ Сервер работает"
-            else
-              echo "⚠️ Сервер еще запускается, проверяем логи..."
-              docker compose -f docker-compose.prod.yml logs server --tail=30
-              # Не падаем сразу, даем еще время
-              sleep 5
-              if timeout 10 docker compose -f docker-compose.prod.yml exec -T server wget --quiet --tries=1 --spider http://localhost:4000/api/health 2>/dev/null; then
-                echo "✅ Сервер работает после ожидания"
+            SERVER_HEALTHY=false
+            for i in {1..10}; do
+              if curl -f -s http://localhost:4000/api/health > /dev/null 2>&1; then
+                echo "✅ Сервер работает (попытка $i)"
+                SERVER_HEALTHY=true
+                break
               else
-                echo "❌ Сервер не отвечает после ожидания"
-                docker compose -f docker-compose.prod.yml logs server --tail=50
-                exit 1
+                echo "⏳ Ожидание ответа сервера... (попытка $i/10)"
+                sleep 3
               fi
+            done
+            
+            if [ "$SERVER_HEALTHY" = false ]; then
+              echo "❌ Сервер не отвечает после 10 попыток"
+              echo "📋 Логи сервера:"
+              docker compose -f docker-compose.prod.yml logs server --tail=50
+              echo "📋 Статус контейнеров:"
+              docker compose -f docker-compose.prod.yml ps
+              exit 1
             fi
             
             # Проверяем клиент (опционально)
             echo "🔍 Проверка клиента..."
-            if timeout 5 docker compose -f docker-compose.prod.yml exec -T client wget --quiet --tries=1 --spider http://localhost/ 2>/dev/null; then
+            if curl -f -s http://localhost:8080/ > /dev/null 2>&1; then
               echo "✅ Клиент работает"
             else
               echo "⚠️ Клиент еще запускается (это нормально)"
