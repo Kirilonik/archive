@@ -9,6 +9,8 @@ import { Login } from '../pages/Login';
 import { Register } from '../pages/Register';
 import { VerifyEmail } from '../pages/VerifyEmail';
 import { CheckEmail } from '../pages/CheckEmail';
+import { ForgotPassword } from '../pages/ForgotPassword';
+import { ResetPassword } from '../pages/ResetPassword';
 import { useAuth } from '../context/AuthContext';
 
 function ProtectedLayout() {
@@ -69,6 +71,8 @@ export function AppRouter() {
         <Route path="/register" element={<Register />} />
         <Route path="/check-email" element={<CheckEmail />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

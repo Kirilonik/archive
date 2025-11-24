@@ -104,7 +104,10 @@ export function Login() {
         </div>
         <div className="flex items-center justify-between mt-4">
           <button className="btn btn-primary px-4 py-2" disabled={loading} onClick={submit}>Войти</button>
-          <Link className="text-textMuted hover:text-text" to="/register">Регистрация</Link>
+          <div className="flex flex-col items-end gap-1">
+            <Link className="text-textMuted hover:text-text" to="/register">Регистрация</Link>
+            <Link className="text-textMuted hover:text-text text-sm" to="/forgot-password">Забыл пароль?</Link>
+          </div>
         </div>
         <div className="mt-6 flex justify-center">
           <div

@@ -12,6 +12,8 @@ export function createAuthRouter(controller: AuthController) {
   router.post('/refresh', authRateLimiter, controller.refresh);
   router.post('/logout', authRateLimiter, controller.logout);
   router.post('/verify-email', authRateLimiter, controller.verifyEmail);
+  router.post('/forgot-password', authRateLimiter, controller.forgotPassword);
+  router.post('/reset-password', authRateLimiter, controller.resetPassword);
   router.get('/me', authMiddleware, generalRateLimiter, controller.me);
   return router;
 }

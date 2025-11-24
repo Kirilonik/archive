@@ -11,7 +11,7 @@ import { env } from '../../config/env.js';
 import type { OAuth2Client } from 'google-auth-library';
 import { logger } from '../../shared/logger.js';
 import type { EmailService } from '../../infrastructure/email/email.service.js';
-import { createEmailVerificationTemplate } from '../../infrastructure/email/email.templates.js';
+import { createEmailVerificationTemplate, createPasswordResetTemplate } from '../../infrastructure/email/email.templates.js';
 
 export class AuthService {
   constructor(
@@ -99,6 +99,13 @@ export class AuthService {
    * Генерирует безопасный случайный токен для подтверждения email
    */
   private generateVerificationToken(): string {
+    return crypto.randomBytes(32).toString('hex');
+  }
+
+  /**
+   * Генерирует безопасный случайный токен для сброса пароля
+   */
+  private generatePasswordResetToken(): string {
     return crypto.randomBytes(32).toString('hex');
   }
   
@@ -259,6 +266,87 @@ export class AuthService {
 
     const tokens = this.buildTokens(user);
     return { user, tokens };
+  }
+
+  /**
+   * Запрашивает сброс пароля для пользователя по email
+   * Отправляет email с токеном для сброса пароля
+   */
+  async requestPasswordReset(email: string): Promise<void> {
+    logger.debug({ email }, 'Запрос сброса пароля');
+    
+    const user = await this.repository.findByEmail(email);
+    
+    // Для безопасности не сообщаем, существует ли пользователь
+    // Но логируем для отладки
+    if (!user) {
+      logger.debug({ email }, 'Пользователь не найден при запросе сброса пароля');
+      // Возвращаем успех, чтобы не раскрывать информацию о существовании пользователя
+      return;
+    }
+
+    // Проверяем, что у пользователя есть пароль (не только Google auth)
+    if (!user.passwordHash || user.authProvider !== 'local') {
+      logger.debug({ email, authProvider: user.authProvider }, 'У пользователя нет локального пароля');
+      // Возвращаем успех для безопасности
+      return;
+    }
+
+    // Генерируем токен сброса пароля
+    const token = this.generatePasswordResetToken();
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + env.PASSWORD_RESET_TOKEN_TTL_HOURS);
+
+    // Сохраняем токен в БД
+    await this.repository.createPasswordResetToken(user.id, token, expiresAt);
+
+    // Отправляем email с токеном
+    const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${token}`;
+    
+    // Запускаем отправку email асинхронно
+    process.nextTick(() => {
+      this.emailService.sendEmail({
+        to: user.email,
+        subject: 'Сброс пароля',
+        html: createPasswordResetTemplate(resetUrl, user.name),
+      }).catch((error) => {
+        logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email сброса пароля (не критично)');
+      });
+    });
+
+    logger.info({ userId: user.id, email: user.email }, 'Запрос сброса пароля обработан');
+  }
+
+  /**
+   * Сбрасывает пароль пользователя по токену
+   */
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    logger.debug({ token: token.substring(0, 8) + '...' }, 'Сброс пароля по токену');
+
+    const tokenRecord = await this.repository.findPasswordResetToken(token);
+
+    if (!tokenRecord) {
+      const error = new Error('Токен сброса пароля не найден или уже использован') as Error & { status: number };
+      error.status = 400;
+      throw error;
+    }
+
+    if (tokenRecord.expiresAt < new Date()) {
+      const error = new Error('Токен сброса пароля истек') as Error & { status: number };
+      error.status = 400;
+      throw error;
+    }
+
+    // Хешируем новый пароль
+    const passwordHash = await this.passwordHasher.hash(newPassword);
+
+    // Обновляем пароль пользователя
+    await this.repository.updateUserPassword(tokenRecord.userId, passwordHash);
+
+    // Отмечаем токен как использованный
+    await this.repository.markPasswordResetTokenAsUsed(tokenRecord.id);
+
+    logger.info({ userId: tokenRecord.userId }, 'Пароль успешно сброшен');
   }
 }
 

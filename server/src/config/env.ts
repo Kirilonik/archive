@@ -74,6 +74,7 @@ const envSchema = z
     SMTP_PASSWORD: z.string().optional(),
     SMTP_FROM: z.string().email().optional(),
     EMAIL_VERIFICATION_TOKEN_TTL_HOURS: z.coerce.number().int().positive().default(24),
+    PASSWORD_RESET_TOKEN_TTL_HOURS: z.coerce.number().int().positive().default(1),
   })
   .transform((values) => ({
     ...values,
@@ -134,5 +135,6 @@ export const env = {
     SMTP_PASSWORD: parsed.data.SMTP_PASSWORD || '',
     SMTP_FROM: parsed.data.SMTP_FROM || 'noreply@example.com',
     EMAIL_VERIFICATION_TOKEN_TTL_HOURS: parsed.data.EMAIL_VERIFICATION_TOKEN_TTL_HOURS || 24,
+    PASSWORD_RESET_TOKEN_TTL_HOURS: parsed.data.PASSWORD_RESET_TOKEN_TTL_HOURS || 1,
   };
 

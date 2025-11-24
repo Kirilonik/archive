@@ -285,5 +285,54 @@ export class AuthController {
     }
   };
 
+  forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const schema = z.object({
+        email: z.string().email('Некорректный email адрес'),
+      });
+      const { email } = schema.parse(req.body);
+      
+      // Запускаем асинхронно, не ждем результата
+      // Всегда возвращаем успех для безопасности (не раскрываем существование пользователя)
+      this.authService.requestPasswordReset(email).catch((error) => {
+        logger.error({ error, email }, 'Ошибка при запросе сброса пароля');
+      });
+      
+      res.json({ message: 'Если указанный email существует, на него отправлено письмо с инструкциями по сбросу пароля' });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0]?.message || 'Некорректные данные' });
+      }
+      next(error);
+    }
+  };
+
+  resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const schema = z.object({
+        token: z.string().min(1, 'Токен обязателен'),
+        password: z.string().min(1, 'Пароль обязателен'),
+      });
+      const { token, password } = schema.parse(req.body);
+      
+      // Валидация пароля
+      const passwordValidation = this.validatePasswordStrength(password);
+      if (!passwordValidation.valid) {
+        return res.status(400).json({ error: passwordValidation.error });
+      }
+      
+      await this.authService.resetPassword(token, password);
+      res.json({ message: 'Пароль успешно изменен' });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0]?.message || 'Некорректные данные' });
+      }
+      if (isErrorWithStatus(error) && error.status === 400) {
+        return res.status(400).json({ error: error.message });
+      }
+      next(error);
+    }
+  };
+
 }
 
