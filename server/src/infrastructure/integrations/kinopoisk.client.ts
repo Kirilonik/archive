@@ -39,17 +39,40 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     return null;
   }
 
-  private async fetchJson<T>(url: string): Promise<T | null> {
-    const resp = await fetch(url, { headers: getHeaders() });
-    if (!resp.ok) {
-      const body = await resp.text().catch(() => '');
-      logger.error(
-        { status: resp.status, statusText: resp.statusText, url, body },
-        '[kinopoisk] request failed',
-      );
+  private async fetchJson<T>(url: string, retries = 2): Promise<T | null> {
+    const timeoutMs = 30000; // 30 секунд вместо дефолтных 10
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const resp = await fetch(url, {
+        headers: getHeaders(),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!resp.ok) {
+        const body = await resp.text().catch(() => '');
+        logger.error(
+          { status: resp.status, statusText: resp.statusText, url, body },
+          '[kinopoisk] request failed',
+        );
+        return null;
+      }
+      return resp.json() as Promise<T>;
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      
+      // Если это таймаут или ошибка соединения, и есть попытки - повторяем
+      if (retries > 0 && (error?.name === 'AbortError' || error?.code === 'ETIMEDOUT' || error?.code === 'ECONNRESET')) {
+        logger.warn({ url, retriesLeft: retries, error: error.message }, 'Kinopoisk request timeout, retrying');
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Ждем 1 секунду перед повтором
+        return this.fetchJson<T>(url, retries - 1);
+      }
+
+      logger.error({ err: error, url, retries }, 'Error fetching from Kinopoisk API');
       return null;
     }
-    return resp.json() as Promise<T>;
   }
 
   private mapStaff(staff: StaffItem[]): { director: string | null; actors: string[] | null } {
