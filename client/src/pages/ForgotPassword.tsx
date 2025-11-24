@@ -77,13 +77,11 @@ export function ForgotPassword() {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-text mb-4 text-center">
-              Письмо отправлено!
+              Письмо отправлено на{' '}
+              <span className="text-primary font-medium">{email}</span>
             </h2>
-            <p className="text-center text-text mb-4">
-              Если указанный email <strong>{email}</strong> существует в нашей системе, на него отправлено письмо с инструкциями по восстановлению пароля.
-            </p>
             <p className="text-center text-textMuted text-sm mb-6">
-              Пожалуйста, проверьте вашу почту и перейдите по ссылке в письме. Если письмо не пришло, проверьте папку &quot;Спам&quot;.
+              Пожалуйста, проверьте вашу почту и перейдите по ссылке в письме. Не забудьте проверить папку &quot;Спам&quot;.
             </p>
             <div className="text-center">
               <Link to="/login" className="btn btn-primary">
