@@ -21,11 +21,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm ci
-          npm ci --workspace shared
-          npm ci --workspace server
-          npm ci --workspace client
+        run: npm ci
 
       - name: Build shared package
         run: npm run build --workspace shared
