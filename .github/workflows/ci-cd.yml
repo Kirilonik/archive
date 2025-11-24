@@ -48,7 +48,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
     environment:
       name: production
-      url: ${{ secrets.FRONTEND_URL }}
 
     steps:
       - name: Checkout code
