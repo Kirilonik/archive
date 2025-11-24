@@ -83,7 +83,7 @@ export function ForgotPassword() {
               Если указанный email <strong>{email}</strong> существует в нашей системе, на него отправлено письмо с инструкциями по восстановлению пароля.
             </p>
             <p className="text-center text-textMuted text-sm mb-6">
-              Пожалуйста, проверьте вашу почту и перейдите по ссылке в письме. Если письмо не пришло, проверьте папку "Спам".
+              Пожалуйста, проверьте вашу почту и перейдите по ссылке в письме. Если письмо не пришло, проверьте папку &quot;Спам&quot;.
             </p>
             <div className="text-center">
               <Link to="/login" className="btn btn-primary">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { apiJson } from '../lib/api';
 
@@ -9,17 +9,7 @@ export function VerifyEmail() {
   const [message, setMessage] = useState<string>('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!token) {
-      setStatus('error');
-      setMessage('Токен подтверждения не найден в ссылке');
-      return;
-    }
-
-    verifyEmail(token);
-  }, [token]);
-
-  async function verifyEmail(token: string) {
+  const verifyEmail = useCallback(async (token: string) => {
     try {
       await apiJson<{ message: string }>('/api/auth/verify-email', {
         method: 'POST',
@@ -36,7 +26,17 @@ export function VerifyEmail() {
       const errorMessage = error?.message || 'Не удалось подтвердить email';
       setMessage(errorMessage);
     }
-  }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!token) {
+      setStatus('error');
+      setMessage('Токен подтверждения не найден в ссылке');
+      return;
+    }
+
+    verifyEmail(token);
+  }, [token, verifyEmail]);
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">

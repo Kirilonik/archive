@@ -37,7 +37,7 @@ export function Login() {
     }
   }
 
-  const handleContainerClick = (e: React.MouseEvent) => {
+  const handleContainerClick = (_e: React.MouseEvent) => {
     if (googleLoading) return;
     
     const container = googleContainerRef.current;
@@ -72,11 +72,11 @@ export function Login() {
               clientY: rect.height / 2,
             });
             iframe.contentDocument?.body?.dispatchEvent(iframeClickEvent);
-          } catch (e) {
+          } catch (_e) {
             // Игнорируем CORS ошибки при доступе к iframe
           }
         }
-      } catch (e) {
+      } catch (_e) {
         console.error('Ошибка при клике на Google iframe:', e);
       }
     } else {
