@@ -14,6 +14,12 @@ const API_KEY = env.KINOPOISK_API_KEY;
 function getHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Referer': 'https://www.kinopoisk.ru/',
+    'Origin': 'https://www.kinopoisk.ru',
   };
   if (API_KEY) {
     headers['X-API-KEY'] = API_KEY;
@@ -54,12 +60,38 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       if (!resp.ok) {
         const body = await resp.text().catch(() => '');
         logger.error(
-          { status: resp.status, statusText: resp.statusText, url, body },
+          { 
+            status: resp.status, 
+            statusText: resp.statusText, 
+            url, 
+            body: body.substring(0, 500), // Ограничиваем длину для логов
+            headers: Object.fromEntries(resp.headers.entries()),
+          },
           '[kinopoisk] request failed',
         );
         return null;
       }
-      return resp.json() as Promise<T>;
+      
+      const responseText = await resp.text();
+      if (!responseText || responseText.trim() === '') {
+        logger.warn({ url, status: resp.status }, '[kinopoisk] Empty response body');
+        return null;
+      }
+      
+      try {
+        return JSON.parse(responseText) as T;
+      } catch (parseError) {
+        logger.error(
+          { 
+            url, 
+            status: resp.status, 
+            body: responseText.substring(0, 500),
+            parseError: parseError instanceof Error ? parseError.message : String(parseError),
+          },
+          '[kinopoisk] Failed to parse JSON response',
+        );
+        return null;
+      }
     } catch (error: any) {
       clearTimeout(timeoutId);
       
