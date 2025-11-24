@@ -45,8 +45,65 @@ export class EmailService {
         debug: env.NODE_ENV === 'development', // Включаем debug в dev режиме
         logger: env.NODE_ENV === 'development', // Логируем в dev режиме
       } as any);
+
+      // Проверяем соединение при старте (асинхронно, не блокируем запуск)
+      this.verifyConnection().catch((err) => {
+        logger.warn({ error: err.message }, 'Предупреждение: не удалось проверить SMTP соединение при старте');
+      });
     } else {
       logger.warn({ smtp: 'not configured' }, 'SMTP не настроен. Email не будут отправляться. Установите SMTP_HOST, SMTP_USER, SMTP_PASSWORD');
+    }
+  }
+
+  /**
+   * Проверяет SMTP соединение при инициализации
+   */
+  private async verifyConnection(): Promise<void> {
+    if (!this.transporter) return;
+
+    try {
+      await this.transporter.verify();
+      logger.info({ host: env.SMTP_HOST, user: env.SMTP_USER }, 'SMTP соединение успешно проверено');
+    } catch (error: any) {
+      const isYandex = env.SMTP_HOST?.includes('yandex');
+      const isGmail = env.SMTP_HOST?.includes('gmail');
+      
+      if (error?.code === 'EAUTH' || error?.responseCode === 535) {
+        let helpMessage = 'Ошибка аутентификации SMTP при проверке соединения.\n';
+        
+        if (isYandex) {
+          helpMessage += '\n📧 Для Yandex необходимо использовать ПАРОЛЬ ПРИЛОЖЕНИЯ, а не обычный пароль!\n';
+          helpMessage += 'Инструкция:\n';
+          helpMessage += '1. Перейдите на https://id.yandex.ru/security\n';
+          helpMessage += '2. Найдите раздел "Пароли приложений"\n';
+          helpMessage += '3. Создайте новый пароль приложения (например, "Media Archive SMTP")\n';
+          helpMessage += '4. Используйте этот пароль в переменной SMTP_PASSWORD\n';
+          helpMessage += '5. Убедитесь, что SMTP_FROM совпадает с SMTP_USER\n';
+        } else if (isGmail) {
+          helpMessage += '\n📧 Для Gmail необходимо использовать ПАРОЛЬ ПРИЛОЖЕНИЯ!\n';
+          helpMessage += 'Инструкция:\n';
+          helpMessage += '1. Включите двухфакторную аутентификацию в Google аккаунте\n';
+          helpMessage += '2. Перейдите на https://myaccount.google.com/apppasswords\n';
+          helpMessage += '3. Создайте пароль приложения для "Почта"\n';
+          helpMessage += '4. Используйте этот пароль в переменной SMTP_PASSWORD\n';
+        } else {
+          helpMessage += '\nПроверьте правильность SMTP_USER и SMTP_PASSWORD\n';
+        }
+        
+        logger.error({
+          host: env.SMTP_HOST,
+          user: env.SMTP_USER,
+          error: error.message,
+          code: error.code,
+          responseCode: error.responseCode,
+        }, helpMessage);
+      } else {
+        logger.warn({
+          host: env.SMTP_HOST,
+          error: error.message,
+          code: error.code,
+        }, 'Не удалось проверить SMTP соединение при старте (это не критично, проверка будет при первой отправке)');
+      }
     }
   }
 
@@ -104,7 +161,40 @@ export class EmailService {
       if (error?.message?.includes('timeout') || error?.code === 'ETIMEDOUT' || error?.code === 'ECONNRESET') {
         logger.warn(errorDetails, 'Таймаут или ошибка подключения при отправке email. Возможные причины: неправильный SMTP_HOST/SMTP_PORT, firewall блокирует порт, SMTP сервер недоступен');
       } else if (error?.code === 'EAUTH' || error?.responseCode === 535) {
-        logger.error(errorDetails, 'Ошибка аутентификации SMTP. Проверьте SMTP_USER и SMTP_PASSWORD (используйте пароль приложения для Gmail/Yandex)');
+        const isYandex = env.SMTP_HOST?.includes('yandex');
+        const isGmail = env.SMTP_HOST?.includes('gmail');
+        
+        let errorMessage = 'Ошибка аутентификации SMTP при отправке email.\n';
+        
+        if (isYandex) {
+          errorMessage += '\n❌ YANDEX: Используется неправильный пароль!\n';
+          errorMessage += 'Для Yandex НЕОБХОДИМО использовать ПАРОЛЬ ПРИЛОЖЕНИЯ, а не обычный пароль аккаунта.\n\n';
+          errorMessage += '🔧 Как исправить:\n';
+          errorMessage += '1. Откройте https://id.yandex.ru/security\n';
+          errorMessage += '2. Найдите раздел "Пароли приложений"\n';
+          errorMessage += '3. Создайте новый пароль приложения (название: "Media Archive SMTP")\n';
+          errorMessage += '4. Скопируйте сгенерированный пароль (16 символов)\n';
+          errorMessage += '5. Обновите переменную SMTP_PASSWORD в docker-compose.prod.yml или .env файле\n';
+          errorMessage += '6. Перезапустите контейнер: docker compose -f docker-compose.prod.yml restart server\n\n';
+          errorMessage += '⚠️  Важно:\n';
+          errorMessage += '- Используйте именно пароль приложения, НЕ обычный пароль от почты\n';
+          errorMessage += '- SMTP_FROM должен совпадать с SMTP_USER\n';
+          errorMessage += '- Пароль приложения показывается только один раз при создании\n';
+        } else if (isGmail) {
+          errorMessage += '\n❌ GMAIL: Используется неправильный пароль!\n';
+          errorMessage += 'Для Gmail НЕОБХОДИМО использовать ПАРОЛЬ ПРИЛОЖЕНИЯ.\n\n';
+          errorMessage += '🔧 Как исправить:\n';
+          errorMessage += '1. Включите двухфакторную аутентификацию в Google аккаунте\n';
+          errorMessage += '2. Откройте https://myaccount.google.com/apppasswords\n';
+          errorMessage += '3. Создайте пароль приложения для "Почта"\n';
+          errorMessage += '4. Используйте этот пароль в SMTP_PASSWORD\n';
+          errorMessage += '5. Перезапустите контейнер\n';
+        } else {
+          errorMessage += '\nПроверьте правильность SMTP_USER и SMTP_PASSWORD.\n';
+          errorMessage += 'Убедитесь, что используете правильные учетные данные для вашего SMTP сервера.\n';
+        }
+        
+        logger.error({ ...errorDetails, help: errorMessage }, errorMessage);
       } else if (error?.code === 'ECONNREFUSED') {
         logger.error(errorDetails, 'SMTP сервер отказал в подключении. Проверьте SMTP_HOST и SMTP_PORT, убедитесь что сервер доступен');
       } else {
