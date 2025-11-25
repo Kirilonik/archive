@@ -55,10 +55,9 @@ export class YouTubeOAuthPgRepository implements YouTubeOAuthRepository {
 
   async getTokensByUserId(userId: number): Promise<YouTubeOAuthToken | null> {
     try {
-      const { rows } = await pool.query(
-        'SELECT * FROM youtube_oauth_tokens WHERE user_id = $1',
-        [userId],
-      );
+      const { rows } = await pool.query('SELECT * FROM youtube_oauth_tokens WHERE user_id = $1', [
+        userId,
+      ]);
 
       if (rows.length === 0) {
         return null;
@@ -105,4 +104,3 @@ export class YouTubeOAuthPgRepository implements YouTubeOAuthRepository {
     }
   }
 }
-

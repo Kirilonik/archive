@@ -30,7 +30,7 @@ export function registerRoutes(app: Express): void {
   app.use('/api/episodes', episodesRouter);
   app.use('/api/users', authMiddleware, usersRouter);
   app.use('/api/search', searchRateLimiter, searchRouter);
-  
+
   // YouTube OAuth routes
   const youtubeRouter = createYouTubeRouter(container.integrations.youtube.controller);
   // Callback не требует auth middleware (публичный endpoint)

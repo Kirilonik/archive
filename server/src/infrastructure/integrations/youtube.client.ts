@@ -371,10 +371,7 @@ export class YouTubeHttpClient implements YouTubeClient {
   /**
    * Получить плейлисты пользователя
    */
-  async fetchUserPlaylists(
-    accessToken: string,
-    maxResults = 50,
-  ): Promise<YouTubePlaylist[]> {
+  async fetchUserPlaylists(accessToken: string, maxResults = 50): Promise<YouTubePlaylist[]> {
     if (!accessToken) {
       return [];
     }
@@ -503,10 +500,7 @@ export class YouTubeHttpClient implements YouTubeClient {
    * Получить лайкнутые видео пользователя
    * Использует специальный плейлист "LL" (Liked videos)
    */
-  async fetchLikedVideos(
-    accessToken: string,
-    maxResults = 50,
-  ): Promise<YouTubePlaylistItem[]> {
+  async fetchLikedVideos(accessToken: string, maxResults = 50): Promise<YouTubePlaylistItem[]> {
     // "LL" - это специальный ID для плейлиста лайкнутых видео
     return this.fetchPlaylistItems('LL', accessToken, maxResults);
   }
@@ -526,9 +520,7 @@ export class YouTubeHttpClient implements YouTubeClient {
   /**
    * Получить детали нескольких видео (YouTube API позволяет до 50 за запрос)
    */
-  async fetchMultipleVideoDetails(
-    videoIds: string[],
-  ): Promise<Map<string, YouTubeVideoDetails>> {
+  async fetchMultipleVideoDetails(videoIds: string[]): Promise<Map<string, YouTubeVideoDetails>> {
     if (!API_KEY) {
       logger.warn('YOUTUBE_API_KEY is not set');
       return new Map();
@@ -597,9 +589,7 @@ export class YouTubeHttpClient implements YouTubeClient {
               duration: this.parseDuration(contentDetails?.duration),
               viewCount: statistics?.viewCount ? parseInt(statistics.viewCount, 10) : null,
               likeCount: statistics?.likeCount ? parseInt(statistics.likeCount, 10) : null,
-              commentCount: statistics?.commentCount
-                ? parseInt(statistics.commentCount, 10)
-                : null,
+              commentCount: statistics?.commentCount ? parseInt(statistics.commentCount, 10) : null,
               thumbnailUrl:
                 snippet?.thumbnails?.high?.url ||
                 snippet?.thumbnails?.medium?.url ||
@@ -619,11 +609,13 @@ export class YouTubeHttpClient implements YouTubeClient {
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
       } catch (error) {
-        logger.error({ err: error, batch: batch.slice(0, 5) }, 'Error fetching YouTube video batch');
+        logger.error(
+          { err: error, batch: batch.slice(0, 5) },
+          'Error fetching YouTube video batch',
+        );
       }
     }
 
     return result;
   }
 }
-

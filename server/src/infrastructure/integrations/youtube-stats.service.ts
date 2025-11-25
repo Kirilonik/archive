@@ -81,8 +81,7 @@ export class YouTubeStatsService {
       }
     }
 
-    const averageWatchTime =
-      uniqueVideos > 0 ? Math.round(totalWatchTime / uniqueVideos) : 0;
+    const averageWatchTime = uniqueVideos > 0 ? Math.round(totalWatchTime / uniqueVideos) : 0;
 
     // Топ просмотренных видео
     const videoCounts = new Map<string, { videoId: string; title: string; watchCount: number }>();
@@ -114,4 +113,3 @@ export class YouTubeStatsService {
     };
   }
 }
-

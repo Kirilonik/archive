@@ -1,5 +1,8 @@
 import { OAuth2Client } from 'google-auth-library';
-import type { YouTubeOAuthRepository, YouTubeOAuthToken } from '../../domain/integrations/youtube-oauth.types.js';
+import type {
+  YouTubeOAuthRepository,
+  YouTubeOAuthToken,
+} from '../../domain/integrations/youtube-oauth.types.js';
 import { logger } from '../../shared/logger.js';
 import { env } from '../../config/env.js';
 
@@ -15,11 +18,7 @@ export class YouTubeOAuthService {
     googleClientSecret: string,
     redirectUri: string,
   ) {
-    this.oauth2Client = new OAuth2Client(
-      googleClientId,
-      googleClientSecret,
-      redirectUri,
-    );
+    this.oauth2Client = new OAuth2Client(googleClientId, googleClientSecret, redirectUri);
   }
 
   /**
@@ -168,4 +167,3 @@ export class YouTubeOAuthService {
     await this.repository.deleteTokensByUserId(userId);
   }
 }
-

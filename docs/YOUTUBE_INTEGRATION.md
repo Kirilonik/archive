@@ -11,6 +11,7 @@
 ## ⚠️ Важное ограничение
 
 YouTube Data API v3 **не предоставляет прямой доступ** к истории просмотров пользователя даже через OAuth (политика конфиденциальности). Однако через OAuth можно получить:
+
 - Плейлисты пользователя
 - Лайкнутые видео
 - Видео из "Смотреть позже"
@@ -47,6 +48,7 @@ YOUTUBE_API_KEY=ваш_api_ключ
 ```
 
 **Важно:** YouTube Data API имеет квоты:
+
 - 10,000 единиц в день (бесплатно)
 - 1 запрос к `/videos` = 1 единица
 - Рекомендуется использовать батчинг (до 50 видео за запрос)
@@ -106,17 +108,17 @@ const accessToken = await container.integrations.youtube.oauthService.getValidAc
 if (accessToken) {
   // Получить плейлисты
   const playlists = await container.integrations.youtube.client.fetchUserPlaylists(accessToken);
-  
+
   // Получить лайкнутые видео
   const likedVideos = await container.integrations.youtube.client.fetchLikedVideos(accessToken);
-  
+
   // Получить видео из "Смотреть позже"
   const watchLater = await container.integrations.youtube.client.fetchWatchLaterVideos(accessToken);
-  
+
   // Получить элементы конкретного плейлиста
   const playlistItems = await container.integrations.youtube.client.fetchPlaylistItems(
     'PLrAXtmRdnEQy6nuLM0v5gGP8g5fLxRk5j',
-    accessToken
+    accessToken,
   );
 }
 ```
@@ -137,15 +139,18 @@ const items = container.integrations.youtube.historyParser.parseTakeoutJson(hist
 // Обработка и обогащение метаданными
 const result = await container.integrations.youtube.statsService.processHistory(
   items,
-  true // обогащать метаданными через YouTube API
+  true, // обогащать метаданными через YouTube API
 );
 
 console.log('Всего просмотрено:', result.stats.totalVideos);
 console.log('Уникальных видео:', result.stats.uniqueVideos);
 console.log('Общее время просмотра:', result.stats.totalWatchTime, 'секунд');
-console.log('Топ каналы:', Object.entries(result.stats.videosByChannel)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 10));
+console.log(
+  'Топ каналы:',
+  Object.entries(result.stats.videosByChannel)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10),
+);
 ```
 
 ### Пример: Получение метаданных видео
@@ -186,11 +191,11 @@ const items = container.integrations.youtube.historyParser.parseTakeoutHtml(html
 
 ```typescript
 {
-  videoId: string;           // ID видео (11 символов)
-  title: string;             // Название видео
+  videoId: string; // ID видео (11 символов)
+  title: string; // Название видео
   channelTitle: string | null; // Название канала
-  watchedAt: Date;           // Дата и время просмотра
-  url: string;               // URL видео
+  watchedAt: Date; // Дата и время просмотра
+  url: string; // URL видео
 }
 ```
 
@@ -198,13 +203,14 @@ const items = container.integrations.youtube.historyParser.parseTakeoutHtml(html
 
 ```typescript
 {
-  totalVideos: number;                    // Всего просмотрено видео
-  uniqueVideos: number;                   // Уникальных видео
-  totalWatchTime: number;                 // Общее время просмотра (секунды)
-  averageWatchTime: number;               // Средняя длительность видео (секунды)
+  totalVideos: number; // Всего просмотрено видео
+  uniqueVideos: number; // Уникальных видео
+  totalWatchTime: number; // Общее время просмотра (секунды)
+  averageWatchTime: number; // Средняя длительность видео (секунды)
   videosByChannel: Record<string, number>; // Количество видео по каналам
-  videosByDate: Record<string, number>;    // Количество видео по датам (YYYY-MM-DD)
-  topVideos: Array<{                      // Топ 20 самых просматриваемых
+  videosByDate: Record<string, number>; // Количество видео по датам (YYYY-MM-DD)
+  topVideos: Array<{
+    // Топ 20 самых просматриваемых
     videoId: string;
     title: string;
     watchCount: number;
@@ -287,17 +293,14 @@ export async function uploadYouTubeHistory(req: Request, res: Response) {
       items = container.integrations.youtube.historyParser.parseTakeoutJson(data);
     } else if (file.mimetype === 'text/html') {
       items = container.integrations.youtube.historyParser.parseTakeoutHtml(
-        file.buffer.toString('utf-8')
+        file.buffer.toString('utf-8'),
       );
     } else {
       return res.status(400).json({ error: 'Неподдерживаемый формат файла' });
     }
 
     // Обработка и обогащение
-    const result = await container.integrations.youtube.statsService.processHistory(
-      items,
-      true
-    );
+    const result = await container.integrations.youtube.statsService.processHistory(items, true);
 
     // Сохранение в базу данных или возврат статистики
     return res.json({
@@ -316,4 +319,3 @@ export async function uploadYouTubeHistory(req: Request, res: Response) {
 - [YouTube Data API v3 Documentation](https://developers.google.com/youtube/v3)
 - [Google Takeout](https://takeout.google.com/)
 - [YouTube API Quotas](https://developers.google.com/youtube/v3/getting-started#quota)
-

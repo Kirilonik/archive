@@ -150,4 +150,3 @@ export interface YouTubeHistoryParser {
    */
   parseTakeoutHtml(html: string): YouTubeWatchHistoryItem[];
 }
-

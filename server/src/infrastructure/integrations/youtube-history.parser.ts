@@ -91,7 +91,8 @@ export class YouTubeHistoryTakeoutParser implements YouTubeHistoryParser {
       //           <br>1 янв. 2024 г.
       //         </div>
 
-      const linkRegex = /<a[^>]+href="https?:\/\/www\.youtube\.com\/watch\?v=([^"&]+)"[^>]*>([^<]+)<\/a>/gi;
+      const linkRegex =
+        /<a[^>]+href="https?:\/\/www\.youtube\.com\/watch\?v=([^"&]+)"[^>]*>([^<]+)<\/a>/gi;
       const matches = Array.from(html.matchAll(linkRegex));
 
       for (const match of matches) {
@@ -212,4 +213,3 @@ export class YouTubeHistoryTakeoutParser implements YouTubeHistoryParser {
     return new Date();
   }
 }
-

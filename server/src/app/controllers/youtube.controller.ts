@@ -132,9 +132,7 @@ export class YouTubeController {
         return res.status(401).json({ error: 'YouTube не подключен или токен истек' });
       }
 
-      const maxResults = req.query.maxResults
-        ? parseInt(String(req.query.maxResults), 10)
-        : 50;
+      const maxResults = req.query.maxResults ? parseInt(String(req.query.maxResults), 10) : 50;
 
       const playlists = await this.youtubeClient.fetchUserPlaylists(accessToken, maxResults);
 
@@ -160,9 +158,7 @@ export class YouTubeController {
         return res.status(401).json({ error: 'YouTube не подключен или токен истек' });
       }
 
-      const maxResults = req.query.maxResults
-        ? parseInt(String(req.query.maxResults), 10)
-        : 50;
+      const maxResults = req.query.maxResults ? parseInt(String(req.query.maxResults), 10) : 50;
 
       const videos = await this.youtubeClient.fetchLikedVideos(accessToken, maxResults);
 
@@ -188,9 +184,7 @@ export class YouTubeController {
         return res.status(401).json({ error: 'YouTube не подключен или токен истек' });
       }
 
-      const maxResults = req.query.maxResults
-        ? parseInt(String(req.query.maxResults), 10)
-        : 50;
+      const maxResults = req.query.maxResults ? parseInt(String(req.query.maxResults), 10) : 50;
 
       const videos = await this.youtubeClient.fetchWatchLaterVideos(accessToken, maxResults);
 
@@ -222,11 +216,13 @@ export class YouTubeController {
         return res.status(401).json({ error: 'YouTube не подключен или токен истек' });
       }
 
-      const maxResults = req.query.maxResults
-        ? parseInt(String(req.query.maxResults), 10)
-        : 50;
+      const maxResults = req.query.maxResults ? parseInt(String(req.query.maxResults), 10) : 50;
 
-      const items = await this.youtubeClient.fetchPlaylistItems(playlistId, accessToken, maxResults);
+      const items = await this.youtubeClient.fetchPlaylistItems(
+        playlistId,
+        accessToken,
+        maxResults,
+      );
 
       res.json({ items });
     } catch (error) {
@@ -235,4 +231,3 @@ export class YouTubeController {
     }
   };
 }
-

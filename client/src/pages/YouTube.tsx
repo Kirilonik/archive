@@ -82,15 +82,21 @@ export function YouTube() {
   const loadData = async () => {
     try {
       // Загружаем плейлисты
-      const playlistsData = await apiJson<{ playlists: YouTubePlaylist[] }>('/api/youtube/playlists');
+      const playlistsData = await apiJson<{ playlists: YouTubePlaylist[] }>(
+        '/api/youtube/playlists',
+      );
       setPlaylists(playlistsData.playlists || []);
 
       // Загружаем лайкнутые видео
-      const likedData = await apiJson<{ videos: YouTubePlaylistItem[] }>('/api/youtube/liked?maxResults=50');
+      const likedData = await apiJson<{ videos: YouTubePlaylistItem[] }>(
+        '/api/youtube/liked?maxResults=50',
+      );
       setLikedVideos(likedData.videos || []);
 
       // Загружаем "Смотреть позже"
-      const watchLaterData = await apiJson<{ videos: YouTubePlaylistItem[] }>('/api/youtube/watch-later?maxResults=50');
+      const watchLaterData = await apiJson<{ videos: YouTubePlaylistItem[] }>(
+        '/api/youtube/watch-later?maxResults=50',
+      );
       setWatchLater(watchLaterData.videos || []);
     } catch (error: any) {
       console.error('Error loading YouTube data:', error);
@@ -149,7 +155,7 @@ export function YouTube() {
     try {
       setSelectedPlaylist(playlistId);
       const data = await apiJson<{ items: YouTubePlaylistItem[] }>(
-        `/api/youtube/playlists/${playlistId}/items?maxResults=50`
+        `/api/youtube/playlists/${playlistId}/items?maxResults=50`,
       );
       setPlaylistItems(data.items || []);
     } catch (error: any) {
@@ -186,7 +192,8 @@ export function YouTube() {
             </div>
             <h2 className="text-2xl font-semibold text-text mb-2">Подключите YouTube</h2>
             <p className="text-textMuted mb-6">
-              Подключите свой YouTube аккаунт, чтобы просматривать плейлисты, лайкнутые видео и многое другое
+              Подключите свой YouTube аккаунт, чтобы просматривать плейлисты, лайкнутые видео и
+              многое другое
             </p>
             <button
               onClick={handleConnect}
@@ -208,7 +215,8 @@ export function YouTube() {
           <div>
             <h1 className="text-2xl font-semibold text-text mb-1">YouTube</h1>
             <p className="text-sm text-textMuted">
-              Подключено {status.expiresAt && new Date(status.expiresAt).toLocaleDateString('ru-RU')}
+              Подключено{' '}
+              {status.expiresAt && new Date(status.expiresAt).toLocaleDateString('ru-RU')}
             </p>
           </div>
           <button
@@ -257,9 +265,7 @@ export function YouTube() {
         {activeTab === 'playlists' && (
           <div>
             {playlists.length === 0 ? (
-              <div className="text-center py-12 text-textMuted">
-                У вас пока нет плейлистов
-              </div>
+              <div className="text-center py-12 text-textMuted">У вас пока нет плейлистов</div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {playlists.map((playlist) => (
@@ -296,9 +302,7 @@ export function YouTube() {
             {/* Элементы выбранного плейлиста */}
             {selectedPlaylist && playlistItems.length > 0 && (
               <div className="mt-6 pt-6 border-t border-black/10">
-                <h3 className="text-lg font-semibold text-text mb-4">
-                  Видео из плейлиста
-                </h3>
+                <h3 className="text-lg font-semibold text-text mb-4">Видео из плейлиста</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {playlistItems.map((item) => (
                     <a
@@ -316,9 +320,7 @@ export function YouTube() {
                         />
                       )}
                       <div className="p-4">
-                        <h4 className="font-medium text-text mb-1 line-clamp-2">
-                          {item.title}
-                        </h4>
+                        <h4 className="font-medium text-text mb-1 line-clamp-2">{item.title}</h4>
                         {item.channelTitle && (
                           <p className="text-sm text-textMuted">{item.channelTitle}</p>
                         )}
@@ -334,9 +336,7 @@ export function YouTube() {
         {activeTab === 'liked' && (
           <div>
             {likedVideos.length === 0 ? (
-              <div className="text-center py-12 text-textMuted">
-                У вас пока нет лайкнутых видео
-              </div>
+              <div className="text-center py-12 text-textMuted">У вас пока нет лайкнутых видео</div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {likedVideos.map((video) => (
@@ -355,9 +355,7 @@ export function YouTube() {
                       />
                     )}
                     <div className="p-4">
-                      <h3 className="font-medium text-text mb-1 line-clamp-2">
-                        {video.title}
-                      </h3>
+                      <h3 className="font-medium text-text mb-1 line-clamp-2">{video.title}</h3>
                       {video.channelTitle && (
                         <p className="text-sm text-textMuted">{video.channelTitle}</p>
                       )}
@@ -393,9 +391,7 @@ export function YouTube() {
                       />
                     )}
                     <div className="p-4">
-                      <h3 className="font-medium text-text mb-1 line-clamp-2">
-                        {video.title}
-                      </h3>
+                      <h3 className="font-medium text-text mb-1 line-clamp-2">{video.title}</h3>
                       {video.channelTitle && (
                         <p className="text-sm text-textMuted">{video.channelTitle}</p>
                       )}
@@ -410,4 +406,3 @@ export function YouTube() {
     </main>
   );
 }
-

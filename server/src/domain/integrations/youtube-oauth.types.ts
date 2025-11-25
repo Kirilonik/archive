@@ -48,4 +48,3 @@ export interface YouTubeOAuthRepository {
     expiresAt: Date,
   ): Promise<YouTubeOAuthToken | null>;
 }
-
