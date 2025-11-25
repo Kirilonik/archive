@@ -231,7 +231,13 @@ export class KinopoiskHttpClient implements KinopoiskClient {
   async searchBestByTitle(title: string): Promise<KpEnriched> {
     try {
       if (!title) return {};
-      const url = `${API_URL}/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(title)}&page=1`;
+      // Используем URL объект для правильной кодировки
+      const urlObj = new URL('/api/v2.1/films/search-by-keyword', API_URL);
+      urlObj.searchParams.set('keyword', title);
+      urlObj.searchParams.set('page', '1');
+      const url = urlObj.toString();
+      
+      logger.debug({ title, encodedUrl: url }, '[kinopoisk] searchBestByTitle request');
       const data = await this.fetchJson<any>(url);
       const film = data?.films?.[0];
       if (!film) {
@@ -308,7 +314,13 @@ export class KinopoiskHttpClient implements KinopoiskClient {
   async suggest(query: string): Promise<KpSuggestItem[]> {
     if (!query) return [];
     try {
-      const url = `${API_URL}/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(query)}&page=1`;
+      // Используем URL объект для правильной кодировки
+      const urlObj = new URL('/api/v2.1/films/search-by-keyword', API_URL);
+      urlObj.searchParams.set('keyword', query);
+      urlObj.searchParams.set('page', '1');
+      const url = urlObj.toString();
+      
+      logger.debug({ query, encodedUrl: url }, '[kinopoisk] suggest request');
       const data = await this.fetchJson<any>(url);
       if (!data) {
         logger.warn({ query, url }, 'Kinopoisk suggest returned null');
