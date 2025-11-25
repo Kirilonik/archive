@@ -40,13 +40,10 @@ services:
     volumes:
       # Монтируем исходный код для hot reload
       - ./server/src:/work/server/src
-      - ./shared/src:/work/shared/src
       - ./tsconfig.base.json:/work/tsconfig.base.json
       - ./server/tsconfig.json:/work/server/tsconfig.json
-      - ./shared/tsconfig.json:/work/shared/tsconfig.json
       # Исключаем node_modules и dist из монтирования
       - /work/server/node_modules
-      - /work/shared/node_modules
       - /work/server/dist
 
   client:
@@ -73,7 +70,6 @@ services:
       - ./client/tailwind.config.js:/work/client/tailwind.config.js
       - ./client/postcss.config.js:/work/client/postcss.config.js
       - ./client/tsconfig.json:/work/client/tsconfig.json
-      - ./shared/src:/work/shared/src
       - ./tsconfig.base.json:/work/tsconfig.base.json
       # Исключаем node_modules из монтирования
       - /work/client/node_modules
