@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "sh -c \"cd /work/shared && npm run build && cd /work/server && ts-node-dev --respawn --transpileOnly src/index.ts\"",
-    "build": "tsc --build tsconfig.json",
+    "build": "tsc --build",
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"

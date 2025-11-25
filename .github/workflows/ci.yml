@@ -116,6 +116,13 @@ jobs:
       - name: Build shared package
         run: npm -w shared run build
 
+      - name: Verify shared build artifacts
+        run: |
+          echo "Checking shared/dist contents:"
+          ls -la shared/dist/ || echo "shared/dist not found"
+          test -f shared/dist/index.d.ts || (echo "ERROR: shared/dist/index.d.ts not found" && exit 1)
+          echo "✅ Shared declaration files found"
+
       - name: Build server
         run: npm -w server run build
 
@@ -209,6 +216,14 @@ jobs:
 
       - name: Build shared package
         run: npm -w shared run build
+
+      - name: Verify shared build artifacts
+        if: matrix.package == 'server'
+        run: |
+          echo "Checking shared/dist contents:"
+          ls -la shared/dist/ || echo "shared/dist not found"
+          test -f shared/dist/index.d.ts || (echo "ERROR: shared/dist/index.d.ts not found" && exit 1)
+          echo "✅ Shared declaration files found"
 
       - name: Build ${{ matrix.package }}
         run: npm -w ${{ matrix.package }} run build
