@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { YouTubeOAuthService } from '../../application/youtube/youtube-oauth.service.js';
 import type { YouTubeHttpClient } from '../../infrastructure/integrations/youtube.client.js';
 import { logger } from '../../shared/logger.js';
+import { env } from '../../config/env.js';
 
 export class YouTubeController {
   constructor(
