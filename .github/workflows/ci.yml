@@ -116,10 +116,11 @@ jobs:
       - name: Build shared package
         run: npm -w shared run build
 
+      - name: Build server
+        run: npm -w server run build
+
       - name: Run database migrations
-        run: |
-          npm -w server run build
-          node server/dist/db/migrate.js
+        run: node server/dist/db/migrate.js
         continue-on-error: false
 
       - name: Run tests with coverage
