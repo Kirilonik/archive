@@ -21,7 +21,7 @@ export function Login() {
     const error = params.get('auth_error');
     if (error) {
       toast.error(`Ошибка авторизации: ${error}`);
-      window.history.replaceState(null, '', '/login');
+      window.history.replaceState(null, '', '/app/login');
     }
   }, []);
 
@@ -29,7 +29,7 @@ export function Login() {
     try {
       setLoading(true);
       await login({ email, password });
-      navigate('/');
+      navigate('/app');
     } catch (e: any) {
       // Ошибки логируются, но не показываем toast для email verification
       if (!e?.requiresEmailVerification) {
@@ -177,7 +177,7 @@ export function Login() {
                     try {
                       setGoogleLoading(true);
                       await loginWithGoogle(credentialResponse.credential);
-                      navigate('/');
+                      navigate('/app');
                     } catch (error: any) {
                       toast.error(error?.message ?? 'Ошибка входа через Google');
                     } finally {

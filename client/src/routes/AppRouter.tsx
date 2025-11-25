@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { Landing } from '../pages/Landing';
 import { Home } from '../pages/Home';
 import { Profile } from '../pages/Profile';
 import { FilmDetails } from '../pages/FilmDetails';
@@ -23,7 +24,7 @@ function ProtectedLayout() {
       </main>
     );
   }
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/app/login" replace />;
   return (
     <>
       <Header />
@@ -62,19 +63,31 @@ export function AppRouter() {
         }}
       />
       <Routes>
+        {/* Landing page - точка входа */}
+        <Route path="/" element={<Landing />} />
+
+        {/* Основное приложение под /app */}
         <Route element={<ProtectedLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/youtube" element={<YouTube />} />
-          <Route path="/films/:id" element={<FilmDetails />} />
-          <Route path="/series/:id" element={<SeriesDetails />} />
+          <Route path="/app" element={<Home />} />
+          <Route path="/app/profile" element={<Profile />} />
+          <Route path="/app/youtube" element={<YouTube />} />
+          <Route path="/app/films/:id" element={<FilmDetails />} />
+          <Route path="/app/series/:id" element={<SeriesDetails />} />
         </Route>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/check-email" element={<CheckEmail />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Auth routes под /app */}
+        <Route path="/app/login" element={<Login />} />
+        <Route path="/app/register" element={<Register />} />
+        <Route path="/app/check-email" element={<CheckEmail />} />
+        <Route path="/app/verify-email" element={<VerifyEmail />} />
+        <Route path="/app/forgot-password" element={<ForgotPassword />} />
+        <Route path="/app/reset-password" element={<ResetPassword />} />
+
+        {/* Редирект старых путей на /app */}
+        <Route path="/login" element={<Navigate to="/app/login" replace />} />
+        <Route path="/register" element={<Navigate to="/app/register" replace />} />
+
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

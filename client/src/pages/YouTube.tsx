@@ -123,7 +123,7 @@ export function YouTube() {
         toast.error('Необходима авторизация. Пожалуйста, войдите в систему.');
         // Перенаправляем на страницу входа через небольшую задержку
         setTimeout(() => {
-          window.location.href = '/login';
+          window.location.href = '/app/login';
         }, 1500);
       } else {
         toast.error('Ошибка получения URL авторизации. Попробуйте позже.');
