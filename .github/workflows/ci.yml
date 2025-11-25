@@ -113,6 +113,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify workspace setup
+        run: |
+          echo "Checking workspace packages:"
+          npm ls @media/shared || echo "⚠️ @media/shared not found in node_modules"
+          ls -la server/node_modules/@media/ 2>/dev/null || echo "⚠️ @media directory not found"
+          echo "Checking shared package:"
+          ls -la shared/ || echo "shared directory not found"
+
       - name: Build shared package
         run: npm -w shared run build
 
@@ -122,6 +130,11 @@ jobs:
           ls -la shared/dist/ || echo "shared/dist not found"
           test -f shared/dist/index.d.ts || (echo "ERROR: shared/dist/index.d.ts not found" && exit 1)
           echo "✅ Shared declaration files found"
+          echo "Checking if TypeScript can find it:"
+          cat shared/dist/index.d.ts | head -3
+
+      - name: Reinstall to ensure workspace links
+        run: npm install
 
       - name: Build server
         run: npm -w server run build
