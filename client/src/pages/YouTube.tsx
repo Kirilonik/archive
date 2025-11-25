@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { apiJson } from '../lib/api';
@@ -38,28 +38,7 @@ export function YouTube() {
   const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
   const [playlistItems, setPlaylistItems] = useState<YouTubePlaylistItem[]>([]);
 
-  // Проверка статуса подключения при загрузке
-  useEffect(() => {
-    checkConnectionStatus();
-  }, []);
-
-  // Обработка callback от OAuth
-  useEffect(() => {
-    const connected = searchParams.get('youtube_connected');
-    const error = searchParams.get('youtube_error');
-
-    if (connected === 'true') {
-      toast.success('YouTube успешно подключен!');
-      checkConnectionStatus();
-      // Очищаем параметры из URL
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (error === 'true') {
-      toast.error('Ошибка подключения YouTube');
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, [searchParams]);
-
-  const checkConnectionStatus = async () => {
+  const checkConnectionStatus = useCallback(async () => {
     try {
       setLoading(true);
       const data = await apiJson<YouTubeConnectionStatus>('/api/youtube/auth/status');
@@ -77,7 +56,28 @@ export function YouTube() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Проверка статуса подключения при загрузке
+  useEffect(() => {
+    checkConnectionStatus();
+  }, [checkConnectionStatus]);
+
+  // Обработка callback от OAuth
+  useEffect(() => {
+    const connected = searchParams.get('youtube_connected');
+    const error = searchParams.get('youtube_error');
+
+    if (connected === 'true') {
+      toast.success('YouTube успешно подключен!');
+      checkConnectionStatus();
+      // Очищаем параметры из URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (error === 'true') {
+      toast.error('Ошибка подключения YouTube');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [searchParams, checkConnectionStatus]);
 
   const loadData = async () => {
     try {
@@ -371,7 +371,7 @@ export function YouTube() {
           <div>
             {watchLater.length === 0 ? (
               <div className="text-center py-12 text-textMuted">
-                У вас пока нет видео в "Смотреть позже"
+                У вас пока нет видео в &quot;Смотреть позже&quot;
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

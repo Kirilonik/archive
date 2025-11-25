@@ -161,7 +161,8 @@ export function Home() {
         if (reset) {
           setVisibleCount(Math.min(LOAD_STEP, nextLength));
         }
-      } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_error) {
         if (controller.signal.aborted) return;
         // Не сбрасываем все данные при ошибке - сохраняем уже загруженные
         // Только сбрасываем состояние пагинации, чтобы можно было повторить попытку

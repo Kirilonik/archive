@@ -74,10 +74,12 @@ export function Login() {
               clientY: rect.height / 2,
             });
             iframe.contentDocument?.body?.dispatchEvent(iframeClickEvent);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
           } catch (_e) {
             // Игнорируем CORS ошибки при доступе к iframe
           }
         }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (_e) {
         // Игнорируем ошибки при клике на Google iframe
       }

@@ -3,8 +3,8 @@ import type {
   YouTubeWatchStats,
   YouTubeVideoDetails,
   YouTubeHistoryProcessResult,
+  YouTubeClient,
 } from '../../domain/integrations/youtube.types.js';
-import type { YouTubeClient } from '../../domain/integrations/youtube.types.js';
 import { logger } from '../../shared/logger.js';
 
 /**

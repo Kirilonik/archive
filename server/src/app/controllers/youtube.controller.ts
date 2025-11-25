@@ -3,12 +3,6 @@ import { z } from 'zod';
 import type { YouTubeOAuthService } from '../../application/youtube/youtube-oauth.service.js';
 import type { YouTubeHttpClient } from '../../infrastructure/integrations/youtube.client.js';
 import { logger } from '../../shared/logger.js';
-import { env } from '../../config/env.js';
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
 
 export class YouTubeController {
   constructor(
@@ -29,7 +23,7 @@ export class YouTubeController {
       const state = `${userId}-${Date.now()}`; // Защита от CSRF
       const authUrl = this.oauthService.getAuthUrl(state);
 
-      res.json({ authUrl, state });
+      res.json({ authUrl });
     } catch (error) {
       logger.error({ err: error }, 'Error generating YouTube auth URL');
       next(error);
@@ -39,14 +33,14 @@ export class YouTubeController {
   /**
    * Обработка callback от Google OAuth
    */
-  handleCallback = async (req: Request, res: Response, next: NextFunction) => {
+  handleCallback = async (req: Request, res: Response, _next: NextFunction) => {
     try {
       const schema = z.object({
         code: z.string().min(1),
         state: z.string().optional(),
       });
 
-      const { code, state } = schema.parse(req.query);
+      const { code } = schema.parse(req.query);
       const userId = (req as any).userId;
 
       if (!userId) {

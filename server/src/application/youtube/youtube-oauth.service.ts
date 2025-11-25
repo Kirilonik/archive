@@ -4,7 +4,6 @@ import type {
   YouTubeOAuthToken,
 } from '../../domain/integrations/youtube-oauth.types.js';
 import { logger } from '../../shared/logger.js';
-import { env } from '../../config/env.js';
 
 /**
  * Сервис для управления OAuth авторизацией YouTube

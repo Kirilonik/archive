@@ -45,7 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       const data = await resp.json();
       setUser(data.user ?? null);
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       setUser(null);
     } finally {
       setLoading(false);

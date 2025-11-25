@@ -1,6 +1,5 @@
 import { randomUUID } from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
-import { env } from '../config/env.js';
 import { logger } from '../shared/logger.js';
 
 const CSRF_COOKIE_NAME = 'csrf_token';
