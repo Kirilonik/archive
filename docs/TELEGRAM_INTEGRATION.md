@@ -37,11 +37,13 @@ server/src/
 ### 2. Получение Chat ID
 
 **Способ 1: Через API**
+
 1. Напишите вашему боту любое сообщение
 2. Откройте в браузере: `https://api.telegram.org/bot<ВАШ_ТОКЕН>/getUpdates`
 3. Найдите в ответе `"chat":{"id":123456789}` - это ваш chat ID
 
 **Способ 2: Через бота**
+
 1. Используйте [@userinfobot](https://t.me/userinfobot)
 2. Отправьте команду `/start`
 3. Бот вернет ваш ID
@@ -78,6 +80,7 @@ TELEGRAM_DEPLOY_SECRET=your_random_secret_here  # Для защиты API endpoi
 **Защита:** Bearer токен (TELEGRAM_DEPLOY_SECRET)
 
 **Пример запроса:**
+
 ```bash
 curl -X POST "https://api.example.com/api/telegram/deploy" \
   -H "Content-Type: application/json" \
@@ -102,10 +105,9 @@ curl -X POST "https://api.example.com/api/telegram/deploy" \
 import { container } from './app/container.js';
 
 // Отправка произвольного сообщения
-await container.telegram.notificationService.sendMessage(
-  'Привет! Это тестовое сообщение',
-  { parseMode: 'HTML' }
-);
+await container.telegram.notificationService.sendMessage('Привет! Это тестовое сообщение', {
+  parseMode: 'HTML',
+});
 
 // Отправка уведомления о деплое
 await container.telegram.notificationService.notifyDeployment({
@@ -114,14 +116,14 @@ await container.telegram.notificationService.notifyDeployment({
   commit: 'abc123',
   author: 'username',
   environment: 'production',
-  duration: 120
+  duration: 120,
 });
 
 // Отправка уведомления о новом пользователе
 await container.telegram.notificationService.notifyNewUser({
   userId: 1,
   email: 'user@example.com',
-  name: 'John Doe'
+  name: 'John Doe',
 });
 ```
 
@@ -135,6 +137,7 @@ await container.telegram.notificationService.notifyNewUser({
 ## Расширение функциональности
 
 Модуль готов к расширению для:
+
 - 📊 Статистики по сайту (количество пользователей, посетителей)
 - 📈 Мониторинга метрик
 - 🔔 Других типов уведомлений
@@ -165,6 +168,7 @@ await container.telegram.notificationService.notifyNewUser({
 Если уведомления не приходят:
 
 1. Проверьте, что переменные окружения установлены:
+
    ```bash
    echo $TELEGRAM_BOT_TOKEN
    echo $TELEGRAM_CHAT_ID
@@ -184,4 +188,3 @@ await container.telegram.notificationService.notifyNewUser({
 ## Отключение уведомлений
 
 Если нужно временно отключить уведомления, просто не устанавливайте переменные окружения. Модуль автоматически определит отсутствие конфигурации и не будет пытаться отправлять сообщения.
-

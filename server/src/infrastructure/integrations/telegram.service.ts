@@ -115,4 +115,3 @@ export class TelegramService {
       .replace(/'/g, '&#039;');
   }
 }
-

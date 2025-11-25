@@ -72,7 +72,10 @@ export class TelegramClient {
           'Failed to send Telegram message',
         );
       } else {
-        logger.debug({ chatId: message.chatId, messageId: data.result?.message_id }, 'Telegram message sent');
+        logger.debug(
+          { chatId: message.chatId, messageId: data.result?.message_id },
+          'Telegram message sent',
+        );
       }
 
       return data;
@@ -92,4 +95,3 @@ export class TelegramClient {
     return !!this.botToken;
   }
 }
-

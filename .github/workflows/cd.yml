@@ -333,7 +333,7 @@ jobs:
         run: |
           STATUS="${{ needs.deploy.result }}"
           ENVIRONMENT="${{ github.event.inputs.environment || 'production' }}"
-          
+
           if [ -z "$DEPLOY_SECRET" ]; then
             echo "⚠️ TELEGRAM_DEPLOY_SECRET is not set. Skipping Telegram notification."
             exit 0

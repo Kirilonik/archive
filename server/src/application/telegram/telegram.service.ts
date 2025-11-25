@@ -62,4 +62,3 @@ export class TelegramNotificationService {
     return this.telegramService.isConfigured();
   }
 }
-

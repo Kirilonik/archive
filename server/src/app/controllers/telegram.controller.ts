@@ -16,7 +16,7 @@ export class TelegramController {
       // Проверка секретного токена
       const authHeader = req.headers.authorization;
       const expectedToken = env.TELEGRAM_DEPLOY_SECRET || '';
-      
+
       if (!expectedToken) {
         logger.warn('TELEGRAM_DEPLOY_SECRET is not set. Deployment notifications are disabled.');
         return res.status(503).json({ error: 'Deployment notifications are not configured' });
@@ -45,11 +45,9 @@ export class TelegramController {
 
       // Отправляем уведомление асинхронно
       process.nextTick(() => {
-        this.telegramNotificationService
-          .notifyDeployment(data)
-          .catch((error) => {
-            logger.error({ error, deploymentData: data }, 'Failed to send deployment notification');
-          });
+        this.telegramNotificationService.notifyDeployment(data).catch((error) => {
+          logger.error({ error, deploymentData: data }, 'Failed to send deployment notification');
+        });
       });
 
       res.json({ success: true, message: 'Notification queued' });
@@ -61,4 +59,3 @@ export class TelegramController {
     }
   };
 }
-
