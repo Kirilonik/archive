@@ -12,7 +12,7 @@
 
 1. **Code Quality Checks** - проверка форматирования, линтинг, проверка типов TypeScript
 2. **Tests** - запуск тестов с coverage отчетами
-3. **Build** - сборка всех пакетов (shared, server, client)
+3. **Build** - сборка всех пакетов (server, client)
 4. **Security** - проверка безопасности зависимостей и поиск секретов
 5. **Docker Build** - сборка Docker образов (только для main/master)
 
