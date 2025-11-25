@@ -60,7 +60,7 @@ export function ForgotPassword() {
                 <button type="submit" className="btn btn-primary px-4 py-2" disabled={loading}>
                   {loading ? 'Отправка...' : 'Отправить'}
                 </button>
-                <Link className="text-textMuted hover:text-text" to="/login">
+                <Link className="text-textMuted hover:text-text" to="/app/login">
                   Вернуться ко входу
                 </Link>
               </div>
@@ -91,7 +91,7 @@ export function ForgotPassword() {
               папку &quot;Спам&quot;.
             </p>
             <div className="text-center">
-              <Link to="/login" className="btn btn-primary">
+              <Link to="/app/login" className="btn btn-primary">
                 Вернуться ко входу
               </Link>
             </div>

@@ -45,7 +45,7 @@ export function AvatarMenu() {
               <>
                 <Link
                   className="block w-full text-left px-3 py-2 hover:bg-black/5 rounded-xl text-text transition-all duration-200"
-                  to="/profile"
+                  to="/app/profile"
                   onClick={() => setOpen(false)}
                 >
                   Профиль
@@ -56,7 +56,7 @@ export function AvatarMenu() {
                     setOpen(false);
                     await logout();
                     toast.success('Вы вышли из аккаунта');
-                    navigate('/login');
+                    navigate('/app/login');
                   }}
                 >
                   Выйти
@@ -66,14 +66,14 @@ export function AvatarMenu() {
               <>
                 <Link
                   className="block w-full text-left px-3 py-2 hover:bg-black/5 rounded-xl text-text transition-all duration-200"
-                  to="/login"
+                  to="/app/login"
                   onClick={() => setOpen(false)}
                 >
                   Войти
                 </Link>
                 <Link
                   className="block w-full text-left px-3 py-2 hover:bg-black/5 rounded-xl text-text transition-all duration-200"
-                  to="/register"
+                  to="/app/register"
                   onClick={() => setOpen(false)}
                 >
                   Регистрация

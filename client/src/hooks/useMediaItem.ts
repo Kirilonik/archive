@@ -193,7 +193,7 @@ export function useMediaItem<T extends MediaItem>({
       if (onDeleted) {
         onDeleted();
       } else {
-        navigate('/');
+        navigate('/app');
       }
     } catch (error: any) {
       const errorMessage = error?.message || `Ошибка при удалении ${itemName}`;

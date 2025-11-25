@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Landing } from '../pages/Landing';
 import { Home } from '../pages/Home';
@@ -14,6 +14,29 @@ import { CheckEmail } from '../pages/CheckEmail';
 import { ForgotPassword } from '../pages/ForgotPassword';
 import { ResetPassword } from '../pages/ResetPassword';
 import { useAuth } from '../context/AuthContext';
+
+function FallbackRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <main className="flex min-h-[50vh] items-center justify-center text-text">
+        <span>Загрузка...</span>
+      </main>
+    );
+  }
+  // Редиректим на /app или /app/login, но НЕ на landing
+  return <Navigate to={user ? '/app' : '/app/login'} replace />;
+}
+
+function FilmRedirect() {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/app/films/${id}`} replace />;
+}
+
+function SeriesRedirect() {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/app/series/${id}`} replace />;
+}
 
 function ProtectedLayout() {
   const { user, loading } = useAuth();
@@ -86,9 +109,13 @@ export function AppRouter() {
         {/* Редирект старых путей на /app */}
         <Route path="/login" element={<Navigate to="/app/login" replace />} />
         <Route path="/register" element={<Navigate to="/app/register" replace />} />
+        <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
+        <Route path="/youtube" element={<Navigate to="/app/youtube" replace />} />
+        <Route path="/films/:id" element={<FilmRedirect />} />
+        <Route path="/series/:id" element={<SeriesRedirect />} />
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Fallback - редирект на /app, НЕ на landing */}
+        <Route path="*" element={<FallbackRedirect />} />
       </Routes>
     </div>
   );

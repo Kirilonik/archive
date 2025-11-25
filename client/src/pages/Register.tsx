@@ -61,7 +61,7 @@ export function Register() {
       setLoading(false);
 
       // Переход на страницу подтверждения email
-      navigate('/check-email', {
+      navigate('/app/check-email', {
         state: { email },
       });
     } catch (e: any) {
@@ -148,7 +148,7 @@ export function Register() {
             <button type="submit" className="btn btn-primary px-4 py-2" disabled={loading}>
               {loading ? 'Создание...' : 'Создать'}
             </button>
-            <Link className="text-textMuted hover:text-text" to="/login">
+            <Link className="text-textMuted hover:text-text" to="/app/login">
               У меня уже есть аккаунт
             </Link>
           </div>

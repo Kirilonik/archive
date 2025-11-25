@@ -7,7 +7,7 @@ export function Header() {
       <div className="mx-auto max-w-6xl px-4 py-3">
         <div className="flex items-center justify-between">
           <Link
-            to="/"
+            to="/app"
             className="text-xl font-semibold text-text transition-opacity hover:opacity-80"
           >
             Архив
@@ -15,7 +15,7 @@ export function Header() {
           <div className="flex items-center gap-4">
             <nav className="hidden sm:flex items-center gap-2">
               <NavLink
-                to="/"
+                to="/app"
                 className={({ isActive }) =>
                   isActive
                     ? 'btn btn-primary px-3 py-1 flex items-center gap-1.5'
@@ -29,7 +29,7 @@ export function Header() {
               </NavLink>
               {/* YouTube вкладка временно скрыта */}
               {/* <NavLink
-                to="/youtube"
+                to="/app/youtube"
                 className={({ isActive }) =>
                   isActive
                     ? 'btn btn-primary px-3 py-1 flex items-center gap-1.5'

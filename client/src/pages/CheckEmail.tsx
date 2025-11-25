@@ -34,7 +34,7 @@ export function CheckEmail() {
             адреса.
           </p>
           <div className="text-center">
-            <Link to="/login" className="btn btn-primary">
+            <Link to="/app/login" className="btn btn-primary">
               Вернуться ко входу
             </Link>
           </div>

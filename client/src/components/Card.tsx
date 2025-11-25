@@ -23,7 +23,7 @@ export function Card({
   genres,
   my_rating,
 }: Props) {
-  const href = kind === 'film' ? `/films/${id}` : `/series/${id}`;
+  const href = kind === 'film' ? `/app/films/${id}` : `/app/series/${id}`;
   const imageSrc = poster_url_preview || poster_url;
   const kpRating =
     typeof rating_kinopoisk === 'number' ? Math.round(rating_kinopoisk * 10) / 10 : null;

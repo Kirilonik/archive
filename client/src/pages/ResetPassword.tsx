@@ -76,7 +76,7 @@ export function ResetPassword() {
       setStatus('success');
       toast.success('Пароль успешно изменен!');
       setTimeout(() => {
-        navigate('/login');
+        navigate('/app/login');
       }, 3000);
     } catch (error: any) {
       setStatus('error');
@@ -128,7 +128,7 @@ export function ResetPassword() {
               Ваш пароль был успешно изменен. Теперь вы можете войти в систему с новым паролем.
             </p>
             <div className="text-center">
-              <Link to="/login" className="btn btn-primary">
+              <Link to="/app/login" className="btn btn-primary">
                 Перейти к входу
               </Link>
             </div>
@@ -161,10 +161,10 @@ export function ResetPassword() {
             <h1 className="text-2xl font-semibold text-text mb-4 text-center">Ошибка</h1>
             <p className="text-center text-text mb-6">{error}</p>
             <div className="text-center space-y-2">
-              <Link to="/forgot-password" className="btn btn-primary block">
+              <Link to="/app/forgot-password" className="btn btn-primary block">
                 Запросить новую ссылку
               </Link>
-              <Link to="/login" className="text-textMuted hover:text-text text-sm">
+              <Link to="/app/login" className="text-textMuted hover:text-text text-sm">
                 Вернуться ко входу
               </Link>
             </div>
@@ -208,7 +208,7 @@ export function ResetPassword() {
             <button type="submit" className="btn btn-primary px-4 py-2" disabled={loading}>
               {loading ? 'Сброс...' : 'Сбросить пароль'}
             </button>
-            <Link className="text-textMuted hover:text-text" to="/login">
+            <Link className="text-textMuted hover:text-text" to="/app/login">
               Вернуться ко входу
             </Link>
           </div>

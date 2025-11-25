@@ -114,10 +114,10 @@ export function Login() {
             Войти
           </button>
           <div className="flex flex-col items-end gap-1">
-            <Link className="text-textMuted hover:text-text" to="/register">
+            <Link className="text-textMuted hover:text-text" to="/app/register">
               Регистрация
             </Link>
-            <Link className="text-textMuted hover:text-text text-sm" to="/forgot-password">
+            <Link className="text-textMuted hover:text-text text-sm" to="/app/forgot-password">
               Забыл пароль?
             </Link>
           </div>

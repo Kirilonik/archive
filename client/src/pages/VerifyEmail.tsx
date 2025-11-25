@@ -20,7 +20,7 @@ export function VerifyEmail() {
         setStatus('success');
         setMessage('Email успешно подтвержден! Теперь вы можете войти в систему.');
         setTimeout(() => {
-          navigate('/login');
+          navigate('/app/login');
         }, 3000);
       } catch (error: any) {
         setStatus('error');
@@ -72,7 +72,7 @@ export function VerifyEmail() {
             </div>
             <p className="text-center text-text mb-6">{message}</p>
             <div className="text-center">
-              <Link to="/login" className="btn btn-primary">
+              <Link to="/app/login" className="btn btn-primary">
                 Перейти к входу
               </Link>
             </div>
@@ -98,7 +98,7 @@ export function VerifyEmail() {
             </div>
             <p className="text-center text-text mb-6">{message}</p>
             <div className="text-center">
-              <Link to="/login" className="btn btn-primary">
+              <Link to="/app/login" className="btn btn-primary">
                 Вернуться ко входу
               </Link>
             </div>
