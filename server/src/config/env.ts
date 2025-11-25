@@ -1,6 +1,5 @@
 import { z } from 'zod';
-// Используем собранный shared через dist, чтобы избежать проблем с TypeScript
-import { resolveAppConfig } from '../../../shared/dist/index.js';
+import { resolveAppConfig } from '@media/shared';
 
 function parseCorsOrigins(value: string | undefined): string[] {
   if (!value) return [];
