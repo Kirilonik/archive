@@ -156,8 +156,8 @@ jobs:
 
             echo "🔄 Rolling update: Updating server (zero-downtime)..."
             # Обновляем server с проверкой health - старый продолжит работать пока новый не станет healthy
-            docker compose -f docker-compose.prod.yml up -d --no-deps server
-            
+            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans server
+
             echo "⏳ Waiting for new server to be healthy..."
             MAX_HEALTH_RETRIES=30
             HEALTH_RETRY=0
@@ -184,7 +184,7 @@ jobs:
 
             echo "🔄 Rolling update: Updating client..."
             # Обновляем client после того как server готов
-            docker compose -f docker-compose.prod.yml up -d --no-deps client
+            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans client
 
             echo "⏳ Waiting for new client to be healthy..."
             sleep 5
