@@ -119,21 +119,22 @@ jobs:
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
+        if: always()
         with:
           files: ./server/coverage/lcov.info
           flags: server
           name: server-coverage
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
 
       - name: Upload coverage to artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-report
-          path: |
-            server/coverage/**
-            !server/coverage/**.log
+          path: server/coverage/
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Coverage comment
@@ -217,6 +218,8 @@ jobs:
           path: ./
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
+        # Игнорируем ошибку когда BASE и HEAD одинаковые (прямой коммит в main)
+        if: github.event_name == 'pull_request' || github.event.before != github.event.after
 
   # Сборка Docker образов (только для main/master)
   docker-build:
