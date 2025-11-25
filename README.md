@@ -4,7 +4,7 @@
 
 ### Персональная библиотека фильмов и сериалов
 
-[![Live Demo](https://img.shields.io/badge/🌐_Попробовать_сайт-archive.рф-blue?style=for-the-badge)](https://archive.рф)
+[![Live Demo](https://img.shields.io/badge/🌐_Попробовать_сайт-мой--архив.рф-blue?style=for-the-badge)](https://мой-архив.рф)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -12,8 +12,8 @@
 
 ---
 
-<a href="https://archive.рф" target="_blank">
-  <img src="https://img.shields.io/badge/🚀_Перейти_на_сайт-archive.рф-FF6B6B?style=for-the-badge&logo=rocket&logoColor=white" alt="Перейти на сайт" />
+<a href="https://мой-архив.рф" target="_blank">
+  <img src="https://img.shields.io/badge/🚀_Перейти_на_сайт-мой--архив.рф-FF6B6B?style=for-the-badge&logo=rocket&logoColor=white" alt="Перейти на сайт" />
 </a>
 
 ---
@@ -201,6 +201,6 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 **Создано с ❤️ для управления медиа-коллекцией**
 
-[🌐 Попробовать сайт →](https://archive.рф)
+[🌐 Попробовать сайт →](https://мой-архив.рф)
 
 </div>
