@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { PasswordInput } from '../components/PasswordInput';
 
 export function Register() {
   const [name, setName] = useState('');
@@ -119,9 +120,8 @@ export function Register() {
             </div>
             <div>
               <label className="block text-sm text-textMuted mb-1">Пароль</label>
-              <input
-                type="password"
-                className={`input ${passwordError ? 'border-red-400' : ''}`}
+              <PasswordInput
+                className={passwordError ? 'border-red-400' : ''}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);

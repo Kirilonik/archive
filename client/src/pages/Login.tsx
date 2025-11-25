@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
+import { PasswordInput } from '../components/PasswordInput';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -103,12 +104,7 @@ export function Login() {
           </div>
           <div>
             <label className="block text-sm text-textMuted mb-1">Пароль</label>
-            <input
-              type="password"
-              className="input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
         </div>
         <div className="flex items-center justify-between mt-4">

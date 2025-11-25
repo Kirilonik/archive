@@ -2,6 +2,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { apiJson } from '../lib/api';
+import { PasswordInput } from '../components/PasswordInput';
 
 export function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -181,9 +182,7 @@ export function ResetPassword() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-textMuted mb-1">Новый пароль</label>
-            <input
-              type="password"
-              className="input"
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Введите новый пароль"
@@ -196,9 +195,7 @@ export function ResetPassword() {
           </div>
           <div>
             <label className="block text-sm text-textMuted mb-1">Подтвердите пароль</label>
-            <input
-              type="password"
-              className="input"
+            <PasswordInput
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Повторите новый пароль"
