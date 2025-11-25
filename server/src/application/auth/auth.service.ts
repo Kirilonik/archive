@@ -100,7 +100,7 @@ export class AuthService {
 
     await this.repository.createEmailVerificationToken(userId, token, expiresAt);
 
-    const verificationUrl = `${env.FRONTEND_URL}/verify-email?token=${token}`;
+    const verificationUrl = `${env.FRONTEND_URL}/app/verify-email?token=${token}`;
 
     try {
       await this.emailService.sendEmail({
@@ -326,7 +326,7 @@ export class AuthService {
     await this.repository.createPasswordResetToken(user.id, token, expiresAt);
 
     // Отправляем email с токеном
-    const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${token}`;
+    const resetUrl = `${env.FRONTEND_URL}/app/reset-password?token=${token}`;
 
     // Запускаем отправку email асинхронно
     process.nextTick(() => {
