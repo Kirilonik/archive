@@ -90,7 +90,8 @@ jobs:
 
             # Rolling update: обновляем server с проверкой health
             echo "🔄 Rolling update: Обновление server (zero-downtime)..."
-            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans server || {
+            # Используем --force-recreate чтобы пересоздать контейнер даже если имя занято
+            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans --force-recreate server || {
               echo "❌ Ошибка при обновлении server";
               docker compose -f docker-compose.prod.yml logs server --tail=50;
               exit 1;

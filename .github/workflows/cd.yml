@@ -156,7 +156,8 @@ jobs:
 
             echo "🔄 Rolling update: Updating server (zero-downtime)..."
             # Обновляем server с проверкой health - старый продолжит работать пока новый не станет healthy
-            if ! docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans server; then
+            # Используем --force-recreate чтобы пересоздать контейнер даже если имя занято
+            if ! docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans --force-recreate server; then
               echo "❌ Ошибка при обновлении server"
               docker compose -f docker-compose.prod.yml logs server --tail=50
               exit 1
@@ -198,7 +199,8 @@ jobs:
 
             echo "🔄 Rolling update: Updating client..."
             # Обновляем client после того как server готов
-            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans client || {
+            # Используем --force-recreate чтобы пересоздать контейнер даже если имя занято
+            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans --force-recreate client || {
               echo "❌ Ошибка при обновлении client"
               docker compose -f docker-compose.prod.yml logs client --tail=50
               exit 1
