@@ -6,6 +6,8 @@ services:
   postgres:
     image: postgres:16
     environment:
+      # ВНИМАНИЕ: Дефолтные значения только для локальной разработки!
+      # В продакшене всегда используйте переменные окружения без дефолтов
       POSTGRES_USER: ${PGUSER:-postgres}
       POSTGRES_PASSWORD: ${PGPASSWORD:-postgres}
       POSTGRES_DB: ${PGDATABASE:-media_archive}
@@ -24,9 +26,12 @@ services:
       PORT: ${PORT:-4000}
       PGHOST: postgres
       PGPORT: 5432
+      # ВНИМАНИЕ: Дефолтные значения только для локальной разработки!
+      # В продакшене всегда используйте переменные окружения без дефолтов
       PGUSER: ${PGUSER:-postgres}
       PGPASSWORD: ${PGPASSWORD:-postgres}
       PGDATABASE: ${PGDATABASE:-media_archive}
+      # Дефолтные JWT секреты только для разработки - НЕ используйте в продакшене!
       JWT_SECRET: ${JWT_SECRET:-dev-access-secret-change-me}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-change-me}
       ACCESS_TOKEN_TTL_MINUTES: ${ACCESS_TOKEN_TTL_MINUTES:-15}
