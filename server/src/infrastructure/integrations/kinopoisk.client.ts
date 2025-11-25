@@ -8,6 +8,17 @@ import type {
 } from '../../domain/integrations/kinopoisk.types.js';
 import { logger } from '../../shared/logger.js';
 
+// Устанавливаем таймауты для undici (Node.js fetch) ДО первого использования fetch
+// Дефолтные таймауты: 10 секунд на подключение, 10 секунд на сокет
+if (typeof process !== 'undefined' && process.env) {
+  if (!process.env.UNDICI_CONNECT_TIMEOUT) {
+    process.env.UNDICI_CONNECT_TIMEOUT = '30000'; // 30 секунд на подключение
+  }
+  if (!process.env.UNDICI_SOCKET_TIMEOUT) {
+    process.env.UNDICI_SOCKET_TIMEOUT = '30000'; // 30 секунд на сокет
+  }
+}
+
 const API_URL = env.KINOPOISK_API_URL;
 const API_KEY = env.KINOPOISK_API_KEY;
 
@@ -55,48 +66,49 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         headers: getHeaders(),
         signal: controller.signal,
       });
+      
       clearTimeout(timeoutId);
 
-      if (!resp.ok) {
-        const body = await resp.text().catch(() => '');
-        logger.error(
-          { 
-            status: resp.status, 
-            statusText: resp.statusText, 
-            url, 
-            body: body.substring(0, 500), // Ограничиваем длину для логов
-            headers: Object.fromEntries(resp.headers.entries()),
-          },
-          '[kinopoisk] request failed',
-        );
-        return null;
-      }
-      
-      const responseText = await resp.text();
-      if (!responseText || responseText.trim() === '') {
-        logger.warn({ url, status: resp.status }, '[kinopoisk] Empty response body');
-        return null;
-      }
-      
-      try {
-        return JSON.parse(responseText) as T;
-      } catch (parseError) {
-        logger.error(
-          { 
-            url, 
-            status: resp.status, 
-            body: responseText.substring(0, 500),
-            parseError: parseError instanceof Error ? parseError.message : String(parseError),
-          },
-          '[kinopoisk] Failed to parse JSON response',
-        );
-        return null;
-      }
+        if (!resp.ok) {
+          const body = await resp.text().catch(() => '');
+          logger.error(
+            { 
+              status: resp.status, 
+              statusText: resp.statusText, 
+              url, 
+              body: body.substring(0, 500), // Ограничиваем длину для логов
+              headers: Object.fromEntries(resp.headers.entries()),
+            },
+            '[kinopoisk] request failed',
+          );
+          return null;
+        }
+        
+        const responseText = await resp.text();
+        if (!responseText || responseText.trim() === '') {
+          logger.warn({ url, status: resp.status }, '[kinopoisk] Empty response body');
+          return null;
+        }
+        
+        try {
+          return JSON.parse(responseText) as T;
+        } catch (parseError) {
+          logger.error(
+            { 
+              url, 
+              status: resp.status, 
+              body: responseText.substring(0, 500),
+              parseError: parseError instanceof Error ? parseError.message : String(parseError),
+            },
+            '[kinopoisk] Failed to parse JSON response',
+          );
+          return null;
+        }
     } catch (error: any) {
       clearTimeout(timeoutId);
       
       // Если это таймаут или ошибка соединения, и есть попытки - повторяем
-      if (retries > 0 && (error?.name === 'AbortError' || error?.code === 'ETIMEDOUT' || error?.code === 'ECONNRESET')) {
+      if (retries > 0 && (error?.name === 'AbortError' || error?.code === 'ETIMEDOUT' || error?.code === 'ECONNRESET' || error?.message?.includes('timeout'))) {
         logger.warn({ url, retriesLeft: retries, error: error.message }, 'Kinopoisk request timeout, retrying');
         await new Promise(resolve => setTimeout(resolve, 1000)); // Ждем 1 секунду перед повтором
         return this.fetchJson<T>(url, retries - 1);
