@@ -4,7 +4,11 @@
     "outDir": "dist",
     "rootDir": "src",
     "noEmit": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@media/shared": ["../shared/dist/index.d.ts"]
+    }
   },
   "include": ["src"],
   "exclude": ["src/**/*.spec.ts", "src/**/__tests__/**"],

@@ -237,10 +237,16 @@ jobs:
           ls -la shared/dist/ || echo "shared/dist not found"
           test -f shared/dist/index.d.ts || (echo "ERROR: shared/dist/index.d.ts not found" && exit 1)
           echo "✅ Shared declaration files found"
+          echo "Checking shared package.json:"
+          cat shared/package.json | grep -A 5 '"exports"'
 
       - name: Reinstall dependencies to update workspace links
         if: matrix.package == 'server'
-        run: npm install
+        run: |
+          echo "Reinstalling dependencies to update workspace links..."
+          npm install
+          echo "Checking workspace resolution:"
+          npm ls @media/shared || echo "⚠️ @media/shared not found in workspace"
 
       - name: Build ${{ matrix.package }}
         run: npm -w ${{ matrix.package }} run build
