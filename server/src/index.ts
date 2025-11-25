@@ -152,9 +152,9 @@ async function bootstrap() {
     .catch((err) => {
       // В случае ошибки тоже сбрасываем флаг
       delete process.env.IS_MIGRATION;
-    logger.error({ err }, 'Migration failed');
-    // Не завершаем процесс при ошибке миграции, чтобы сервер продолжал работать
-  });
+      logger.error({ err }, 'Migration failed');
+      // Не завершаем процесс при ошибке миграции, чтобы сервер продолжал работать
+    });
 
   // Graceful shutdown
   const shutdown = (signal: string) => {

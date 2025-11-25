@@ -168,12 +168,12 @@ export class SeriesPgRepository implements SeriesRepository {
     // Безопасное формирование SQL с параметризованными значениями
     const params: unknown[] = [userId, title];
     const conditions = ['us.user_id = $1', 'LOWER(sc.title) = LOWER($2)'];
-    
+
     if (typeof year === 'number') {
       params.push(year);
       conditions.push('COALESCE(sc.year, 0) = COALESCE($3, 0)');
     }
-    
+
     // Безопасное формирование SQL с параметризованными значениями
     const whereClause = conditions.join(' AND ');
     const sql =

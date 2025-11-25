@@ -173,12 +173,12 @@ export class FilmsPgRepository implements FilmsRepository {
     // Безопасное формирование SQL с параметризованными значениями
     const params: unknown[] = [userId, title];
     const conditions = ['uf.user_id = $1', 'LOWER(fc.title) = LOWER($2)'];
-    
+
     if (typeof year === 'number') {
       params.push(year);
       conditions.push('COALESCE(fc.year, 0) = COALESCE($3, 0)');
     }
-    
+
     // Безопасное формирование SQL с параметризованными значениями
     const whereClause = conditions.join(' AND ');
     const sql =

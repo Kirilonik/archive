@@ -17,4 +17,3 @@ runMigrations()
     logger.error({ err }, 'Migration failed');
     process.exit(1);
   });
-
