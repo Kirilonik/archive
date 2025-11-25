@@ -124,16 +124,49 @@ jobs:
             echo "🐳 Stopping existing containers..."
             docker compose -f docker-compose.prod.yml down || true
             
-            echo "🧹 Cleaning up old images..."
+            echo "📊 Checking disk space..."
+            df -h / || true
+            df -h /var/lib/docker || true
+            
+            echo "🧹 Cleaning up old images and containers..."
             # Удаляем образы проекта перед сборкой
             docker compose -f docker-compose.prod.yml down --rmi local --volumes --remove-orphans || true
             # Удаляем образы по имени проекта
             docker images | grep -E "media-archive-prod-(client|server)" | awk '{print $3}' | xargs -r docker rmi -f || true
+            # Удаляем все остановленные контейнеры
+            docker container prune -f || true
             # Общая очистка неиспользуемых ресурсов
             docker system prune -af --volumes || true
             
+            echo "🔧 Checking Docker daemon status..."
+            docker info > /dev/null 2>&1 || {
+              echo "⚠️ Docker daemon issue detected, attempting to restart..."
+              sudo systemctl restart docker || true
+              sleep 5
+            }
+            
             echo "🔨 Building and starting containers..."
-            docker compose -f docker-compose.prod.yml build --no-cache --pull
+            # Пробуем собрать с retry на случай временных проблем с Docker
+            MAX_BUILD_RETRIES=3
+            BUILD_RETRY=0
+            while [ $BUILD_RETRY -lt $MAX_BUILD_RETRIES ]; do
+              if docker compose -f docker-compose.prod.yml build --no-cache --pull; then
+                echo "✅ Build successful"
+                break
+              else
+                BUILD_RETRY=$((BUILD_RETRY + 1))
+                if [ $BUILD_RETRY -lt $MAX_BUILD_RETRIES ]; then
+                  echo "⚠️ Build failed, retrying... ($BUILD_RETRY/$MAX_BUILD_RETRIES)"
+                  sleep 10
+                  # Дополнительная очистка перед повтором
+                  docker system prune -af || true
+                else
+                  echo "❌ Build failed after $MAX_BUILD_RETRIES attempts"
+                  docker compose -f docker-compose.prod.yml logs || true
+                  exit 1
+                fi
+              fi
+            done
             
             echo "🚀 Starting services..."
             docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
