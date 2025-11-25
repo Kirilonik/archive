@@ -62,8 +62,16 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
+      const headers = getHeaders();
+      // Логируем заголовки для диагностики (без API ключа)
+      const headersForLog = { ...headers };
+      if (headersForLog['X-API-KEY']) {
+        headersForLog['X-API-KEY'] = headersForLog['X-API-KEY'].substring(0, 8) + '...';
+      }
+      logger.debug({ url, headers: headersForLog }, '[kinopoisk] Making request');
+      
       const resp = await fetch(url, {
-        headers: getHeaders(),
+        headers,
         signal: controller.signal,
       });
       

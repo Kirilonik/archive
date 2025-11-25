@@ -39,6 +39,9 @@ services:
       REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-30}
       KINOPOISK_API_KEY: ${KINOPOISK_API_KEY}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      # Таймауты для undici (Node.js fetch)
+      UNDICI_CONNECT_TIMEOUT: 30000
+      UNDICI_SOCKET_TIMEOUT: 30000
       # SMTP настройки для отправки email
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT:-465}
