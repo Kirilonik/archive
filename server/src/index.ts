@@ -142,7 +142,16 @@ async function bootstrap() {
 
   // Запускаем миграции после старта сервера в фоне
   // Это позволяет серверу отвечать на запросы сразу, даже если миграции еще выполняются
-  runMigrations().catch((err) => {
+  // Устанавливаем флаг миграции для безопасной проверки в env.ts
+  process.env.IS_MIGRATION = 'true';
+  runMigrations()
+    .then(() => {
+      // После миграций сбрасываем флаг
+      delete process.env.IS_MIGRATION;
+    })
+    .catch((err) => {
+      // В случае ошибки тоже сбрасываем флаг
+      delete process.env.IS_MIGRATION;
     logger.error({ err }, 'Migration failed');
     // Не завершаем процесс при ошибке миграции, чтобы сервер продолжал работать
   });

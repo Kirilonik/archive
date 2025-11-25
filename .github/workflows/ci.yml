@@ -111,7 +111,7 @@ jobs:
         run: npm -w server run build
 
       - name: Run database migrations
-        run: node server/dist/db/migrate.js
+        run: npm -w server run migrate
         continue-on-error: false
 
       - name: Run tests with coverage

@@ -27,8 +27,8 @@ const envSchema = z
         (val) => {
           // Проверяем NODE_ENV из process.env
           const isProd = process.env.NODE_ENV === 'production';
-          // Для миграций (когда запускается migrate.js) разрешаем дефолтные значения
-          const isMigration = process.argv[1]?.includes('migrate.js');
+          // Для миграций используем переменную окружения вместо process.argv для безопасности
+          const isMigration = process.env.IS_MIGRATION === 'true';
           if (!isProd || isMigration) return true;
           // В продакшене проверяем, что секрет не дефолтный
           const isDefault = val === 'dev-access-secret-change-me' || val === 'postgres';
@@ -46,8 +46,8 @@ const envSchema = z
       .refine(
         (val) => {
           const isProd = process.env.NODE_ENV === 'production';
-          // Для миграций разрешаем дефолтные значения
-          const isMigration = process.argv[1]?.includes('migrate.js');
+          // Для миграций используем переменную окружения вместо process.argv для безопасности
+          const isMigration = process.env.IS_MIGRATION === 'true';
           if (!isProd || isMigration) return true;
           const isDefault = val === 'dev-refresh-secret-change-me' || val === 'postgres';
           return !isDefault && val.length >= 32;
@@ -110,8 +110,8 @@ const allowedOrigins = [appConfig.frontendUrl, ...corsOrigins].filter(
   (origin, index, array) => array.indexOf(origin) === index,
 );
 
-// Для миграций используем дефолтные значения, если переменные не установлены
-const isMigration = process.argv[1]?.includes('migrate.js');
+// Для миграций используем переменную окружения вместо process.argv для безопасности
+const isMigration = process.env.IS_MIGRATION === 'true';
 
 export const env = {
   ...parsed.data,
