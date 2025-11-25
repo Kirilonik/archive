@@ -22,7 +22,7 @@ export function Header() {
                     : 'btn px-3 py-1 bg-white/90 hover:bg-white border-black/15 hover:border-black/20'
                 }
               >
-                Моя библиотека
+                Кинематограф
               </NavLink>
               <NavLink
                 to="/youtube"
