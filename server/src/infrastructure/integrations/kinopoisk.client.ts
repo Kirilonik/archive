@@ -179,9 +179,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     }
   }
 
-  private async fetchBudgetInfo(
-    kpId: number,
-  ): Promise<{
+  private async fetchBudgetInfo(kpId: number): Promise<{
     amount: number | null;
     currencyCode: string | null;
     currencySymbol: string | null;

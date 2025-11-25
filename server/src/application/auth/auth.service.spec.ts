@@ -52,11 +52,9 @@ function createPasswordHasherMock(overrides: Partial<PasswordHasher> = {}): Pass
 
 function createGoogleClientMock(overrides: Partial<{ verifyIdToken: jest.Mock }> = {}) {
   return {
-    verifyIdToken: jest
-      .fn()
-      .mockResolvedValue({
-        getPayload: () => ({ sub: 'google-123', email: baseUser.email, name: baseUser.name }),
-      }),
+    verifyIdToken: jest.fn().mockResolvedValue({
+      getPayload: () => ({ sub: 'google-123', email: baseUser.email, name: baseUser.name }),
+    }),
     ...overrides,
   };
 }

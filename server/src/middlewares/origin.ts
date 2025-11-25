@@ -38,13 +38,11 @@ export function originValidationMiddleware(req: Request, res: Response, next: Ne
       },
       'Origin validation failed',
     );
-    res
-      .status(403)
-      .json({
-        error: 'Origin not allowed',
-        received: headerOrigin,
-        allowed: Array.from(allowedOrigins),
-      });
+    res.status(403).json({
+      error: 'Origin not allowed',
+      received: headerOrigin,
+      allowed: Array.from(allowedOrigins),
+    });
     return;
   }
 
@@ -63,13 +61,11 @@ export function originValidationMiddleware(req: Request, res: Response, next: Ne
       },
       'Origin validation failed (referer)',
     );
-    res
-      .status(403)
-      .json({
-        error: 'Origin not allowed',
-        received: refererOrigin,
-        allowed: Array.from(allowedOrigins),
-      });
+    res.status(403).json({
+      error: 'Origin not allowed',
+      received: refererOrigin,
+      allowed: Array.from(allowedOrigins),
+    });
     return;
   }
 

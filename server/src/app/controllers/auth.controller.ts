@@ -69,9 +69,7 @@ function toApiUser(user: {
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly getProfileById: (
-      userId: number,
-    ) => Promise<{
+    private readonly getProfileById: (userId: number) => Promise<{
       id: number;
       email: string;
       name: string | null;
