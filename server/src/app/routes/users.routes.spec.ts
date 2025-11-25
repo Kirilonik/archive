@@ -165,4 +165,3 @@ describe('users routes', () => {
     expect(response.body).toEqual(detailedStats);
   });
 });
-

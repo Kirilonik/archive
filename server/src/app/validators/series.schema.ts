@@ -19,4 +19,3 @@ export const seriesUpdateSchema = seriesCreateSchema.partial();
 
 export type SeriesCreateDto = z.infer<typeof seriesCreateSchema>;
 export type SeriesUpdateDto = z.infer<typeof seriesUpdateSchema>;
-

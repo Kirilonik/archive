@@ -10,12 +10,12 @@ function getClientIp(req: Request): string {
     const ips = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
     return ips.split(',')[0].trim();
   }
-  
+
   const realIp = req.headers['x-real-ip'];
   if (realIp) {
     return Array.isArray(realIp) ? realIp[0] : realIp;
   }
-  
+
   return req.ip || 'unknown';
 }
 
@@ -27,7 +27,7 @@ export function securityLoggerMiddleware(req: Request, res: Response, next: Next
   const userAgent = req.get('user-agent') || 'unknown';
   const path = req.path;
   const method = req.method;
-  
+
   // Логируем подозрительные паттерны
   const suspiciousPatterns = [
     /\.\./, // Path traversal
@@ -36,29 +36,32 @@ export function securityLoggerMiddleware(req: Request, res: Response, next: Next
     /exec\(/i, // Command injection
     /eval\(/i, // Code injection
   ];
-  
+
   const bodyString = JSON.stringify(req.body || {});
   const queryString = JSON.stringify(req.query || {});
   const paramsString = JSON.stringify(req.params || {});
   const allInput = `${bodyString} ${queryString} ${paramsString}`.toLowerCase();
-  
+
   for (const pattern of suspiciousPatterns) {
     if (pattern.test(allInput)) {
-      logger.warn({
-        type: 'suspicious_activity',
-        ip,
-        userAgent,
-        path,
-        method,
-        pattern: pattern.toString(),
-        body: req.body,
-        query: req.query,
-        params: req.params,
-      }, 'Suspicious activity detected');
+      logger.warn(
+        {
+          type: 'suspicious_activity',
+          ip,
+          userAgent,
+          path,
+          method,
+          pattern: pattern.toString(),
+          body: req.body,
+          query: req.query,
+          params: req.params,
+        },
+        'Suspicious activity detected',
+      );
       break;
     }
   }
-  
+
   next();
 }
 
@@ -66,13 +69,16 @@ export function securityLoggerMiddleware(req: Request, res: Response, next: Next
  * Логирование неудачных попыток входа
  */
 export function logFailedLoginAttempt(email: string, ip: string, reason: string): void {
-  logger.warn({
-    type: 'failed_login_attempt',
-    email,
-    ip,
-    reason,
-    timestamp: new Date().toISOString(),
-  }, 'Failed login attempt');
+  logger.warn(
+    {
+      type: 'failed_login_attempt',
+      email,
+      ip,
+      reason,
+      timestamp: new Date().toISOString(),
+    },
+    'Failed login attempt',
+  );
 }
 
 /**
@@ -84,25 +90,30 @@ export function logUnauthorizedAccessAttempt(
   resourceType: string,
   ip: string,
 ): void {
-  logger.warn({
-    type: 'unauthorized_access_attempt',
-    userId,
-    requestedResourceId,
-    resourceType,
-    ip,
-    timestamp: new Date().toISOString(),
-  }, 'Unauthorized access attempt');
+  logger.warn(
+    {
+      type: 'unauthorized_access_attempt',
+      userId,
+      requestedResourceId,
+      resourceType,
+      ip,
+      timestamp: new Date().toISOString(),
+    },
+    'Unauthorized access attempt',
+  );
 }
 
 /**
  * Логирование множественных неудачных попыток входа с одного IP
  */
 export function logBruteForceAttempt(ip: string, attemptCount: number): void {
-  logger.error({
-    type: 'brute_force_attempt',
-    ip,
-    attemptCount,
-    timestamp: new Date().toISOString(),
-  }, `Brute force attempt detected from IP: ${ip} (${attemptCount} attempts)`);
+  logger.error(
+    {
+      type: 'brute_force_attempt',
+      ip,
+      attemptCount,
+      timestamp: new Date().toISOString(),
+    },
+    `Brute force attempt detected from IP: ${ip} (${attemptCount} attempts)`,
+  );
 }
-

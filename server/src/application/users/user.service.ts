@@ -1,4 +1,8 @@
-import type { UsersRepository, AvatarProcessor, UserProfile } from '../../domain/users/user.types.js';
+import type {
+  UsersRepository,
+  AvatarProcessor,
+  UserProfile,
+} from '../../domain/users/user.types.js';
 
 export interface UpdateUserProfileInput {
   name?: string | null;
@@ -17,7 +21,10 @@ export class UserService {
     return profile;
   }
 
-  async updateUserProfile(userId: number, input: UpdateUserProfileInput): Promise<UserProfile | null> {
+  async updateUserProfile(
+    userId: number,
+    input: UpdateUserProfileInput,
+  ): Promise<UserProfile | null> {
     const profile = await this.usersRepository.findById(userId);
     if (!profile) return null;
 
@@ -40,4 +47,3 @@ export class UserService {
     return this.usersRepository.findById(userId);
   }
 }
-

@@ -3,7 +3,7 @@ import { httpRequestCounter, httpRequestDuration, errorCounter } from '../monito
 
 export function metricsMiddleware(req: Request, res: Response, next: NextFunction) {
   const start = Date.now();
-  
+
   // Нормализуем путь (убираем ID из URL для группировки)
   const route = normalizeRoute(req.route?.path || req.path);
   const method = req.method;
@@ -20,10 +20,7 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
     });
 
     // Записываем время ответа
-    httpRequestDuration.observe(
-      { method, route },
-      duration,
-    );
+    httpRequestDuration.observe({ method, route }, duration);
 
     // Считаем ошибки отдельно
     if (status >= 400) {
@@ -46,4 +43,3 @@ function normalizeRoute(path: string): string {
   // Заменяем числовые ID на :id
   return path.replace(/\/\d+/g, '/:id').replace(/\/\d+$/g, '/:id');
 }
-

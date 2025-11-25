@@ -30,15 +30,29 @@ export function FilmDetails() {
     handleDelete,
   } = useMediaItem<Film>({ id, type: 'film' });
 
-  const { items: conceptArtItems, loading: conceptLoading, error: conceptError } = useMediaAssets(id, 'film', 'concept-art');
-  const { items: posterItems, loading: posterLoading, error: posterError } = useMediaAssets(id, 'film', 'posters');
+  const {
+    items: conceptArtItems,
+    loading: conceptLoading,
+    error: conceptError,
+  } = useMediaAssets(id, 'film', 'concept-art');
+  const {
+    items: posterItems,
+    loading: posterLoading,
+    error: posterError,
+  } = useMediaAssets(id, 'film', 'posters');
 
   if (!data) return <main className="mx-auto max-w-5xl px-4 py-6 text-text">Загрузка...</main>;
 
-  const kpRating = typeof data.rating_kinopoisk === 'number' ? Math.round(data.rating_kinopoisk * 10) / 10 : null;
+  const kpRating =
+    typeof data.rating_kinopoisk === 'number' ? Math.round(data.rating_kinopoisk * 10) / 10 : null;
   const formattedDuration = formatMinutes(data.film_length);
-  const formattedBudget = formatBudget(data.budget, data.budget_currency_symbol, data.budget_currency_code);
-  const myRatingValue = typeof data.my_rating === 'number' ? Math.round(data.my_rating * 10) / 10 : null;
+  const formattedBudget = formatBudget(
+    data.budget,
+    data.budget_currency_symbol,
+    data.budget_currency_code,
+  );
+  const myRatingValue =
+    typeof data.my_rating === 'number' ? Math.round(data.my_rating * 10) / 10 : null;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
@@ -95,15 +109,18 @@ export function FilmDetails() {
                 <div className="flex flex-col sm:flex-row gap-2">
                   {(data.web_url || data.kp_id) && (
                     <a
-                      href={data.web_url || (data.kp_id ? `https://www.kinopoisk.ru/film/${data.kp_id}/` : '#')}
+                      href={
+                        data.web_url ||
+                        (data.kp_id ? `https://www.kinopoisk.ru/film/${data.kp_id}/` : '#')
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn px-3 py-1 flex items-center gap-2"
                       title="Открыть на Кинопоиске"
                     >
-                      <img 
-                        src="/kinopoisk-logo-colored-on-whitebackground-rus.png" 
-                        alt="Кинопоиск" 
+                      <img
+                        src="/kinopoisk-logo-colored-on-whitebackground-rus.png"
+                        alt="Кинопоиск"
                         className="h-5 w-auto"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
@@ -125,7 +142,9 @@ export function FilmDetails() {
               <div className="flex flex-wrap gap-3 items-center">
                 {data.year && <span>Год: {data.year}</span>}
                 {formattedBudget && <span>Бюджет: {formattedBudget}</span>}
-                {typeof data.revenue === 'number' && <span>Сборы: {data.revenue.toLocaleString()} ₽</span>}
+                {typeof data.revenue === 'number' && (
+                  <span>Сборы: {data.revenue.toLocaleString()} ₽</span>
+                )}
               </div>
               {data.director && (
                 <div>
@@ -142,7 +161,9 @@ export function FilmDetails() {
                 </div>
               )}
               {data.description && (
-                <div className="text-sm text-textMuted mt-4 leading-relaxed max-w-2xl">{data.description}</div>
+                <div className="text-sm text-textMuted mt-4 leading-relaxed max-w-2xl">
+                  {data.description}
+                </div>
               )}
             </div>
           </div>
@@ -161,7 +182,9 @@ export function FilmDetails() {
         <div className="flex items-center justify-between mb-3">
           <div className="text-xl font-semibold text-text">Моё мнение</div>
           {!opinionEditMode && (
-            <button className="btn px-3 py-1" onClick={() => setOpinionEditMode(true)}>Редактировать</button>
+            <button className="btn px-3 py-1" onClick={() => setOpinionEditMode(true)}>
+              Редактировать
+            </button>
           )}
         </div>
         {!opinionEditMode ? (
@@ -176,12 +199,22 @@ export function FilmDetails() {
               placeholder="Напишите развернутое мнение в Markdown"
             />
             <div className="flex gap-2 justify-end">
-              <button className="btn px-3 py-1" onClick={() => { setOpinionEditMode(false); setOpinionDraft(data.opinion ?? ''); }}>Отмена</button>
+              <button
+                className="btn px-3 py-1"
+                onClick={() => {
+                  setOpinionEditMode(false);
+                  setOpinionDraft(data.opinion ?? '');
+                }}
+              >
+                Отмена
+              </button>
               <button
                 className="btn btn-primary px-3 py-1"
                 disabled={saving}
                 onClick={handleSaveOpinion}
-              >Сохранить</button>
+              >
+                Сохранить
+              </button>
             </div>
           </div>
         )}
@@ -198,7 +231,11 @@ export function FilmDetails() {
         {!conceptLoading && !conceptError && conceptArtItems.length === 0 ? (
           <div className="mt-3 text-sm text-textMuted">Нет доступных концепт-артов.</div>
         ) : null}
-        {conceptArtItems.length > 0 ? <div className="mt-4"><ConceptArtCarousel items={conceptArtItems} /></div> : null}
+        {conceptArtItems.length > 0 ? (
+          <div className="mt-4">
+            <ConceptArtCarousel items={conceptArtItems} />
+          </div>
+        ) : null}
       </div>
 
       <div className="card mt-6">
@@ -206,11 +243,17 @@ export function FilmDetails() {
           <div className="text-xl font-semibold text-text">Постеры</div>
           {posterLoading && <div className="text-sm text-textMuted">Загрузка…</div>}
         </div>
-        {!posterLoading && posterError ? <div className="mt-3 text-sm text-red-300">{posterError}</div> : null}
+        {!posterLoading && posterError ? (
+          <div className="mt-3 text-sm text-red-300">{posterError}</div>
+        ) : null}
         {!posterLoading && !posterError && posterItems.length === 0 ? (
           <div className="mt-3 text-sm text-textMuted">Нет доступных постеров.</div>
         ) : null}
-        {posterItems.length > 0 ? <div className="mt-4"><ConceptArtCarousel items={posterItems} /></div> : null}
+        {posterItems.length > 0 ? (
+          <div className="mt-4">
+            <ConceptArtCarousel items={posterItems} />
+          </div>
+        ) : null}
       </div>
       <RatingEditModal
         isOpen={ratingEditMode}
@@ -224,5 +267,3 @@ export function FilmDetails() {
     </main>
   );
 }
-
-

@@ -223,4 +223,3 @@ export function useMediaItem<T extends MediaItem>({
     refreshData,
   };
 }
-

@@ -72,4 +72,3 @@ if (typeof setInterval !== 'undefined') {
     updateMemoryMetrics();
   }, 5000);
 }
-

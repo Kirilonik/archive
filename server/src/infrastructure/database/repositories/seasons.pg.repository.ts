@@ -35,7 +35,10 @@ export class SeasonsPgRepository implements SeasonsRepository {
     }));
   }
 
-  async findUserSeasonByCatalog(userId: number, seasonCatalogId: number): Promise<{ id: number; watched: boolean } | null> {
+  async findUserSeasonByCatalog(
+    userId: number,
+    seasonCatalogId: number,
+  ): Promise<{ id: number; watched: boolean } | null> {
     const { rows } = await pool.query<{ id: number; watched: boolean }>(
       'SELECT id, watched FROM user_seasons WHERE user_id = $1 AND season_catalog_id = $2',
       [userId, seasonCatalogId],
@@ -43,7 +46,10 @@ export class SeasonsPgRepository implements SeasonsRepository {
     return rows[0] ?? null;
   }
 
-  async createUserSeason(userId: number, seasonCatalogId: number): Promise<{ id: number; watched: boolean }> {
+  async createUserSeason(
+    userId: number,
+    seasonCatalogId: number,
+  ): Promise<{ id: number; watched: boolean }> {
     const { rows } = await pool.query<{ id: number; watched: boolean }>(
       'INSERT INTO user_seasons (user_id, season_catalog_id, watched) VALUES ($1, $2, false) RETURNING id, watched',
       [userId, seasonCatalogId],
@@ -51,7 +57,10 @@ export class SeasonsPgRepository implements SeasonsRepository {
     return rows[0];
   }
 
-  async getUserSeason(userSeasonId: number, userId: number): Promise<{ seasonCatalogId: number } | null> {
+  async getUserSeason(
+    userSeasonId: number,
+    userId: number,
+  ): Promise<{ seasonCatalogId: number } | null> {
     const { rows } = await pool.query<{ season_catalog_id: number }>(
       'SELECT season_catalog_id FROM user_seasons WHERE id = $1 AND user_id = $2',
       [userSeasonId, userId],
@@ -61,10 +70,17 @@ export class SeasonsPgRepository implements SeasonsRepository {
   }
 
   async deleteUserSeason(userSeasonId: number, userId: number): Promise<void> {
-    await pool.query('DELETE FROM user_seasons WHERE id = $1 AND user_id = $2', [userSeasonId, userId]);
+    await pool.query('DELETE FROM user_seasons WHERE id = $1 AND user_id = $2', [
+      userSeasonId,
+      userId,
+    ]);
   }
 
-  async markUserSeason(userSeasonId: number, userId: number, watched: boolean): Promise<{ id: number; watched: boolean } | null> {
+  async markUserSeason(
+    userSeasonId: number,
+    userId: number,
+    watched: boolean,
+  ): Promise<{ id: number; watched: boolean } | null> {
     const { rows } = await pool.query<{ id: number; watched: boolean }>(
       'UPDATE user_seasons SET watched = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3 RETURNING id, watched',
       [watched, userSeasonId, userId],
@@ -90,4 +106,3 @@ export class SeasonsPgRepository implements SeasonsRepository {
     );
   }
 }
-

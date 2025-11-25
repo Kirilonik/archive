@@ -26,7 +26,7 @@ function setRefreshCookie(res: Response, token: string, req: Request) {
   const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
   const sameSite = isHttps ? 'none' : 'lax';
   const secure = isHttps;
-  
+
   res.cookie('refresh_token', token, {
     httpOnly: true,
     secure: secure,
@@ -40,7 +40,7 @@ function setAccessCookie(res: Response, token: string, req: Request) {
   const isHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https';
   const sameSite = isHttps ? 'none' : 'lax';
   const secure = isHttps;
-  
+
   res.cookie('access_token', token, {
     httpOnly: true,
     secure: secure,
@@ -50,7 +50,13 @@ function setAccessCookie(res: Response, token: string, req: Request) {
   });
 }
 
-function toApiUser(user: { id: number; email: string; name: string | null; avatarUrl: string | null; emailVerified?: boolean }) {
+function toApiUser(user: {
+  id: number;
+  email: string;
+  name: string | null;
+  avatarUrl: string | null;
+  emailVerified?: boolean;
+}) {
   return {
     id: user.id,
     email: user.email,
@@ -63,7 +69,14 @@ function toApiUser(user: { id: number; email: string; name: string | null; avata
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly getProfileById: (userId: number) => Promise<{ id: number; email: string; name: string | null; avatarUrl: string | null } | null>,
+    private readonly getProfileById: (
+      userId: number,
+    ) => Promise<{
+      id: number;
+      email: string;
+      name: string | null;
+      avatarUrl: string | null;
+    } | null>,
   ) {}
 
   /**
@@ -98,19 +111,19 @@ export class AuthController {
         password: z.string().min(8),
       });
       const { name, email, password } = schema.parse(req.body);
-      
+
       // Проверка сложности пароля
       const passwordValidation = this.validatePasswordStrength(password);
       if (!passwordValidation.valid) {
         return res.status(400).json({ error: passwordValidation.error });
       }
-      
+
       const { user } = await this.authService.register({ name: name ?? null, email, password });
-      
+
       // Не выдаем токены, пользователь должен подтвердить email
-      res.status(201).json({ 
+      res.status(201).json({
         user: toApiUser(user),
-        message: 'Регистрация успешна. Пожалуйста, проверьте вашу почту и подтвердите email адрес.' 
+        message: 'Регистрация успешна. Пожалуйста, проверьте вашу почту и подтвердите email адрес.',
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -144,9 +157,9 @@ export class AuthController {
       } catch (error: any) {
         // Проверяем, требуется ли подтверждение email
         if (error?.requiresEmailVerification) {
-          return res.status(403).json({ 
+          return res.status(403).json({
             error: error.message,
-            requiresEmailVerification: true 
+            requiresEmailVerification: true,
           });
         }
         throw error;
@@ -177,11 +190,14 @@ export class AuthController {
       }
       if (isErrorWithStatus(error) && error.status === 401) {
         const cause = error.cause instanceof Error ? error.cause.message : undefined;
-        logger.warn({ 
-          error: getErrorMessage(error), 
-          cause,
-          type: 'google_token_verification_failed' 
-        }, 'Google token verification failed');
+        logger.warn(
+          {
+            error: getErrorMessage(error),
+            cause,
+            type: 'google_token_verification_failed',
+          },
+          'Google token verification failed',
+        );
         return res.status(401).json({ error: 'Не удалось подтвердить Google аккаунт' });
       }
       // Логируем неожиданные ошибки
@@ -202,8 +218,18 @@ export class AuthController {
       if (!user) {
         // Пользователь удален или токен недействителен - очищаем cookies
         const isProd = env.NODE_ENV === 'production';
-        res.clearCookie('refresh_token', { path: '/api/auth', httpOnly: true, secure: isProd, sameSite: 'lax' });
-        res.clearCookie('access_token', { path: '/', httpOnly: true, secure: isProd, sameSite: 'lax' });
+        res.clearCookie('refresh_token', {
+          path: '/api/auth',
+          httpOnly: true,
+          secure: isProd,
+          sameSite: 'lax',
+        });
+        res.clearCookie('access_token', {
+          path: '/',
+          httpOnly: true,
+          secure: isProd,
+          sameSite: 'lax',
+        });
         return res.status(401).json({ error: 'User not found or token invalid' });
       }
       const tokens = this.authService.rotateTokens(user);
@@ -213,9 +239,19 @@ export class AuthController {
     } catch (error: unknown) {
       // Обработка истечения или отзыва токена
       const isProd = env.NODE_ENV === 'production';
-      res.clearCookie('refresh_token', { path: '/api/auth', httpOnly: true, secure: isProd, sameSite: 'lax' });
-      res.clearCookie('access_token', { path: '/', httpOnly: true, secure: isProd, sameSite: 'lax' });
-      
+      res.clearCookie('refresh_token', {
+        path: '/api/auth',
+        httpOnly: true,
+        secure: isProd,
+        sameSite: 'lax',
+      });
+      res.clearCookie('access_token', {
+        path: '/',
+        httpOnly: true,
+        secure: isProd,
+        sameSite: 'lax',
+      });
+
       if (error && typeof error === 'object' && 'name' in error) {
         if (error.name === 'TokenExpiredError') {
           return res.status(401).json({ error: 'Refresh token expired' });
@@ -230,7 +266,12 @@ export class AuthController {
 
   logout = async (req: Request, res: Response) => {
     const isProd = env.NODE_ENV === 'production';
-    res.clearCookie('refresh_token', { path: '/api/auth', httpOnly: true, secure: isProd, sameSite: 'lax' });
+    res.clearCookie('refresh_token', {
+      path: '/api/auth',
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax',
+    });
     res.clearCookie('access_token', { path: '/', httpOnly: true, secure: isProd, sameSite: 'lax' });
     res.status(204).send();
   };
@@ -272,14 +313,17 @@ export class AuthController {
         email: z.string().email('Некорректный email адрес'),
       });
       const { email } = schema.parse(req.body);
-      
+
       // Запускаем асинхронно, не ждем результата
       // Всегда возвращаем успех для безопасности (не раскрываем существование пользователя)
       this.authService.requestPasswordReset(email).catch((error) => {
         logger.error({ error, email }, 'Ошибка при запросе сброса пароля');
       });
-      
-      res.json({ message: 'Если указанный email существует, на него отправлено письмо с инструкциями по сбросу пароля' });
+
+      res.json({
+        message:
+          'Если указанный email существует, на него отправлено письмо с инструкциями по сбросу пароля',
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors[0]?.message || 'Некорректные данные' });
@@ -295,13 +339,13 @@ export class AuthController {
         password: z.string().min(1, 'Пароль обязателен'),
       });
       const { token, password } = schema.parse(req.body);
-      
+
       // Валидация пароля
       const passwordValidation = this.validatePasswordStrength(password);
       if (!passwordValidation.valid) {
         return res.status(400).json({ error: passwordValidation.error });
       }
-      
+
       await this.authService.resetPassword(token, password);
       res.json({ message: 'Пароль успешно изменен' });
     } catch (error) {
@@ -314,6 +358,4 @@ export class AuthController {
       next(error);
     }
   };
-
 }
-

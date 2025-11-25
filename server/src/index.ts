@@ -50,25 +50,31 @@ async function bootstrap() {
   app.use(cors(corsOptions));
   app.use(
     helmet({
-      contentSecurityPolicy: env.NODE_ENV === 'production' ? {
-        directives: {
-          defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'strict-dynamic'"], // Используем strict-dynamic вместо unsafe-inline/unsafe-eval
-          styleSrc: ["'self'", "'unsafe-inline'"], // unsafe-inline для стилей допустим
-          imgSrc: ["'self'", "data:", "https:"],
-          connectSrc: ["'self'", env.API_BASE_URL || '', ...env.allowedOrigins],
-          fontSrc: ["'self'", "data:"],
-          objectSrc: ["'none'"],
-          mediaSrc: ["'self'"],
-          frameSrc: ["'none'"],
-        },
-      } : false,
+      contentSecurityPolicy:
+        env.NODE_ENV === 'production'
+          ? {
+              directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'strict-dynamic'"], // Используем strict-dynamic вместо unsafe-inline/unsafe-eval
+                styleSrc: ["'self'", "'unsafe-inline'"], // unsafe-inline для стилей допустим
+                imgSrc: ["'self'", 'data:', 'https:'],
+                connectSrc: ["'self'", env.API_BASE_URL || '', ...env.allowedOrigins],
+                fontSrc: ["'self'", 'data:'],
+                objectSrc: ["'none'"],
+                mediaSrc: ["'self'"],
+                frameSrc: ["'none'"],
+              },
+            }
+          : false,
       crossOriginEmbedderPolicy: false,
-      hsts: env.NODE_ENV === 'production' ? {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true,
-      } : false,
+      hsts:
+        env.NODE_ENV === 'production'
+          ? {
+              maxAge: 31536000,
+              includeSubDomains: true,
+              preload: true,
+            }
+          : false,
       // Дополнительные security headers
       referrerPolicy: {
         policy: 'strict-origin-when-cross-origin',
@@ -90,8 +96,8 @@ async function bootstrap() {
   app.use(cookieParser());
   // Простой healthcheck endpoint БЕЗ middleware для быстрой проверки доступности
   app.get('/api/health', (req, res) => {
-    res.json({ 
-      ok: true, 
+    res.json({
+      ok: true,
       status: 'healthy',
       timestamp: new Date().toISOString(),
     });
@@ -99,10 +105,10 @@ async function bootstrap() {
 
   // Rate limiting на уровне IP (защита от DDoS)
   app.use(ipRateLimiter);
-  
+
   // Логирование подозрительной активности
   app.use(securityLoggerMiddleware);
-  
+
   app.use(requestLogger);
   app.use(metricsMiddleware); // Сбор метрик для Prometheus
   // Теперь всё на одном домене через Nginx, можно включить обратно
@@ -122,13 +128,16 @@ async function bootstrap() {
   // В Node.js, прослушивание на 0.0.0.0 позволяет принимать соединения со всех IPv4 интерфейсов
   const server = app.listen(PORT, '0.0.0.0', () => {
     const address = server.address();
-    logger.info({ 
-      port: PORT, 
-      host: '0.0.0.0', 
-      envPort: process.env.PORT, 
-      configPort: env.PORT,
-      serverAddress: address,
-    }, 'Server listening');
+    logger.info(
+      {
+        port: PORT,
+        host: '0.0.0.0',
+        envPort: process.env.PORT,
+        configPort: env.PORT,
+        serverAddress: address,
+      },
+      'Server listening',
+    );
   });
 
   // Запускаем миграции после старта сервера в фоне
@@ -144,13 +153,16 @@ async function bootstrap() {
     server.close(() => {
       logger.info('HTTP server closed');
       // Закрываем соединения с БД
-      pool.end().then(() => {
-        logger.info('Database connections closed');
-        process.exit(0);
-      }).catch((err) => {
-        logger.error({ err }, 'Error closing database connections');
-        process.exit(1);
-      });
+      pool
+        .end()
+        .then(() => {
+          logger.info('Database connections closed');
+          process.exit(0);
+        })
+        .catch((err) => {
+          logger.error({ err }, 'Error closing database connections');
+          process.exit(1);
+        });
     });
 
     // Принудительное завершение через 10 секунд
@@ -178,5 +190,3 @@ bootstrap().catch((e) => {
   logger.error({ err: e }, 'Failed to start server');
   process.exit(1);
 });
-
-

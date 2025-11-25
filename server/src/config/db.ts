@@ -17,6 +17,3 @@ export const pool = new Pool({
 pool.on('error', (err) => {
   logger.error({ err }, 'Unexpected error on idle client');
 });
-
-
-

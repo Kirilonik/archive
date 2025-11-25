@@ -41,7 +41,7 @@ export function ResetPassword() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    
+
     if (!token) {
       setError('Токен сброса пароля не найден');
       return;
@@ -106,8 +106,18 @@ export function ResetPassword() {
         <div className="card">
           <div className="py-6">
             <div className="flex items-center justify-center mb-4">
-              <svg className="h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="h-16 w-16 text-green-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
             <h1 className="text-2xl font-semibold text-text mb-4 text-center">
@@ -133,13 +143,21 @@ export function ResetPassword() {
         <div className="card">
           <div className="py-6">
             <div className="flex items-center justify-center mb-4">
-              <svg className="h-16 w-16 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="h-16 w-16 text-red-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
-            <h1 className="text-2xl font-semibold text-text mb-4 text-center">
-              Ошибка
-            </h1>
+            <h1 className="text-2xl font-semibold text-text mb-4 text-center">Ошибка</h1>
             <p className="text-center text-text mb-6">{error}</p>
             <div className="text-center space-y-2">
               <Link to="/forgot-password" className="btn btn-primary block">
@@ -159,9 +177,7 @@ export function ResetPassword() {
     <main className="mx-auto max-w-md px-4 py-10">
       <div className="card">
         <h1 className="text-2xl font-semibold text-text mb-4">Сброс пароля</h1>
-        <p className="text-textMuted text-sm mb-6">
-          Введите новый пароль для вашего аккаунта.
-        </p>
+        <p className="text-textMuted text-sm mb-6">Введите новый пароль для вашего аккаунта.</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-textMuted mb-1">Новый пароль</label>
@@ -190,15 +206,9 @@ export function ResetPassword() {
               disabled={loading}
             />
           </div>
-          {error && (
-            <div className="text-red-500 text-sm">{error}</div>
-          )}
+          {error && <div className="text-red-500 text-sm">{error}</div>}
           <div className="flex items-center justify-between mt-6">
-            <button
-              type="submit"
-              className="btn btn-primary px-4 py-2"
-              disabled={loading}
-            >
+            <button type="submit" className="btn btn-primary px-4 py-2" disabled={loading}>
               {loading ? 'Сброс...' : 'Сбросить пароль'}
             </button>
             <Link className="text-textMuted hover:text-text" to="/login">
@@ -210,4 +220,3 @@ export function ResetPassword() {
     </main>
   );
 }
-

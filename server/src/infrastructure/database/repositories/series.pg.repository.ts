@@ -1,5 +1,9 @@
 import { pool } from '../../../config/db.js';
-import type { SeriesRepository, SeriesCatalogCreateInput, UserSeriesRow } from '../../../domain/series/series.types.js';
+import type {
+  SeriesRepository,
+  SeriesCatalogCreateInput,
+  UserSeriesRow,
+} from '../../../domain/series/series.types.js';
 
 export class SeriesPgRepository implements SeriesRepository {
   async listUserSeries(params: {
@@ -45,7 +49,7 @@ export class SeriesPgRepository implements SeriesRepository {
         values,
       ),
       pool.query<UserSeriesRow>(
-      `SELECT 
+        `SELECT 
         us.id as user_series_id,
         us.user_id,
         us.series_catalog_id,
@@ -126,7 +130,10 @@ export class SeriesPgRepository implements SeriesRepository {
   }
 
   async findCatalogIdByKpId(kpId: number): Promise<number | null> {
-    const { rows } = await pool.query<{ id: number }>('SELECT id FROM series_catalog WHERE kp_id = $1', [kpId]);
+    const { rows } = await pool.query<{ id: number }>(
+      'SELECT id FROM series_catalog WHERE kp_id = $1',
+      [kpId],
+    );
     return rows[0]?.id ?? null;
   }
 
@@ -170,7 +177,11 @@ export class SeriesPgRepository implements SeriesRepository {
     return rows[0].id;
   }
 
-  async findUserSeriesDuplicateByTitleYear(title: string, year: number | null, userId: number): Promise<UserSeriesRow | null> {
+  async findUserSeriesDuplicateByTitleYear(
+    title: string,
+    year: number | null,
+    userId: number,
+  ): Promise<UserSeriesRow | null> {
     const params: unknown[] = [userId, title];
     let sql = `
       SELECT 
@@ -213,7 +224,13 @@ export class SeriesPgRepository implements SeriesRepository {
     return rows[0] ?? null;
   }
 
-  async createUserSeries(params: { userId: number; seriesCatalogId: number; myRating?: number | null; opinion?: string | null; status?: string | null }): Promise<number> {
+  async createUserSeries(params: {
+    userId: number;
+    seriesCatalogId: number;
+    myRating?: number | null;
+    opinion?: string | null;
+    status?: string | null;
+  }): Promise<number> {
     const { rows } = await pool.query<{ id: number }>(
       `INSERT INTO user_series (user_id, series_catalog_id, my_rating, opinion, status)
        VALUES ($1, $2, $3, $4, $5)
@@ -229,18 +246,16 @@ export class SeriesPgRepository implements SeriesRepository {
     return rows[0].id;
   }
 
-  async updateUserSeries(userSeriesId: number, userId: number, data: { myRating?: number | null; opinion?: string | null; status?: string | null }): Promise<void> {
+  async updateUserSeries(
+    userSeriesId: number,
+    userId: number,
+    data: { myRating?: number | null; opinion?: string | null; status?: string | null },
+  ): Promise<void> {
     await pool.query(
       `UPDATE user_series
        SET my_rating = $1, opinion = $2, status = $3, updated_at = NOW()
        WHERE id = $4 AND user_id = $5`,
-      [
-        data.myRating ?? null,
-        data.opinion ?? null,
-        data.status ?? null,
-        userSeriesId,
-        userId,
-      ],
+      [data.myRating ?? null, data.opinion ?? null, data.status ?? null, userSeriesId, userId],
     );
   }
 
@@ -263,12 +278,21 @@ export class SeriesPgRepository implements SeriesRepository {
         [season.id],
       );
       for (const episode of episodes) {
-        await pool.query('DELETE FROM user_episodes WHERE user_id = $1 AND episode_catalog_id = $2', [userId, episode.id]);
+        await pool.query(
+          'DELETE FROM user_episodes WHERE user_id = $1 AND episode_catalog_id = $2',
+          [userId, episode.id],
+        );
       }
-      await pool.query('DELETE FROM user_seasons WHERE user_id = $1 AND season_catalog_id = $2', [userId, season.id]);
+      await pool.query('DELETE FROM user_seasons WHERE user_id = $1 AND season_catalog_id = $2', [
+        userId,
+        season.id,
+      ]);
     }
 
-    await pool.query('DELETE FROM user_series WHERE id = $1 AND user_id = $2', [userSeriesId, userId]);
+    await pool.query('DELETE FROM user_series WHERE id = $1 AND user_id = $2', [
+      userSeriesId,
+      userId,
+    ]);
   }
 
   async getOrCreateSeasonCatalog(seriesCatalogId: number, seasonNumber: number): Promise<number> {
@@ -298,13 +322,24 @@ export class SeriesPgRepository implements SeriesRepository {
     if (existing[0]) {
       await pool.query(
         'UPDATE episodes_catalog SET title = COALESCE($1, title), release_date = COALESCE($2, release_date), duration = COALESCE($3, duration) WHERE id = $4',
-        [options.title ?? null, options.releaseDate ?? null, options.duration ?? null, existing[0].id],
+        [
+          options.title ?? null,
+          options.releaseDate ?? null,
+          options.duration ?? null,
+          existing[0].id,
+        ],
       );
       return existing[0].id;
     }
     const { rows } = await pool.query<{ id: number }>(
       'INSERT INTO episodes_catalog (season_catalog_id, number, title, release_date, duration) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [seasonCatalogId, episodeNumber, options.title ?? null, options.releaseDate ?? null, options.duration ?? null],
+      [
+        seasonCatalogId,
+        episodeNumber,
+        options.title ?? null,
+        options.releaseDate ?? null,
+        options.duration ?? null,
+      ],
     );
     return rows[0].id;
   }
@@ -327,4 +362,3 @@ export class SeriesPgRepository implements SeriesRepository {
     );
   }
 }
-

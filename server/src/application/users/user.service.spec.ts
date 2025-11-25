@@ -1,6 +1,10 @@
 import { jest } from '@jest/globals';
 import { UserService } from './user.service.js';
-import type { UsersRepository, AvatarProcessor, UserProfile } from '../../domain/users/user.types.js';
+import type {
+  UsersRepository,
+  AvatarProcessor,
+  UserProfile,
+} from '../../domain/users/user.types.js';
 
 const profile: UserProfile = {
   id: 1,
@@ -58,7 +62,10 @@ describe('UserService', () => {
     });
     const service = new UserService(repository, avatarProcessor);
 
-    const result = await service.updateUserProfile(1, { name: 'New Name', avatarUrl: 'data:image/png;base64,xyz' });
+    const result = await service.updateUserProfile(1, {
+      name: 'New Name',
+      avatarUrl: 'data:image/png;base64,xyz',
+    });
 
     expect(avatarProcessor.process).toHaveBeenCalledWith('data:image/png;base64,xyz');
     expect(repository.updateProfile).toHaveBeenCalledWith(1, {
@@ -77,4 +84,3 @@ describe('UserService', () => {
     expect(repository.deleteById).toHaveBeenCalledWith(1);
   });
 });
-

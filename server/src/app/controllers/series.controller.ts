@@ -8,12 +8,11 @@ import { isErrorWithStatus } from '../../shared/error-utils.js';
 const listQuerySchema = z.object({
   query: z.string().optional(),
   status: z.string().optional(),
-  ratingGte: z
-    .preprocess((val) => {
-      if (typeof val === 'string' && val.trim() !== '') return Number(val);
-      if (typeof val === 'number') return val;
-      return undefined;
-    }, z.number().min(0).max(10).optional()),
+  ratingGte: z.preprocess((val) => {
+    if (typeof val === 'string' && val.trim() !== '') return Number(val);
+    if (typeof val === 'number') return val;
+    return undefined;
+  }, z.number().min(0).max(10).optional()),
   limit: z.coerce.number().int().min(1).max(100).default(24),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -151,4 +150,3 @@ export class SeriesController {
     }
   };
 }
-

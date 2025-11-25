@@ -68,12 +68,26 @@ describe('FilmService', () => {
     const kinopoisk = createKinopoiskMock();
     const service = new FilmService(repository, kinopoisk);
 
-    const result = await service.listFilms({ userId: 1, query: undefined, status: undefined, ratingGte: undefined, limit: 10, offset: 0 });
+    const result = await service.listFilms({
+      userId: 1,
+      query: undefined,
+      status: undefined,
+      ratingGte: undefined,
+      limit: 10,
+      offset: 0,
+    });
     expect(result.items).toHaveLength(1);
     expect(result.items[0].title).toBe('Example Film');
     expect(result.total).toBe(1);
     expect(result.hasMore).toBe(false);
-    expect(repository.listUserFilms).toHaveBeenCalledWith({ userId: 1, query: undefined, status: undefined, ratingGte: undefined, limit: 10, offset: 0 });
+    expect(repository.listUserFilms).toHaveBeenCalledWith({
+      userId: 1,
+      query: undefined,
+      status: undefined,
+      ratingGte: undefined,
+      limit: 10,
+      offset: 0,
+    });
   });
 
   it('создает фильм и возвращает данные', async () => {
@@ -98,4 +112,3 @@ describe('FilmService', () => {
     });
   });
 });
-

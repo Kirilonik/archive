@@ -20,7 +20,7 @@ export function StarRating({ value, onChange, max = 10 }: StarRatingProps) {
       {Array.from({ length: max }, (_, i) => {
         const starValue = i + 1;
         const isFilled = starValue <= displayValue;
-        
+
         return (
           <button
             key={i}
@@ -62,4 +62,3 @@ export function StarRating({ value, onChange, max = 10 }: StarRatingProps) {
     </div>
   );
 }
-

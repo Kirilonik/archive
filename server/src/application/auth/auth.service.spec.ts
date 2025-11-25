@@ -1,5 +1,10 @@
 import { jest } from '@jest/globals';
-import type { AuthRepository, PasswordHasher, AuthUser, AuthUserWithPassword } from '../../domain/auth/auth.types.js';
+import type {
+  AuthRepository,
+  PasswordHasher,
+  AuthUser,
+  AuthUserWithPassword,
+} from '../../domain/auth/auth.types.js';
 import { AuthService } from './auth.service.js';
 
 const baseUser: AuthUser = {
@@ -18,7 +23,9 @@ function createRepositoryMock(overrides: Partial<AuthRepository> = {}): AuthRepo
       ...baseUser,
       passwordHash: 'hash',
     } as AuthUserWithPassword) as AuthRepository['findByEmail'],
-    createUser: jest.fn().mockResolvedValue({ ...baseUser, emailVerified: false }) as AuthRepository['createUser'],
+    createUser: jest
+      .fn()
+      .mockResolvedValue({ ...baseUser, emailVerified: false }) as AuthRepository['createUser'],
     findByGoogleId: jest.fn().mockResolvedValue(null),
     createUserFromGoogle: jest.fn().mockResolvedValue({
       ...baseUser,
@@ -47,7 +54,9 @@ function createGoogleClientMock(overrides: Partial<{ verifyIdToken: jest.Mock }>
   return {
     verifyIdToken: jest
       .fn()
-      .mockResolvedValue({ getPayload: () => ({ sub: 'google-123', email: baseUser.email, name: baseUser.name }) }),
+      .mockResolvedValue({
+        getPayload: () => ({ sub: 'google-123', email: baseUser.email, name: baseUser.name }),
+      }),
     ...overrides,
   };
 }
@@ -58,7 +67,11 @@ describe('AuthService', () => {
     const passwordHasher = createPasswordHasherMock();
     const service = new AuthService(repository, passwordHasher, createGoogleClientMock() as any);
 
-    const result = await service.register({ name: 'User', email: baseUser.email, password: 'password' });
+    const result = await service.register({
+      name: 'User',
+      email: baseUser.email,
+      password: 'password',
+    });
     expect(result.user).toEqual({ ...baseUser, emailVerified: false }); // При регистрации email не подтвержден
     expect(repository.createUser).toHaveBeenCalledWith({
       name: 'User',
@@ -72,7 +85,9 @@ describe('AuthService', () => {
     const passwordHasher = createPasswordHasherMock();
     const service = new AuthService(repository, passwordHasher, createGoogleClientMock() as any);
 
-    await expect(service.register({ email: baseUser.email, password: 'password' })).rejects.toMatchObject({ status: 409 });
+    await expect(
+      service.register({ email: baseUser.email, password: 'password' }),
+    ).rejects.toMatchObject({ status: 409 });
   });
 
   it('возвращает пользователя при успешном входе', async () => {
@@ -87,7 +102,9 @@ describe('AuthService', () => {
 
   it('возвращает null, если пароль неверен', async () => {
     const repository = createRepositoryMock();
-    const passwordHasher = createPasswordHasherMock({ compare: jest.fn().mockResolvedValue(false) });
+    const passwordHasher = createPasswordHasherMock({
+      compare: jest.fn().mockResolvedValue(false),
+    });
     const service = new AuthService(repository, passwordHasher, createGoogleClientMock() as any);
 
     const result = await service.login({ email: baseUser.email, password: 'wrong' });
@@ -122,4 +139,3 @@ describe('AuthService', () => {
     expect(repository.createUserFromGoogle).toHaveBeenCalled();
   });
 });
-

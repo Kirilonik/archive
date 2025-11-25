@@ -12,4 +12,3 @@ export const seasonUpdateSchema = z.object({
 export const seasonMarkSchema = z.object({
   watched: z.boolean(),
 });
-

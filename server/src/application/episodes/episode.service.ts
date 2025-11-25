@@ -68,12 +68,19 @@ export class EpisodeService {
       err.status = 403;
       throw err;
     }
-    const episodeCatalogId = await this.seriesRepository.getOrCreateEpisodeCatalog(seasonCatalogId, number, {
-      title: title ?? null,
-      releaseDate: releaseDate ?? null,
-      duration: duration ?? null,
-    });
-    const existing = await this.episodesRepository.findUserEpisodeByCatalog(userId, episodeCatalogId);
+    const episodeCatalogId = await this.seriesRepository.getOrCreateEpisodeCatalog(
+      seasonCatalogId,
+      number,
+      {
+        title: title ?? null,
+        releaseDate: releaseDate ?? null,
+        duration: duration ?? null,
+      },
+    );
+    const existing = await this.episodesRepository.findUserEpisodeByCatalog(
+      userId,
+      episodeCatalogId,
+    );
     if (existing) {
       return {
         id: existing.id,
@@ -100,7 +107,12 @@ export class EpisodeService {
 
   async updateEpisode(
     episodeId: number,
-    fields: { number?: number; title?: string; release_date?: string | null; duration?: number | null },
+    fields: {
+      number?: number;
+      title?: string;
+      release_date?: string | null;
+      duration?: number | null;
+    },
     userId?: number,
   ) {
     if (!userId) return null;
@@ -137,4 +149,3 @@ export class EpisodeService {
     return updated;
   }
 }
-

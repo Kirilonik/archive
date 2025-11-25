@@ -18,10 +18,13 @@ export class EmailService {
       const isGmail = env.SMTP_HOST.includes('gmail');
 
       if (isYandex && env.SMTP_FROM !== env.SMTP_USER) {
-        logger.error({
-          smtp_user: env.SMTP_USER,
-          smtp_from: env.SMTP_FROM,
-        }, 'SMTP_FROM не совпадает с SMTP_USER. Для Yandex они должны быть одинаковыми.');
+        logger.error(
+          {
+            smtp_user: env.SMTP_USER,
+            smtp_from: env.SMTP_FROM,
+          },
+          'SMTP_FROM не совпадает с SMTP_USER. Для Yandex они должны быть одинаковыми.',
+        );
       }
 
       const transporterConfig: any = {
@@ -63,42 +66,60 @@ export class EmailService {
 
     try {
       await this.transporter.verify();
-      logger.info({ host: env.SMTP_HOST, user: env.SMTP_USER }, 'SMTP соединение успешно проверено');
+      logger.info(
+        { host: env.SMTP_HOST, user: env.SMTP_USER },
+        'SMTP соединение успешно проверено',
+      );
     } catch (error: any) {
       if (error?.code === 'EAUTH' || error?.responseCode === 535) {
-        logger.error({
-          host: env.SMTP_HOST,
-          user: env.SMTP_USER,
-          error: error.message,
-          code: error.code,
-          responseCode: error.responseCode,
-        }, 'Ошибка аутентификации SMTP. Проверьте SMTP_USER и SMTP_PASSWORD (используйте пароль приложения для Gmail/Yandex)');
+        logger.error(
+          {
+            host: env.SMTP_HOST,
+            user: env.SMTP_USER,
+            error: error.message,
+            code: error.code,
+            responseCode: error.responseCode,
+          },
+          'Ошибка аутентификации SMTP. Проверьте SMTP_USER и SMTP_PASSWORD (используйте пароль приложения для Gmail/Yandex)',
+        );
       } else {
-        logger.warn({
-          host: env.SMTP_HOST,
-          error: error.message,
-          code: error.code,
-        }, 'Не удалось проверить SMTP соединение при старте');
+        logger.warn(
+          {
+            host: env.SMTP_HOST,
+            error: error.message,
+            code: error.code,
+          },
+          'Не удалось проверить SMTP соединение при старте',
+        );
       }
     }
   }
 
   async sendEmail(options: EmailOptions): Promise<void> {
     if (!this.transporter) {
-      logger.warn({ to: options.to, subject: options.subject }, 'Попытка отправить email, но SMTP не настроен');
+      logger.warn(
+        { to: options.to, subject: options.subject },
+        'Попытка отправить email, но SMTP не настроен',
+      );
       if (env.NODE_ENV === 'development') {
-        logger.info({
-          to: options.to,
-          subject: options.subject,
-          html: options.html.substring(0, 200) + '...',
-        }, 'DEV MODE: Email был бы отправлен');
+        logger.info(
+          {
+            to: options.to,
+            subject: options.subject,
+            html: options.html.substring(0, 200) + '...',
+          },
+          'DEV MODE: Email был бы отправлен',
+        );
       }
       return;
     }
 
     try {
-      logger.debug({ to: options.to, subject: options.subject, from: env.SMTP_FROM }, 'Начало отправки email');
-      
+      logger.debug(
+        { to: options.to, subject: options.subject, from: env.SMTP_FROM },
+        'Начало отправки email',
+      );
+
       const sendMailPromise = this.transporter.sendMail({
         from: env.SMTP_FROM,
         to: options.to,
@@ -136,14 +157,27 @@ export class EmailService {
         secure: env.SMTP_SECURE,
       };
 
-      if (error?.message?.includes('timeout') || error?.code === 'ETIMEDOUT' || error?.code === 'ECONNRESET') {
+      if (
+        error?.message?.includes('timeout') ||
+        error?.code === 'ETIMEDOUT' ||
+        error?.code === 'ECONNRESET'
+      ) {
         logger.warn(errorDetails, 'Таймаут или ошибка подключения при отправке email');
       } else if (error?.code === 'EAUTH' || error?.responseCode === 535) {
-        logger.error(errorDetails, 'Ошибка аутентификации SMTP. Проверьте SMTP_USER и SMTP_PASSWORD (используйте пароль приложения для Gmail/Yandex)');
+        logger.error(
+          errorDetails,
+          'Ошибка аутентификации SMTP. Проверьте SMTP_USER и SMTP_PASSWORD (используйте пароль приложения для Gmail/Yandex)',
+        );
       } else if (error?.code === 'EMESSAGE' || error?.responseCode === 554) {
-        logger.error(errorDetails, 'Письмо отклонено как спам (код 554). Проверьте содержимое письма и настройки SMTP сервера.');
+        logger.error(
+          errorDetails,
+          'Письмо отклонено как спам (код 554). Проверьте содержимое письма и настройки SMTP сервера.',
+        );
       } else if (error?.code === 'ECONNREFUSED') {
-        logger.error(errorDetails, 'SMTP сервер отказал в подключении. Проверьте SMTP_HOST и SMTP_PORT');
+        logger.error(
+          errorDetails,
+          'SMTP сервер отказал в подключении. Проверьте SMTP_HOST и SMTP_PORT',
+        );
       } else {
         logger.error(errorDetails, 'Ошибка при отправке email');
       }
@@ -151,6 +185,9 @@ export class EmailService {
   }
 
   private stripHtml(html: string): string {
-    return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    return html
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 }

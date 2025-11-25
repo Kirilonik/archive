@@ -35,9 +35,7 @@ export function AvatarMenu() {
         {user?.avatar_url ? (
           <img src={user.avatar_url} alt="avatar" className="w-full h-full object-cover" />
         ) : (
-          <span className="text-sm uppercase">
-            {user?.name?.[0] ?? user?.email?.[0] ?? ''}
-          </span>
+          <span className="text-sm uppercase">{user?.name?.[0] ?? user?.email?.[0] ?? ''}</span>
         )}
       </button>
       {open && (
@@ -45,7 +43,11 @@ export function AvatarMenu() {
           <div className="flex flex-col space-y-1">
             {user ? (
               <>
-                <Link className="block w-full text-left px-3 py-2 hover:bg-black/5 rounded-xl text-text transition-all duration-200" to="/profile" onClick={() => setOpen(false)}>
+                <Link
+                  className="block w-full text-left px-3 py-2 hover:bg-black/5 rounded-xl text-text transition-all duration-200"
+                  to="/profile"
+                  onClick={() => setOpen(false)}
+                >
                   Профиль
                 </Link>
                 <button
@@ -62,8 +64,20 @@ export function AvatarMenu() {
               </>
             ) : (
               <>
-                <Link className="block w-full text-left px-3 py-2 hover:bg-black/5 rounded-xl text-text transition-all duration-200" to="/login" onClick={() => setOpen(false)}>Войти</Link>
-                <Link className="block w-full text-left px-3 py-2 hover:bg-black/5 rounded-xl text-text transition-all duration-200" to="/register" onClick={() => setOpen(false)}>Регистрация</Link>
+                <Link
+                  className="block w-full text-left px-3 py-2 hover:bg-black/5 rounded-xl text-text transition-all duration-200"
+                  to="/login"
+                  onClick={() => setOpen(false)}
+                >
+                  Войти
+                </Link>
+                <Link
+                  className="block w-full text-left px-3 py-2 hover:bg-black/5 rounded-xl text-text transition-all duration-200"
+                  to="/register"
+                  onClick={() => setOpen(false)}
+                >
+                  Регистрация
+                </Link>
               </>
             )}
           </div>
@@ -72,5 +86,3 @@ export function AvatarMenu() {
     </div>
   );
 }
-
-

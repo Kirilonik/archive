@@ -5,7 +5,8 @@ import type { PasswordHasher } from '../../domain/auth/auth.types.js';
  * Защита от timing attacks: всегда выполняем сравнение пароля,
  * даже если пользователь не найден, чтобы время ответа было одинаковым
  */
-const DUMMY_HASH = '$2a$10$dummy.hash.for.timing.attack.protection.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+const DUMMY_HASH =
+  '$2a$10$dummy.hash.for.timing.attack.protection.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 
 export class BcryptPasswordHasher implements PasswordHasher {
   constructor(private readonly rounds = 10) {}
@@ -24,4 +25,3 @@ export class BcryptPasswordHasher implements PasswordHasher {
     return bcrypt.compare(password, hashToCompare);
   }
 }
-

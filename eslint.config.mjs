@@ -50,7 +50,10 @@ export default tseslint.config(
       ...jsxA11yRecommendedRules,
       'react/react-in-jsx-scope': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       'import/no-unresolved': 'off', // Отключено для TypeScript, так как пути с .js разрешаются во время компиляции
       'jsx-a11y/label-has-associated-control': 'off',
       'jsx-a11y/click-events-have-key-events': 'off',
@@ -65,5 +68,3 @@ export default tseslint.config(
   },
   prettier,
 );
-
-

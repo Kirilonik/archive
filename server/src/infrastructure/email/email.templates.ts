@@ -1,6 +1,9 @@
-export function createEmailVerificationTemplate(verificationUrl: string, userName?: string | null): string {
+export function createEmailVerificationTemplate(
+  verificationUrl: string,
+  userName?: string | null,
+): string {
   const greeting = userName ? `Здравствуйте, ${userName}!` : 'Здравствуйте!';
-  
+
   return `
 <!DOCTYPE html>
 <html lang="ru">
@@ -46,9 +49,12 @@ export function createEmailVerificationTemplate(verificationUrl: string, userNam
   `.trim();
 }
 
-export function createResendVerificationTemplate(verificationUrl: string, userName?: string | null): string {
+export function createResendVerificationTemplate(
+  verificationUrl: string,
+  userName?: string | null,
+): string {
   const greeting = userName ? `Здравствуйте, ${userName}!` : 'Здравствуйте!';
-  
+
   return `
 <!DOCTYPE html>
 <html lang="ru">
@@ -96,7 +102,7 @@ export function createResendVerificationTemplate(verificationUrl: string, userNa
 
 export function createPasswordResetTemplate(resetUrl: string, userName?: string | null): string {
   const greeting = userName ? `Здравствуйте, ${userName}!` : 'Здравствуйте!';
-  
+
   return `
 <!DOCTYPE html>
 <html lang="ru">
@@ -141,4 +147,3 @@ export function createPasswordResetTemplate(resetUrl: string, userName?: string 
 </html>
   `.trim();
 }
-

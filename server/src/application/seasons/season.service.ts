@@ -13,7 +13,17 @@ export class SeasonService {
     this.statsService?.clearCacheFor(userId);
   }
 
-  private mapToResponse(row: { catalog_id: number; user_season_id: number | null; number: number; watched: boolean | null; created_at: any; updated_at: any }, seriesId: number) {
+  private mapToResponse(
+    row: {
+      catalog_id: number;
+      user_season_id: number | null;
+      number: number;
+      watched: boolean | null;
+      created_at: any;
+      updated_at: any;
+    },
+    seriesId: number,
+  ) {
     return {
       id: row.user_season_id ?? row.catalog_id,
       series_id: seriesId,
@@ -44,7 +54,10 @@ export class SeasonService {
       err.status = 403;
       throw err;
     }
-    const seasonCatalogId = await this.seriesRepository.getOrCreateSeasonCatalog(seriesCatalogId, number);
+    const seasonCatalogId = await this.seriesRepository.getOrCreateSeasonCatalog(
+      seriesCatalogId,
+      number,
+    );
     const existing = await this.seasonsRepository.findUserSeasonByCatalog(userId, seasonCatalogId);
     if (existing) {
       return {
@@ -84,8 +97,14 @@ export class SeasonService {
     }
     const updated = await this.seasonsRepository.markUserSeason(seasonId, userId, watched);
     if (!updated) return null;
-    const episodeIds = await this.seasonsRepository.listSeasonEpisodeCatalogIds(seasonRef.seasonCatalogId);
-    await Promise.all(episodeIds.map((episodeId) => this.seasonsRepository.syncUserEpisode(userId, episodeId, watched)));
+    const episodeIds = await this.seasonsRepository.listSeasonEpisodeCatalogIds(
+      seasonRef.seasonCatalogId,
+    );
+    await Promise.all(
+      episodeIds.map((episodeId) =>
+        this.seasonsRepository.syncUserEpisode(userId, episodeId, watched),
+      ),
+    );
     this.invalidateStats(userId);
     return {
       id: updated.id,
@@ -93,4 +112,3 @@ export class SeasonService {
     };
   }
 }
-

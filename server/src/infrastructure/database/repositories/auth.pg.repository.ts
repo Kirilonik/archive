@@ -84,7 +84,11 @@ export class AuthPgRepository implements AuthRepository {
     return mapRow(rows[0]);
   }
 
-  async createEmailVerificationToken(userId: number, token: string, expiresAt: Date): Promise<EmailVerificationToken> {
+  async createEmailVerificationToken(
+    userId: number,
+    token: string,
+    expiresAt: Date,
+  ): Promise<EmailVerificationToken> {
     const { rows } = await pool.query(
       `INSERT INTO email_verification_tokens (user_id, token, expires_at)
        VALUES ($1, $2, $3)
@@ -145,7 +149,11 @@ export class AuthPgRepository implements AuthRepository {
     return rowCount ?? 0;
   }
 
-  async createPasswordResetToken(userId: number, token: string, expiresAt: Date): Promise<PasswordResetToken> {
+  async createPasswordResetToken(
+    userId: number,
+    token: string,
+    expiresAt: Date,
+  ): Promise<PasswordResetToken> {
     const { rows } = await pool.query(
       `INSERT INTO password_reset_tokens (user_id, token, expires_at)
        VALUES ($1, $2, $3)
@@ -206,4 +214,3 @@ export class AuthPgRepository implements AuthRepository {
     return rowCount ?? 0;
   }
 }
-

@@ -94,7 +94,10 @@ export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set()
     if (!isOpen) return;
 
     function handleClickOutside(event: MouseEvent) {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
         // Не закрываем, если открыто модальное окно добавления
         if (!selected) {
           setOpen(false);
@@ -118,7 +121,9 @@ export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set()
     if (!selected) return;
 
     try {
-      const body: { title: string; kp_id?: number; my_rating?: number; opinion?: string } = { title: selected.title };
+      const body: { title: string; kp_id?: number; my_rating?: number; opinion?: string } = {
+        title: selected.title,
+      };
       // Передаем kp_id (ID с Кинопоиска) если он есть в выбранном элементе
       if (selected.id) {
         body.kp_id = selected.id;
@@ -136,7 +141,9 @@ export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set()
         toast.error(errorData.error || 'Ошибка при добавлении в библиотеку');
         return;
       }
-      toast.success(selected.isSeries ? 'Сериал добавлен в библиотеку' : 'Фильм добавлен в библиотеку');
+      toast.success(
+        selected.isSeries ? 'Сериал добавлен в библиотеку' : 'Фильм добавлен в библиотеку',
+      );
       setSelected(null);
       setMyRating(0);
       setOpinion('');
@@ -157,9 +164,15 @@ export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set()
   return (
     <>
       {/* Модальное окно поиска */}
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-[20px] z-50 px-4 pt-8" onClick={onClose}>
+      <div
+        className="fixed inset-0 bg-black/30 backdrop-blur-[20px] z-50 px-4 pt-8"
+        onClick={onClose}
+      >
         <div className="mx-auto max-w-6xl">
-          <div className="card card-modal relative overflow-visible" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="card card-modal relative overflow-visible"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-3 text-text font-semibold">Начните вводить название</div>
             <div className="relative" ref={searchContainerRef}>
               <div className="relative">
@@ -181,8 +194,17 @@ export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set()
                     type="button"
                     title="Очистить"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </button>
                 )}
@@ -191,19 +213,33 @@ export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set()
                 <div className="absolute left-0 right-0 mt-2 popover-panel max-h-[70vh] overflow-auto z-[100]">
                   <ul className="divide-y divide-black/10">
                     {items.map((it, idx) => (
-                      <li key={idx} className="flex items-center gap-3 p-3 hover:bg-black/5 transition-colors rounded-lg">
+                      <li
+                        key={idx}
+                        className="flex items-center gap-3 p-3 hover:bg-black/5 transition-colors rounded-lg"
+                      >
                         <div className="w-12 h-18 shrink-0 bg-black/5 rounded-soft overflow-hidden flex items-center justify-center">
                           {it.poster ? (
-                            <img src={it.poster} alt={it.title} className="w-full h-full object-cover" />
+                            <img
+                              src={it.poster}
+                              alt={it.title}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <span className="text-xs text-textMuted">Нет постера</span>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-text truncate font-medium">{it.title}</div>
-                          <div className="text-sm text-textMuted">{it.year ? `Год: ${it.year}` : ''}{it.isSeries ? (it.year ? ' · ' : '') + 'Сериал' : ''}</div>
+                          <div className="text-sm text-textMuted">
+                            {it.year ? `Год: ${it.year}` : ''}
+                            {it.isSeries ? (it.year ? ' · ' : '') + 'Сериал' : ''}
+                          </div>
                         </div>
-                        <button className="btn btn-primary px-3 py-1" onMouseDown={(e) => e.preventDefault()} onClick={() => addToLibrary(it)}>
+                        <button
+                          className="btn btn-primary px-3 py-1"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => addToLibrary(it)}
+                        >
                           Добавить
                         </button>
                       </li>
@@ -218,19 +254,26 @@ export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set()
 
       {/* Модальное окно добавления */}
       {selected && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-[20px] flex items-center justify-center z-[60] px-4" onClick={() => {
-          setSelected(null);
-          setMyRating(0);
-          setOpinion('');
-        }}>
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-[20px] flex items-center justify-center z-[60] px-4"
+          onClick={() => {
+            setSelected(null);
+            setMyRating(0);
+            setOpinion('');
+          }}
+        >
           <div className="card card-modal max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
             <div className="text-xl font-semibold text-text mb-4">Добавить в библиотеку</div>
-            
+
             {/* Информация о фильме/сериале */}
             <div className="flex items-center gap-4 mb-6 p-3 rounded-xl bg-black/5 border border-black/10">
               <div className="w-16 h-24 shrink-0 bg-black/5 rounded-soft overflow-hidden flex items-center justify-center">
                 {selected.poster ? (
-                  <img src={selected.poster} alt={selected.title} className="w-full h-full object-cover" />
+                  <img
+                    src={selected.poster}
+                    alt={selected.title}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <span className="text-xs text-textMuted text-center px-1">Нет постера</span>
                 )}
@@ -250,20 +293,24 @@ export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set()
                 <StarRating value={myRating} onChange={setMyRating} max={10} />
               </div>
               <div>
-                <label className="block text-sm text-textMuted mb-1">Мнение (Markdown, необязательно)</label>
+                <label className="block text-sm text-textMuted mb-1">
+                  Мнение (Markdown, необязательно)
+                </label>
                 <MarkdownEditor value={opinion} onChange={(val) => setOpinion(val)} />
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-              <button className="btn px-3 py-1" onClick={() => {
-                setSelected(null);
-                setMyRating(0);
-                setOpinion('');
-              }}>Отмена</button>
               <button
-                className="btn btn-primary px-3 py-1"
-                onClick={handleAdd}
+                className="btn px-3 py-1"
+                onClick={() => {
+                  setSelected(null);
+                  setMyRating(0);
+                  setOpinion('');
+                }}
               >
+                Отмена
+              </button>
+              <button className="btn btn-primary px-3 py-1" onClick={handleAdd}>
                 Добавить
               </button>
             </div>
@@ -273,4 +320,3 @@ export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set()
     </>
   );
 }
-

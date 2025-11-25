@@ -138,4 +138,3 @@ describe('series routes', () => {
     expect(listSeries).not.toHaveBeenCalled();
   });
 });
-

@@ -34,7 +34,10 @@ const envSchema = z
           const isDefault = val === 'dev-access-secret-change-me' || val === 'postgres';
           return !isDefault && val.length >= 32;
         },
-        { message: 'JWT_SECRET must be at least 32 characters long in production and not use default value' },
+        {
+          message:
+            'JWT_SECRET must be at least 32 characters long in production and not use default value',
+        },
       )
       .optional(),
     JWT_REFRESH_SECRET: z
@@ -49,17 +52,17 @@ const envSchema = z
           const isDefault = val === 'dev-refresh-secret-change-me' || val === 'postgres';
           return !isDefault && val.length >= 32;
         },
-        { message: 'JWT_REFRESH_SECRET must be at least 32 characters long in production and not use default value' },
+        {
+          message:
+            'JWT_REFRESH_SECRET must be at least 32 characters long in production and not use default value',
+        },
       )
       .optional(),
 
     ACCESS_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(15),
     REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
 
-    KINOPOISK_API_URL: z
-      .string()
-      .url()
-      .default('https://kinopoiskapiunofficial.tech'),
+    KINOPOISK_API_URL: z.string().url().default('https://kinopoiskapiunofficial.tech'),
     KINOPOISK_API_KEY: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
     API_BASE_URL: z.string().optional(),
@@ -105,7 +108,6 @@ const allowedOrigins = [appConfig.frontendUrl, ...corsOrigins].filter(
   (origin, index, array) => array.indexOf(origin) === index,
 );
 
-
 // Для миграций используем дефолтные значения, если переменные не установлены
 const isMigration = process.argv[1]?.includes('migrate.js');
 
@@ -119,16 +121,18 @@ export const env = {
   KINOPOISK_API_KEY: parsed.data.KINOPOISK_API_KEY || '',
   GOOGLE_CLIENT_ID: parsed.data.GOOGLE_CLIENT_ID || '',
   // Для миграций используем дефолтные значения JWT секретов
-    JWT_SECRET: parsed.data.JWT_SECRET || (isMigration ? 'migration-temp-secret-key-min-32-chars' : ''),
-    JWT_REFRESH_SECRET: parsed.data.JWT_REFRESH_SECRET || (isMigration ? 'migration-temp-refresh-secret-key-min-32-chars' : ''),
-    // SMTP настройки
-    SMTP_HOST: parsed.data.SMTP_HOST || '',
-    SMTP_PORT: parsed.data.SMTP_PORT || 587,
-    SMTP_SECURE: parsed.data.SMTP_SECURE ?? false,
-    SMTP_USER: parsed.data.SMTP_USER || '',
-    SMTP_PASSWORD: parsed.data.SMTP_PASSWORD || '',
-    SMTP_FROM: parsed.data.SMTP_FROM || 'noreply@example.com',
-    EMAIL_VERIFICATION_TOKEN_TTL_HOURS: parsed.data.EMAIL_VERIFICATION_TOKEN_TTL_HOURS || 24,
-    PASSWORD_RESET_TOKEN_TTL_HOURS: parsed.data.PASSWORD_RESET_TOKEN_TTL_HOURS || 1,
-  };
-
+  JWT_SECRET:
+    parsed.data.JWT_SECRET || (isMigration ? 'migration-temp-secret-key-min-32-chars' : ''),
+  JWT_REFRESH_SECRET:
+    parsed.data.JWT_REFRESH_SECRET ||
+    (isMigration ? 'migration-temp-refresh-secret-key-min-32-chars' : ''),
+  // SMTP настройки
+  SMTP_HOST: parsed.data.SMTP_HOST || '',
+  SMTP_PORT: parsed.data.SMTP_PORT || 587,
+  SMTP_SECURE: parsed.data.SMTP_SECURE ?? false,
+  SMTP_USER: parsed.data.SMTP_USER || '',
+  SMTP_PASSWORD: parsed.data.SMTP_PASSWORD || '',
+  SMTP_FROM: parsed.data.SMTP_FROM || 'noreply@example.com',
+  EMAIL_VERIFICATION_TOKEN_TTL_HOURS: parsed.data.EMAIL_VERIFICATION_TOKEN_TTL_HOURS || 24,
+  PASSWORD_RESET_TOKEN_TTL_HOURS: parsed.data.PASSWORD_RESET_TOKEN_TTL_HOURS || 1,
+};

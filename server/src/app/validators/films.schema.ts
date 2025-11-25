@@ -19,4 +19,3 @@ export const filmUpdateSchema = filmCreateSchema.partial();
 
 export type FilmCreateDto = z.infer<typeof filmCreateSchema>;
 export type FilmUpdateDto = z.infer<typeof filmUpdateSchema>;
-

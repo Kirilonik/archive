@@ -41,7 +41,7 @@ export function Home() {
   const loadingRef = useRef(false);
   const filmsStateRef = useRef(filmsState);
   const seriesStateRef = useRef(seriesState);
-  
+
   // Собираем все уникальные жанры из библиотеки
   const availableGenres = useMemo(() => {
     const genresSet = new Set<string>();
@@ -74,9 +74,10 @@ export function Home() {
   }, [items, selectedGenres]);
 
   const visibleItems = useMemo(() => {
-    const count = visibleCount === 0 && filteredItems.length > 0 
-      ? Math.min(LOAD_STEP, filteredItems.length) 
-      : visibleCount;
+    const count =
+      visibleCount === 0 && filteredItems.length > 0
+        ? Math.min(LOAD_STEP, filteredItems.length)
+        : visibleCount;
     return filteredItems.slice(0, count);
   }, [filteredItems, visibleCount]);
   const hasMore = !filmsState.done || !seriesState.done;
@@ -337,7 +338,13 @@ export function Home() {
         ))}
       </div>
       <div ref={sentinelRef} className="py-6 text-center text-textMuted">
-        {isLoading ? 'Загружаем ещё...' : hasMore ? 'Показать ещё' : filteredItems.length === 0 ? 'Ничего не найдено' : 'Это всё'}
+        {isLoading
+          ? 'Загружаем ещё...'
+          : hasMore
+            ? 'Показать ещё'
+            : filteredItems.length === 0
+              ? 'Ничего не найдено'
+              : 'Это всё'}
       </div>
     </main>
   );

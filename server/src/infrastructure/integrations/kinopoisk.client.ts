@@ -25,12 +25,13 @@ const API_KEY = env.KINOPOISK_API_KEY;
 function getHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    Accept: 'application/json',
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
     'Accept-Encoding': 'gzip, deflate, br',
-    'Referer': 'https://www.kinopoisk.ru/',
-    'Origin': 'https://www.kinopoisk.ru',
+    Referer: 'https://www.kinopoisk.ru/',
+    Origin: 'https://www.kinopoisk.ru',
   };
   if (API_KEY) {
     headers['X-API-KEY'] = API_KEY;
@@ -40,7 +41,13 @@ function getHeaders(): Record<string, string> {
   return headers;
 }
 
-type StaffItem = { staffId?: number; nameRu?: string; nameEn?: string; professionText?: string; professionKey?: string };
+type StaffItem = {
+  staffId?: number;
+  nameRu?: string;
+  nameEn?: string;
+  professionText?: string;
+  professionKey?: string;
+};
 type BoxOfficeItem = { type?: string; amount?: number; currencyCode?: string; symbol?: string };
 
 export class KinopoiskHttpClient implements KinopoiskClient {
@@ -69,56 +76,65 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         headersForLog['X-API-KEY'] = headersForLog['X-API-KEY'].substring(0, 8) + '...';
       }
       logger.debug({ url, headers: headersForLog }, '[kinopoisk] Making request');
-      
+
       const resp = await fetch(url, {
         headers,
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
 
-        if (!resp.ok) {
-          const body = await resp.text().catch(() => '');
-          logger.error(
-            { 
-              status: resp.status, 
-              statusText: resp.statusText, 
-              url, 
-              body: body.substring(0, 500), // Ограничиваем длину для логов
-              headers: Object.fromEntries(resp.headers.entries()),
-            },
-            '[kinopoisk] request failed',
-          );
-          return null;
-        }
-        
-        const responseText = await resp.text();
-        if (!responseText || responseText.trim() === '') {
-          logger.warn({ url, status: resp.status }, '[kinopoisk] Empty response body');
-          return null;
-        }
-        
-        try {
-          return JSON.parse(responseText) as T;
-        } catch (parseError) {
-          logger.error(
-            { 
-              url, 
-              status: resp.status, 
-              body: responseText.substring(0, 500),
-              parseError: parseError instanceof Error ? parseError.message : String(parseError),
-            },
-            '[kinopoisk] Failed to parse JSON response',
-          );
-          return null;
-        }
+      if (!resp.ok) {
+        const body = await resp.text().catch(() => '');
+        logger.error(
+          {
+            status: resp.status,
+            statusText: resp.statusText,
+            url,
+            body: body.substring(0, 500), // Ограничиваем длину для логов
+            headers: Object.fromEntries(resp.headers.entries()),
+          },
+          '[kinopoisk] request failed',
+        );
+        return null;
+      }
+
+      const responseText = await resp.text();
+      if (!responseText || responseText.trim() === '') {
+        logger.warn({ url, status: resp.status }, '[kinopoisk] Empty response body');
+        return null;
+      }
+
+      try {
+        return JSON.parse(responseText) as T;
+      } catch (parseError) {
+        logger.error(
+          {
+            url,
+            status: resp.status,
+            body: responseText.substring(0, 500),
+            parseError: parseError instanceof Error ? parseError.message : String(parseError),
+          },
+          '[kinopoisk] Failed to parse JSON response',
+        );
+        return null;
+      }
     } catch (error: any) {
       clearTimeout(timeoutId);
-      
+
       // Если это таймаут или ошибка соединения, и есть попытки - повторяем
-      if (retries > 0 && (error?.name === 'AbortError' || error?.code === 'ETIMEDOUT' || error?.code === 'ECONNRESET' || error?.message?.includes('timeout'))) {
-        logger.warn({ url, retriesLeft: retries, error: error.message }, 'Kinopoisk request timeout, retrying');
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Ждем 1 секунду перед повтором
+      if (
+        retries > 0 &&
+        (error?.name === 'AbortError' ||
+          error?.code === 'ETIMEDOUT' ||
+          error?.code === 'ECONNRESET' ||
+          error?.message?.includes('timeout'))
+      ) {
+        logger.warn(
+          { url, retriesLeft: retries, error: error.message },
+          'Kinopoisk request timeout, retrying',
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Ждем 1 секунду перед повтором
         return this.fetchJson<T>(url, retries - 1);
       }
 
@@ -129,11 +145,16 @@ export class KinopoiskHttpClient implements KinopoiskClient {
 
   private mapStaff(staff: StaffItem[]): { director: string | null; actors: string[] | null } {
     const directors = staff
-      .filter((s) => s.professionKey === 'DIRECTOR' || s.professionText?.toLowerCase().includes('режиссер'))
+      .filter(
+        (s) =>
+          s.professionKey === 'DIRECTOR' || s.professionText?.toLowerCase().includes('режиссер'),
+      )
       .map((s) => s.nameRu || s.nameEn)
       .filter(Boolean) as string[];
     const actors = staff
-      .filter((s) => s.professionKey === 'ACTOR' || s.professionText?.toLowerCase().includes('актер'))
+      .filter(
+        (s) => s.professionKey === 'ACTOR' || s.professionText?.toLowerCase().includes('актер'),
+      )
       .map((s) => s.nameRu || s.nameEn)
       .filter(Boolean) as string[];
     return {
@@ -142,7 +163,9 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     };
   }
 
-  private async fetchStaff(kpId: number): Promise<{ director: string | null; actors: string[] | null }> {
+  private async fetchStaff(
+    kpId: number,
+  ): Promise<{ director: string | null; actors: string[] | null }> {
     try {
       const staffUrl = `${API_URL}/api/v1/staff?filmId=${kpId}`;
       const staff = await this.fetchJson<StaffItem[]>(staffUrl);
@@ -156,7 +179,13 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     }
   }
 
-  private async fetchBudgetInfo(kpId: number): Promise<{ amount: number | null; currencyCode: string | null; currencySymbol: string | null }> {
+  private async fetchBudgetInfo(
+    kpId: number,
+  ): Promise<{
+    amount: number | null;
+    currencyCode: string | null;
+    currencySymbol: string | null;
+  }> {
     try {
       const url = `${API_URL}/api/v2.2/films/${kpId}/box_office`;
       const data = await this.fetchJson<{ items?: BoxOfficeItem[] }>(url);
@@ -200,7 +229,8 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         detail.serialEpisodesCount ??
         detail.totalEpisodes ??
         null;
-      const seasonsCount = detail.seasons?.length ?? detail.serialSeasonsNumber ?? detail.totalSeasons ?? null;
+      const seasonsCount =
+        detail.seasons?.length ?? detail.serialSeasonsNumber ?? detail.totalSeasons ?? null;
       return {
         kp_id: detail.kinopoiskId ?? kpId,
         kp_poster: detail.posterUrl || detail.posterUrlPreview || null,
@@ -208,7 +238,8 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         kp_logo: detail.logoUrl ?? null,
         kp_description: detail.description ?? null,
         kp_year: detail.year ?? detail.startYear ?? null,
-        kp_isSeries: detail.type === 'TV_SERIES' || detail.type === 'MINI_SERIES' || detail.serial === true,
+        kp_isSeries:
+          detail.type === 'TV_SERIES' || detail.type === 'MINI_SERIES' || detail.serial === true,
         kp_episodesCount: episodesCount ?? null,
         kp_seasonsCount: seasonsCount ?? null,
         kp_genres: genres.length ? genres : null,
@@ -236,7 +267,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       urlObj.searchParams.set('keyword', title);
       urlObj.searchParams.set('page', '1');
       const url = urlObj.toString();
-      
+
       logger.debug({ title, encodedUrl: url }, '[kinopoisk] searchBestByTitle request');
       const data = await this.fetchJson<any>(url);
       const film = data?.films?.[0];
@@ -255,7 +286,9 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       }
       const genres = (film.genres || []).map((g: any) => g.genre).filter(Boolean) as string[];
       const posterId = this.extractKpIdFromPosterUrl(film.posterUrl || film.posterUrlPreview);
-      const budgetInfo = filmKpId ? await this.fetchBudgetInfo(filmKpId) : { amount: null, currencyCode: null, currencySymbol: null };
+      const budgetInfo = filmKpId
+        ? await this.fetchBudgetInfo(filmKpId)
+        : { amount: null, currencyCode: null, currencySymbol: null };
 
       return {
         kp_id: film.kinopoiskId ?? posterId,
@@ -264,8 +297,10 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         kp_logo: film.logoUrl ?? null,
         kp_description: film.description ?? null,
         kp_year: film.year ?? null,
-        kp_isSeries: film.type === 'TV_SERIES' || film.type === 'MINI_SERIES' || film.serial === true,
-        kp_episodesCount: film.episodesLength ?? film.serialEpisodesNumber ?? film.serialEpisodesCount ?? null,
+        kp_isSeries:
+          film.type === 'TV_SERIES' || film.type === 'MINI_SERIES' || film.serial === true,
+        kp_episodesCount:
+          film.episodesLength ?? film.serialEpisodesNumber ?? film.serialEpisodesCount ?? null,
         kp_seasonsCount: film.seasonsCount ?? film.serialSeasonsNumber ?? null,
         kp_genres: genres.length ? genres : null,
         kp_director: null,
@@ -319,7 +354,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       urlObj.searchParams.set('keyword', query);
       urlObj.searchParams.set('page', '1');
       const url = urlObj.toString();
-      
+
       logger.debug({ query, encodedUrl: url }, '[kinopoisk] suggest request');
       const data = await this.fetchJson<any>(url);
       if (!data) {
@@ -367,4 +402,3 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     }
   }
 }
-

@@ -1,5 +1,9 @@
 import { pool } from '../../../config/db.js';
-import type { FilmsRepository, FilmCatalogCreateInput, UserFilmRow } from '../../../domain/films/film.types.js';
+import type {
+  FilmsRepository,
+  FilmCatalogCreateInput,
+  UserFilmRow,
+} from '../../../domain/films/film.types.js';
 
 export class FilmsPgRepository implements FilmsRepository {
   async listUserFilms(params: {
@@ -45,7 +49,7 @@ export class FilmsPgRepository implements FilmsRepository {
         values,
       ),
       pool.query<UserFilmRow>(
-      `SELECT 
+        `SELECT 
         uf.id as user_film_id,
         uf.user_id,
         uf.film_catalog_id,
@@ -130,7 +134,10 @@ export class FilmsPgRepository implements FilmsRepository {
   }
 
   async findCatalogIdByKpId(kpId: number): Promise<number | null> {
-    const { rows } = await pool.query<{ id: number }>('SELECT id FROM films_catalog WHERE kp_id = $1', [kpId]);
+    const { rows } = await pool.query<{ id: number }>(
+      'SELECT id FROM films_catalog WHERE kp_id = $1',
+      [kpId],
+    );
     return rows[0]?.id ?? null;
   }
 
@@ -177,7 +184,11 @@ export class FilmsPgRepository implements FilmsRepository {
     return rows[0].id;
   }
 
-  async findUserFilmDuplicateByTitleYear(title: string, year: number | null, userId: number): Promise<UserFilmRow | null> {
+  async findUserFilmDuplicateByTitleYear(
+    title: string,
+    year: number | null,
+    userId: number,
+  ): Promise<UserFilmRow | null> {
     const params: unknown[] = [userId, title];
     let sql = `
       SELECT 
@@ -222,7 +233,13 @@ export class FilmsPgRepository implements FilmsRepository {
     return rows[0] ?? null;
   }
 
-  async createUserFilm(params: { userId: number; filmCatalogId: number; myRating?: number | null; opinion?: string | null; status?: string | null }): Promise<number> {
+  async createUserFilm(params: {
+    userId: number;
+    filmCatalogId: number;
+    myRating?: number | null;
+    opinion?: string | null;
+    status?: string | null;
+  }): Promise<number> {
     const { rows } = await pool.query<{ id: number }>(
       `INSERT INTO user_films (user_id, film_catalog_id, my_rating, opinion, status)
        VALUES ($1, $2, $3, $4, $5)
@@ -238,18 +255,16 @@ export class FilmsPgRepository implements FilmsRepository {
     return rows[0].id;
   }
 
-  async updateUserFilm(userFilmId: number, userId: number, data: { myRating?: number | null; opinion?: string | null; status?: string | null }): Promise<void> {
+  async updateUserFilm(
+    userFilmId: number,
+    userId: number,
+    data: { myRating?: number | null; opinion?: string | null; status?: string | null },
+  ): Promise<void> {
     await pool.query(
       `UPDATE user_films 
        SET my_rating = $1, opinion = $2, status = $3, updated_at = NOW()
        WHERE id = $4 AND user_id = $5`,
-      [
-        data.myRating ?? null,
-        data.opinion ?? null,
-        data.status ?? null,
-        userFilmId,
-        userId,
-      ],
+      [data.myRating ?? null, data.opinion ?? null, data.status ?? null, userFilmId, userId],
     );
   }
 
@@ -257,4 +272,3 @@ export class FilmsPgRepository implements FilmsRepository {
     await pool.query('DELETE FROM user_films WHERE id = $1 AND user_id = $2', [userFilmId, userId]);
   }
 }
-

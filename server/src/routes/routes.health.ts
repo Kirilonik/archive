@@ -5,13 +5,13 @@ import { logger } from '../shared/logger.js';
 export const router = Router();
 
 router.get('/', async (req, res) => {
-  res.json({ 
-    ok: true, 
+  res.json({
+    ok: true,
     status: 'healthy',
     timestamp: new Date().toISOString(),
     database: 'checking',
   });
-  
+
   pool.query('SELECT 1').catch((err) => {
     logger.warn({ err }, 'Database health check failed');
   });
@@ -32,4 +32,3 @@ router.get('/live', (req, res) => {
   // Liveness probe - просто проверяет что процесс жив
   res.json({ alive: true });
 });
-

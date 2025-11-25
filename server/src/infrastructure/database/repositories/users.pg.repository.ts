@@ -1,5 +1,9 @@
 import { pool } from '../../../config/db.js';
-import type { UsersRepository, UserProfile, UserProfileUpdate } from '../../../domain/users/user.types.js';
+import type {
+  UsersRepository,
+  UserProfile,
+  UserProfileUpdate,
+} from '../../../domain/users/user.types.js';
 
 function mapProfile(row: any): UserProfile {
   return {
@@ -12,10 +16,9 @@ function mapProfile(row: any): UserProfile {
 
 export class UsersPgRepository implements UsersRepository {
   async findById(userId: number): Promise<UserProfile | null> {
-    const { rows } = await pool.query(
-      'SELECT id, email, name, avatar_url FROM users WHERE id=$1',
-      [userId],
-    );
+    const { rows } = await pool.query('SELECT id, email, name, avatar_url FROM users WHERE id=$1', [
+      userId,
+    ]);
     if (!rows[0]) return null;
     return mapProfile(rows[0]);
   }
@@ -35,4 +38,3 @@ export class UsersPgRepository implements UsersRepository {
     await pool.query('DELETE FROM users WHERE id=$1', [userId]);
   }
 }
-

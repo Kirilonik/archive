@@ -30,12 +30,21 @@ export function originValidationMiddleware(req: Request, res: Response, next: Ne
       return;
     }
     // Логируем для отладки
-    logger.warn({
-      headerOrigin,
-      allowedOrigins: Array.from(allowedOrigins),
-      referer: req.headers.referer,
-    }, 'Origin validation failed');
-    res.status(403).json({ error: 'Origin not allowed', received: headerOrigin, allowed: Array.from(allowedOrigins) });
+    logger.warn(
+      {
+        headerOrigin,
+        allowedOrigins: Array.from(allowedOrigins),
+        referer: req.headers.referer,
+      },
+      'Origin validation failed',
+    );
+    res
+      .status(403)
+      .json({
+        error: 'Origin not allowed',
+        received: headerOrigin,
+        allowed: Array.from(allowedOrigins),
+      });
     return;
   }
 
@@ -46,22 +55,32 @@ export function originValidationMiddleware(req: Request, res: Response, next: Ne
       return;
     }
     // Логируем для отладки
-    logger.warn({
-      refererOrigin,
-      allowedOrigins: Array.from(allowedOrigins),
-      origin: req.headers.origin,
-    }, 'Origin validation failed (referer)');
-    res.status(403).json({ error: 'Origin not allowed', received: refererOrigin, allowed: Array.from(allowedOrigins) });
+    logger.warn(
+      {
+        refererOrigin,
+        allowedOrigins: Array.from(allowedOrigins),
+        origin: req.headers.origin,
+      },
+      'Origin validation failed (referer)',
+    );
+    res
+      .status(403)
+      .json({
+        error: 'Origin not allowed',
+        received: refererOrigin,
+        allowed: Array.from(allowedOrigins),
+      });
     return;
   }
 
   // Если нет ни origin, ни referer для небезопасного метода - отклоняем
-  logger.warn({
-    origin: req.headers.origin,
-    referer: req.headers.referer,
-    allowedOrigins: Array.from(allowedOrigins),
-  }, 'Origin validation failed (no origin/referer)');
+  logger.warn(
+    {
+      origin: req.headers.origin,
+      referer: req.headers.referer,
+      allowedOrigins: Array.from(allowedOrigins),
+    },
+    'Origin validation failed (no origin/referer)',
+  );
   res.status(403).json({ error: 'Origin validation required for this request' });
 }
-
-

@@ -20,7 +20,12 @@ function getClientIp(req: Request): string {
   return req.ip || 'unknown';
 }
 
-function toApiProfile(profile: { id: number; email: string; name: string | null; avatarUrl: string | null }) {
+function toApiProfile(profile: {
+  id: number;
+  email: string;
+  name: string | null;
+  avatarUrl: string | null;
+}) {
   return {
     id: profile.id,
     email: profile.email,
@@ -126,4 +131,3 @@ export class UsersController {
     }
   };
 }
-

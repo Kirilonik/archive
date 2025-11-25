@@ -25,11 +25,8 @@ export const errorMiddleware: ErrorRequestHandler = (err, req, res, _next) => {
   }
 
   // В продакшене не раскрываем детали внутренних ошибок
-  const errorMessage = status >= 500 && env.NODE_ENV === 'production'
-    ? 'Internal Server Error'
-    : message;
+  const errorMessage =
+    status >= 500 && env.NODE_ENV === 'production' ? 'Internal Server Error' : message;
 
   res.status(status).json({ error: errorMessage });
 };
-
-

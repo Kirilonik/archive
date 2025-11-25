@@ -132,7 +132,10 @@ function createTimeoutSignal(timeoutMs: number): AbortSignal {
 }
 
 // Функция для объединения сигналов с правильной очисткой
-function combineSignals(signal1: AbortSignal, signal2: AbortSignal): { signal: AbortSignal; cleanup: () => void } {
+function combineSignals(
+  signal1: AbortSignal,
+  signal2: AbortSignal,
+): { signal: AbortSignal; cleanup: () => void } {
   const combined = new AbortController();
   const cleanup: (() => void)[] = [];
 
@@ -147,18 +150,18 @@ function combineSignals(signal1: AbortSignal, signal2: AbortSignal): { signal: A
     signal2.removeEventListener('abort', abort2);
   });
 
-  return { signal: combined.signal, cleanup: () => cleanup.forEach(fn => fn()) };
+  return { signal: combined.signal, cleanup: () => cleanup.forEach((fn) => fn()) };
 }
 
 export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const resolvedInput = resolveRequestInput(input);
   const method = init?.method ? init.method.toUpperCase() : 'GET';
   const headers = await attachCsrfHeader(createHeaders(init), method);
-  
+
   // Объединяем сигналы: пользовательский и timeout
   const timeoutSignal = createTimeoutSignal(REQUEST_TIMEOUT);
   const userSignal = init?.signal;
-  
+
   let combinedSignal: AbortSignal;
   let cleanup: (() => void) | null = null;
 
@@ -182,17 +185,19 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Pr
     let response = await doFetch();
 
     // Не пытаемся обновлять токен для auth эндпоинтов, чтобы избежать бесконечных циклов
-    const urlString = typeof resolvedInput === 'string' 
-      ? resolvedInput 
-      : resolvedInput instanceof URL 
-        ? resolvedInput.pathname 
-        : '';
-    const isAuthEndpoint = urlString.includes('/api/auth/me') || 
-                          urlString.includes('/api/auth/refresh') ||
-                          urlString.includes('/api/auth/logout') ||
-                          urlString.includes('/api/auth/login') ||
-                          urlString.includes('/api/auth/register') ||
-                          urlString.includes('/api/auth/google');
+    const urlString =
+      typeof resolvedInput === 'string'
+        ? resolvedInput
+        : resolvedInput instanceof URL
+          ? resolvedInput.pathname
+          : '';
+    const isAuthEndpoint =
+      urlString.includes('/api/auth/me') ||
+      urlString.includes('/api/auth/refresh') ||
+      urlString.includes('/api/auth/logout') ||
+      urlString.includes('/api/auth/login') ||
+      urlString.includes('/api/auth/register') ||
+      urlString.includes('/api/auth/google');
 
     if (response.status === 401 && !isAuthEndpoint && !isRefreshing) {
       // Используем существующий промис, если refresh уже выполняется
@@ -244,4 +249,3 @@ export async function apiJson<T>(input: RequestInfo | URL, init?: RequestInit): 
   }
   return response.json() as Promise<T>;
 }
-

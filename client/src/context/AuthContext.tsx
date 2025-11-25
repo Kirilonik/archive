@@ -86,29 +86,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     toast.success('Вход выполнен успешно!');
   }, []);
 
-  const loginWithGoogle = useCallback(async (credential: string) => {
-    const resp = await apiFetch('/api/auth/google', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credential }),
-      credentials: 'include', // Важно: отправляем cookies с запросом
-    });
-    if (!resp.ok) {
-      const data = await readJsonSafely(resp);
-      let message = data?.error ?? 'Не удалось войти через Google';
-      if (resp.status === 500) {
-        message = 'Ошибка сервера. Проверьте, что сервер запущен и доступен.';
-      } else if (resp.status >= 500) {
-        message = 'Временная ошибка сервера. Попробуйте позже.';
+  const loginWithGoogle = useCallback(
+    async (credential: string) => {
+      const resp = await apiFetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential }),
+        credentials: 'include', // Важно: отправляем cookies с запросом
+      });
+      if (!resp.ok) {
+        const data = await readJsonSafely(resp);
+        let message = data?.error ?? 'Не удалось войти через Google';
+        if (resp.status === 500) {
+          message = 'Ошибка сервера. Проверьте, что сервер запущен и доступен.';
+        } else if (resp.status >= 500) {
+          message = 'Временная ошибка сервера. Попробуйте позже.';
+        }
+        throw new Error(message);
       }
-      throw new Error(message);
-    }
-    const data = await resp.json();
-    setUser(data.user ?? null);
-    // Вызываем refresh для проверки, что cookies установлены и пользователь авторизован
-    await refresh();
-    toast.success('Вход через Google выполнен!');
-  }, [refresh]);
+      const data = await resp.json();
+      setUser(data.user ?? null);
+      // Вызываем refresh для проверки, что cookies установлены и пользователь авторизован
+      await refresh();
+      toast.success('Вход через Google выполнен!');
+    },
+    [refresh],
+  );
 
   const register = useCallback(async ({ name, email, password }: RegisterPayload) => {
     const resp = await apiFetch('/api/auth/register', {
@@ -126,7 +129,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await resp.json();
     // Не устанавливаем пользователя, так как требуется подтверждение email
     // setUser не вызывается - пользователь должен подтвердить email перед входом
-    toast.success(data.message || 'Регистрация успешна! Проверьте вашу почту для подтверждения email.');
+    toast.success(
+      data.message || 'Регистрация успешна! Проверьте вашу почту для подтверждения email.',
+    );
   }, []);
 
   const logout = useCallback(async () => {
@@ -157,4 +162,3 @@ export function useAuth() {
   }
   return context;
 }
-

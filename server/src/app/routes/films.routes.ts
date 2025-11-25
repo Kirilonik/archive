@@ -17,4 +17,3 @@ export function createFilmsRouter(controller: FilmsController) {
 }
 
 export const filmsRouter = createFilmsRouter(container.films.controller);
-

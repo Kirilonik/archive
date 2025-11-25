@@ -63,4 +63,3 @@ export interface KinopoiskClient {
   extractKpIdFromPosterUrl(posterUrl: string | null | undefined): number | null;
   fetchFilmImages(kpId: number, type: string, page?: number): Promise<KpImageResponse | null>;
 }
-

@@ -19,4 +19,3 @@ export interface UsersRepository {
 export interface AvatarProcessor {
   process(dataUrl: string): Promise<string>;
 }
-

@@ -76,7 +76,10 @@ export function Profile() {
     try {
       setSaving(true);
       if (!user?.id) return;
-      const body: { name: string; avatar_url: string | null } = { name, avatar_url: avatarUrl ?? null };
+      const body: { name: string; avatar_url: string | null } = {
+        name,
+        avatar_url: avatarUrl ?? null,
+      };
       const resp = await apiFetch(`/api/users/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -145,7 +148,6 @@ export function Profile() {
     reader.readAsDataURL(file);
   }
 
-
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
       <h1 className="text-2xl font-semibold mb-4 text-text">Профиль</h1>
@@ -162,7 +164,11 @@ export function Profile() {
             <div className="flex items-center gap-4">
               <div className="relative size-20 aspect-square rounded-full overflow-hidden bg-white/18 border border-white/25 backdrop-blur-[20px] backdrop-saturate-[180%] flex items-center justify-center group cursor-pointer shrink-0 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)]">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt={name || 'avatar'} className="w-full h-full object-cover" />
+                  <img
+                    src={avatarUrl}
+                    alt={name || 'avatar'}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <span className="text-textMuted text-xs">Нет аватара</span>
                 )}
@@ -176,13 +182,24 @@ export function Profile() {
                     Изменить
                   </button>
                 </div>
-                <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <label className="block text-sm text-textMuted mb-1">Имя</label>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2">
-                  <input className="input sm:flex-1" value={name} onChange={(e) => setName(e.target.value)} />
-                  {(name !== (data.profile?.name ?? '') || avatarUrl !== (data.profile?.avatar_url ?? null)) && (
+                  <input
+                    className="input sm:flex-1"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                  {(name !== (data.profile?.name ?? '') ||
+                    avatarUrl !== (data.profile?.avatar_url ?? null)) && (
                     <div className="flex gap-2 sm:justify-end">
                       <button
                         className="btn px-3 py-1"
@@ -193,7 +210,11 @@ export function Profile() {
                       >
                         Отменить
                       </button>
-                      <button className="btn btn-primary px-3 py-1" disabled={saving} onClick={saveProfile}>
+                      <button
+                        className="btn btn-primary px-3 py-1"
+                        disabled={saving}
+                        onClick={saveProfile}
+                      >
                         Сохранить
                       </button>
                     </div>
@@ -220,11 +241,15 @@ export function Profile() {
                     <div className="text-sm text-textMuted mt-1">Фильмы</div>
                   </div>
                   <div className="card p-4 text-center">
-                    <div className="text-3xl font-semibold text-text">{data.stats?.filmsWithRating ?? 0}</div>
+                    <div className="text-3xl font-semibold text-text">
+                      {data.stats?.filmsWithRating ?? 0}
+                    </div>
                     <div className="text-sm text-textMuted mt-1">С оценкой</div>
                   </div>
                   <div className="card p-4 text-center">
-                    <div className="text-3xl font-semibold text-text">{data.stats?.filmsWithOpinion ?? 0}</div>
+                    <div className="text-3xl font-semibold text-text">
+                      {data.stats?.filmsWithOpinion ?? 0}
+                    </div>
                     <div className="text-sm text-textMuted mt-1">С мнением</div>
                   </div>
                   <div className="card p-4 text-center">
@@ -240,23 +265,33 @@ export function Profile() {
                 <div className="text-lg font-semibold text-text">Сериалы</div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   <div className="card p-4 text-center">
-                    <div className="text-3xl font-semibold text-text">{data.stats?.series ?? 0}</div>
+                    <div className="text-3xl font-semibold text-text">
+                      {data.stats?.series ?? 0}
+                    </div>
                     <div className="text-sm text-textMuted mt-1">Сериалы</div>
                   </div>
                   <div className="card p-4 text-center">
-                    <div className="text-3xl font-semibold text-text">{data.stats?.seriesWithRating ?? 0}</div>
+                    <div className="text-3xl font-semibold text-text">
+                      {data.stats?.seriesWithRating ?? 0}
+                    </div>
                     <div className="text-sm text-textMuted mt-1">С оценкой</div>
                   </div>
                   <div className="card p-4 text-center">
-                    <div className="text-3xl font-semibold text-text">{data.stats?.seriesWithOpinion ?? 0}</div>
+                    <div className="text-3xl font-semibold text-text">
+                      {data.stats?.seriesWithOpinion ?? 0}
+                    </div>
                     <div className="text-sm text-textMuted mt-1">С мнением</div>
                   </div>
                   <div className="card p-4 text-center">
-                    <div className="text-3xl font-semibold text-text">{data.stats?.totalSeasons ?? 0}</div>
+                    <div className="text-3xl font-semibold text-text">
+                      {data.stats?.totalSeasons ?? 0}
+                    </div>
                     <div className="text-sm text-textMuted mt-1">Сезоны</div>
                   </div>
                   <div className="card p-4 text-center">
-                    <div className="text-3xl font-semibold text-text">{data.stats?.totalEpisodes ?? 0}</div>
+                    <div className="text-3xl font-semibold text-text">
+                      {data.stats?.totalEpisodes ?? 0}
+                    </div>
                     <div className="text-sm text-textMuted mt-1">Эпизоды</div>
                   </div>
                   <div className="card p-4 text-center">
@@ -330,5 +365,3 @@ function StatsSkeleton() {
     </div>
   );
 }
-
-

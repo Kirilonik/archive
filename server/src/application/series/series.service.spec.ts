@@ -70,7 +70,14 @@ describe('SeriesService', () => {
     const kinopoisk = createKinopoiskMock();
     const service = new SeriesService(repository, kinopoisk);
 
-    const result = await service.listSeries({ userId: 1, query: undefined, status: undefined, ratingGte: undefined, limit: 10, offset: 0 });
+    const result = await service.listSeries({
+      userId: 1,
+      query: undefined,
+      status: undefined,
+      ratingGte: undefined,
+      limit: 10,
+      offset: 0,
+    });
     expect(result.items).toHaveLength(1);
     expect(result.items[0].title).toBe('Example Series');
     expect(result.total).toBe(1);
@@ -99,4 +106,3 @@ describe('SeriesService', () => {
     expect(repository.getOrCreateSeasonCatalog).toHaveBeenCalledWith(expect.any(Number), 1);
   });
 });
-

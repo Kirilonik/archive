@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   });
 
   const isProduction = mode === 'production';
-  
+
   // Для dev режима: если API_BASE_URL не установлен, используем адрес сервера для proxy
   // В Docker используем http://server:4000 (внутренний адрес Docker сети)
   // Локально можно использовать http://localhost:4000

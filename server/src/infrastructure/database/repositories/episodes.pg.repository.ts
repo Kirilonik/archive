@@ -43,7 +43,10 @@ export class EpisodesPgRepository implements EpisodesRepository {
     }));
   }
 
-  async findUserEpisodeByCatalog(userId: number, episodeCatalogId: number): Promise<{ id: number; watched: boolean } | null> {
+  async findUserEpisodeByCatalog(
+    userId: number,
+    episodeCatalogId: number,
+  ): Promise<{ id: number; watched: boolean } | null> {
     const { rows } = await pool.query<{ id: number; watched: boolean }>(
       'SELECT id, watched FROM user_episodes WHERE user_id = $1 AND episode_catalog_id = $2',
       [userId, episodeCatalogId],
@@ -51,7 +54,10 @@ export class EpisodesPgRepository implements EpisodesRepository {
     return rows[0] ?? null;
   }
 
-  async createUserEpisode(userId: number, episodeCatalogId: number): Promise<{ id: number; watched: boolean }> {
+  async createUserEpisode(
+    userId: number,
+    episodeCatalogId: number,
+  ): Promise<{ id: number; watched: boolean }> {
     const { rows } = await pool.query<{ id: number; watched: boolean }>(
       'INSERT INTO user_episodes (user_id, episode_catalog_id, watched) VALUES ($1, $2, false) RETURNING id, watched',
       [userId, episodeCatalogId],
@@ -59,7 +65,10 @@ export class EpisodesPgRepository implements EpisodesRepository {
     return rows[0];
   }
 
-  async updateEpisodeCatalog(episodeCatalogId: number, data: { title?: string | null; releaseDate?: string | null; duration?: number | null }): Promise<void> {
+  async updateEpisodeCatalog(
+    episodeCatalogId: number,
+    data: { title?: string | null; releaseDate?: string | null; duration?: number | null },
+  ): Promise<void> {
     if (data.title === undefined && data.releaseDate === undefined && data.duration === undefined) {
       return;
     }
@@ -104,10 +113,17 @@ export class EpisodesPgRepository implements EpisodesRepository {
   }
 
   async deleteUserEpisode(userEpisodeId: number, userId: number): Promise<void> {
-    await pool.query('DELETE FROM user_episodes WHERE id = $1 AND user_id = $2', [userEpisodeId, userId]);
+    await pool.query('DELETE FROM user_episodes WHERE id = $1 AND user_id = $2', [
+      userEpisodeId,
+      userId,
+    ]);
   }
 
-  async markUserEpisode(userEpisodeId: number, userId: number, watched: boolean): Promise<{ id: number; watched: boolean } | null> {
+  async markUserEpisode(
+    userEpisodeId: number,
+    userId: number,
+    watched: boolean,
+  ): Promise<{ id: number; watched: boolean } | null> {
     const { rows } = await pool.query<{ id: number; watched: boolean }>(
       'UPDATE user_episodes SET watched = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3 RETURNING id, watched',
       [watched, userEpisodeId, userId],
@@ -115,4 +131,3 @@ export class EpisodesPgRepository implements EpisodesRepository {
     return rows[0] ?? null;
   }
 }
-

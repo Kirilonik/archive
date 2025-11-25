@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: ${PGPASSWORD:-postgres}
       POSTGRES_DB: ${PGDATABASE:-media_archive}
     ports:
-      - "5433:5432"
+      - '5433:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./server/src/db/migrations:/docker-entrypoint-initdb.d:ro
@@ -38,7 +38,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - "4000:4000"
+      - '4000:4000'
 
   client:
     build:
@@ -48,7 +48,7 @@ services:
       API_BASE_URL: http://server:4000
       FRONTEND_URL: http://localhost:5173
     ports:
-      - "5173:5173"
+      - '5173:5173'
     depends_on:
       - server
     links:
@@ -56,5 +56,3 @@ services:
 
 volumes:
   pgdata:
-
-

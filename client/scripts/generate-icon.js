@@ -18,19 +18,18 @@ const pngPath = join(publicDir, 'favicon.png');
 
 try {
   const svgBuffer = readFileSync(svgPath);
-  
+
   await sharp(svgBuffer)
     .resize(512, 512, {
       fit: 'contain',
-      background: { r: 241, g: 245, b: 249, alpha: 1 } // #F1F5F9
+      background: { r: 241, g: 245, b: 249, alpha: 1 }, // #F1F5F9
     })
     .png()
     .toFile(pngPath);
-  
+
   console.log('✅ PNG иконка успешно создана: favicon.png (512x512)');
 } catch (error) {
   console.error('❌ Ошибка при создании PNG иконки:', error.message);
   console.log('\n💡 Установите sharp: npm install -D sharp');
   process.exit(1);
 }
-

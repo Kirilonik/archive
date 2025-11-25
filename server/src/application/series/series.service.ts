@@ -1,4 +1,8 @@
-import type { SeriesRepository, SeriesCatalogCreateInput, UserSeriesRow } from '../../domain/series/series.types.js';
+import type {
+  SeriesRepository,
+  SeriesCatalogCreateInput,
+  UserSeriesRow,
+} from '../../domain/series/series.types.js';
 import type { KinopoiskClient, KpEnriched } from '../../domain/integrations/kinopoisk.types.js';
 import type { SeriesCreateDto, SeriesUpdateDto } from '../../app/validators/series.schema.js';
 import type { StatsService } from '../stats/stats.service.js';
@@ -150,22 +154,33 @@ export class SeriesService {
     return this.repository.createCatalogEntry(catalogInput);
   }
 
-  private async ensureSeasonsAndEpisodes(userId: number, seriesCatalogId: number, kpId: number | null) {
+  private async ensureSeasonsAndEpisodes(
+    userId: number,
+    seriesCatalogId: number,
+    kpId: number | null,
+  ) {
     if (!kpId) return;
     const details = await this.kinopoiskClient.fetchSeriesDetails(kpId);
     const seasons = details.seasons ?? [];
     for (const season of seasons) {
       if (season.number === undefined) continue;
-      const seasonCatalogId = await this.repository.getOrCreateSeasonCatalog(seriesCatalogId, season.number);
+      const seasonCatalogId = await this.repository.getOrCreateSeasonCatalog(
+        seriesCatalogId,
+        season.number,
+      );
       await this.repository.ensureUserSeason(userId, seasonCatalogId);
       const episodes = season.episodes ?? [];
       for (const episode of episodes) {
         if (episode.number === undefined) continue;
-        const episodeCatalogId = await this.repository.getOrCreateEpisodeCatalog(seasonCatalogId, episode.number, {
-          title: episode.name ?? null,
-          releaseDate: episode.releaseDate ?? null,
-          duration: episode.duration ?? null,
-        });
+        const episodeCatalogId = await this.repository.getOrCreateEpisodeCatalog(
+          seasonCatalogId,
+          episode.number,
+          {
+            title: episode.name ?? null,
+            releaseDate: episode.releaseDate ?? null,
+            duration: episode.duration ?? null,
+          },
+        );
         await this.repository.ensureUserEpisode(userId, episodeCatalogId);
       }
     }
@@ -226,7 +241,11 @@ export class SeriesService {
     this.invalidateStats(userId);
   }
 
-  private async getSeriesImagesByType(userSeriesId: number, userId: number | undefined, type: string) {
+  private async getSeriesImagesByType(
+    userSeriesId: number,
+    userId: number | undefined,
+    type: string,
+  ) {
     if (!userId) return null;
     const row = await this.repository.getUserSeries(userSeriesId, userId);
     if (!row) return null;
@@ -247,4 +266,3 @@ export class SeriesService {
     return { items };
   }
 }
-

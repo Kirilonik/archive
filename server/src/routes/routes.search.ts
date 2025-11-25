@@ -18,5 +18,3 @@ router.get('/suggest', async (req, res, next) => {
     next(e);
   }
 });
-
-

@@ -16,7 +16,7 @@ function ensureCsrfCookie(req: Request, res: Response): string {
     // Если HTTPS, используем 'none', иначе 'lax'
     const sameSite = isHttps ? 'none' : 'lax';
     const secure = isHttps; // Для sameSite: 'none' всегда нужен secure: true
-    
+
     res.cookie(CSRF_COOKIE_NAME, token, {
       httpOnly: true, // Безопасно: токен недоступен через JavaScript
       secure: secure, // Обязательно true для sameSite: 'none', иначе false
@@ -44,19 +44,20 @@ export function csrfMiddleware(req: Request, res: Response, next: NextFunction):
 
   const headerToken = req.headers[CSRF_HEADER_NAME] as string | undefined;
   if (!headerToken || headerToken !== token) {
-    logger.warn({
-      hasHeaderToken: !!headerToken,
-      headerTokenLength: headerToken?.length,
-      cookieTokenLength: token?.length,
-      tokensMatch: headerToken === token,
-      path: req.path,
-      method: req.method,
-    }, 'CSRF token mismatch');
+    logger.warn(
+      {
+        hasHeaderToken: !!headerToken,
+        headerTokenLength: headerToken?.length,
+        cookieTokenLength: token?.length,
+        tokensMatch: headerToken === token,
+        path: req.path,
+        method: req.method,
+      },
+      'CSRF token mismatch',
+    );
     res.status(403).json({ error: 'CSRF token mismatch' });
     return;
   }
 
   next();
 }
-
-

@@ -7,9 +7,5 @@
     "baseUrl": "."
   },
   "include": ["src", "vite-env.d.ts"],
-  "references": [
-    { "path": "../shared" }
-  ]
+  "references": [{ "path": "../shared" }]
 }
-
-

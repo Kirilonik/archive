@@ -21,12 +21,12 @@ export async function runMigrations() {
         id serial primary key,
         name text unique,
         run_at timestamptz default now()
-      )`
+      )`,
     );
 
     const candidates = [
       path.resolve(__dirname, './migrations'), // dist/db/migrations
-      path.resolve(__dirname, '../../src/db/migrations') // source dir when running from dist
+      path.resolve(__dirname, '../../src/db/migrations'), // source dir when running from dist
     ];
     const dir = candidates.find((p) => fs.existsSync(p));
     if (!dir) {
@@ -34,7 +34,8 @@ export async function runMigrations() {
       return;
     }
 
-    const files = fs.readdirSync(dir)
+    const files = fs
+      .readdirSync(dir)
       .filter((f) => f.endsWith('.sql'))
       .sort((a, b) => a.localeCompare(b));
 
@@ -57,24 +58,27 @@ export async function runMigrations() {
         await client.query('ROLLBACK');
         const errorMessage = e instanceof Error ? e.message : 'Unknown error';
         const errorStack = e instanceof Error ? e.stack : undefined;
-        logger.error({ 
-          err: e, 
-          migration: name,
-          file: file,
-          error: errorMessage,
-          stack: errorStack
-        }, '[migrate] failed');
+        logger.error(
+          {
+            err: e,
+            migration: name,
+            file: file,
+            error: errorMessage,
+            stack: errorStack,
+          },
+          '[migrate] failed',
+        );
         throw e;
       }
     }
   } finally {
     if (lockAcquired) {
-      await client.query('SELECT pg_advisory_unlock(hashtext($1))', [LOCK_KEY]).catch((unlockError) => {
-        logger.error({ err: unlockError }, '[migrate] failed to release advisory lock');
-      });
+      await client
+        .query('SELECT pg_advisory_unlock(hashtext($1))', [LOCK_KEY])
+        .catch((unlockError) => {
+          logger.error({ err: unlockError }, '[migrate] failed to release advisory lock');
+        });
     }
     client.release();
   }
 }
-
-

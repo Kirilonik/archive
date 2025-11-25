@@ -41,11 +41,15 @@ export class StatsPgRepository implements StatsRepository {
       [seriesWithOpinion],
       [filmsDuration],
       [seriesDuration],
-    ] =
-      await Promise.all([
-        pool.query('SELECT COUNT(*)::int as c FROM user_films WHERE user_id=$1', [userId]).then((r) => r.rows),
-        pool.query('SELECT COUNT(*)::int as c FROM user_series WHERE user_id=$1', [userId]).then((r) => r.rows),
-        pool.query(
+    ] = await Promise.all([
+      pool
+        .query('SELECT COUNT(*)::int as c FROM user_films WHERE user_id=$1', [userId])
+        .then((r) => r.rows),
+      pool
+        .query('SELECT COUNT(*)::int as c FROM user_series WHERE user_id=$1', [userId])
+        .then((r) => r.rows),
+      pool
+        .query(
           `SELECT ROUND(AVG(my_rating)::numeric, 2) as avg
            FROM (
              SELECT my_rating FROM user_films WHERE user_id=$1 AND my_rating IS NOT NULL
@@ -53,54 +57,62 @@ export class StatsPgRepository implements StatsRepository {
              SELECT my_rating FROM user_series WHERE user_id=$1 AND my_rating IS NOT NULL
            ) t`,
           [userId],
-        ).then((r) => r.rows),
-        pool.query(
-          'SELECT COUNT(*)::int as c FROM user_episodes WHERE user_id=$1 AND watched = true',
-          [userId],
-        ).then((r) => r.rows),
-        pool.query(
-          'SELECT COUNT(*)::int as c FROM user_seasons WHERE user_id=$1',
-          [userId],
-        ).then((r) => r.rows),
-        pool.query(
-          'SELECT COUNT(*)::int as c FROM user_episodes WHERE user_id=$1',
-          [userId],
-        ).then((r) => r.rows),
-        pool.query(
+        )
+        .then((r) => r.rows),
+      pool
+        .query('SELECT COUNT(*)::int as c FROM user_episodes WHERE user_id=$1 AND watched = true', [
+          userId,
+        ])
+        .then((r) => r.rows),
+      pool
+        .query('SELECT COUNT(*)::int as c FROM user_seasons WHERE user_id=$1', [userId])
+        .then((r) => r.rows),
+      pool
+        .query('SELECT COUNT(*)::int as c FROM user_episodes WHERE user_id=$1', [userId])
+        .then((r) => r.rows),
+      pool
+        .query(
           'SELECT COUNT(*)::int as c FROM user_films WHERE user_id=$1 AND my_rating IS NOT NULL',
           [userId],
-        ).then((r) => r.rows),
-        pool.query(
+        )
+        .then((r) => r.rows),
+      pool
+        .query(
           'SELECT COUNT(*)::int as c FROM user_series WHERE user_id=$1 AND my_rating IS NOT NULL',
           [userId],
-        ).then((r) => r.rows),
-        pool.query(
+        )
+        .then((r) => r.rows),
+      pool
+        .query(
           "SELECT COUNT(*)::int as c FROM user_films WHERE user_id=$1 AND opinion IS NOT NULL AND opinion <> ''",
           [userId],
-        ).then((r) => r.rows),
-        pool.query(
+        )
+        .then((r) => r.rows),
+      pool
+        .query(
           "SELECT COUNT(*)::int as c FROM user_series WHERE user_id=$1 AND opinion IS NOT NULL AND opinion <> ''",
           [userId],
-        ).then((r) => r.rows),
-        pool
-          .query(
-            `SELECT COALESCE(SUM(fc.film_length), 0)::int as total_minutes
+        )
+        .then((r) => r.rows),
+      pool
+        .query(
+          `SELECT COALESCE(SUM(fc.film_length), 0)::int as total_minutes
              FROM user_films uf
              JOIN films_catalog fc ON uf.film_catalog_id = fc.id
              WHERE uf.user_id = $1`,
-            [userId],
-          )
-          .then((r) => r.rows),
-        pool
-          .query(
-            `SELECT COALESCE(SUM(COALESCE(sc.film_length, 0) * COALESCE(sc.kp_episodes_count, 1)), 0)::int as total_minutes
+          [userId],
+        )
+        .then((r) => r.rows),
+      pool
+        .query(
+          `SELECT COALESCE(SUM(COALESCE(sc.film_length, 0) * COALESCE(sc.kp_episodes_count, 1)), 0)::int as total_minutes
              FROM user_series us
              JOIN series_catalog sc ON us.series_catalog_id = sc.id
              WHERE us.user_id = $1`,
-            [userId],
-          )
-          .then((r) => r.rows),
-      ]);
+          [userId],
+        )
+        .then((r) => r.rows),
+    ]);
 
     const avg = avgAll?.avg != null ? parseFloatField(avgAll.avg) : null;
 
@@ -305,4 +317,3 @@ export class StatsPgRepository implements StatsRepository {
     };
   }
 }
-

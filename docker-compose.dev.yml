@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${PGPASSWORD:-postgres}
       POSTGRES_DB: ${PGDATABASE:-media_archive}
     ports:
-      - "5433:5432"
+      - '5433:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./server/src/db/migrations:/docker-entrypoint-initdb.d:ro
@@ -36,7 +36,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - "4000:4000"
+      - '4000:4000'
     volumes:
       # Монтируем исходный код для hot reload
       - ./server/src:/work/server/src
@@ -55,11 +55,11 @@ services:
       dockerfile: ./client/Dockerfile
     environment:
       # Не устанавливаем API_BASE_URL в dev - используем Vite proxy
-      # API_BASE_URL: 
+      # API_BASE_URL:
       DOCKER_ENV: 'true'
       FRONTEND_URL: http://localhost:5173
     ports:
-      - "5173:5173"
+      - '5173:5173'
     depends_on:
       - server
     links:
@@ -80,4 +80,3 @@ services:
 
 volumes:
   pgdata:
-

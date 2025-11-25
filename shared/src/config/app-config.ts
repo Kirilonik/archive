@@ -35,11 +35,11 @@ export function resolveAppConfig(env: EnvRecord): AppConfig {
   // При сборке клиента Vite будет использовать переменные окружения, поэтому проверяем только при выполнении в браузере
   const isBrowser = typeof window !== 'undefined';
   const isDev = env.NODE_ENV !== 'production' && !env.API_BASE_URL;
-  
+
   // API_BASE_URL требуется только для клиента в production в браузере
   // Для сервера и dev режима он опциональный
   const apiBaseUrlRequired = !isDev && isBrowser && env.NODE_ENV === 'production';
-  
+
   let apiBaseUrl = '';
   if (apiBaseUrlRaw) {
     apiBaseUrl = normalizeUrl(apiBaseUrlRaw, 'API_BASE_URL', apiBaseUrlRequired);
@@ -50,12 +50,12 @@ export function resolveAppConfig(env: EnvRecord): AppConfig {
     // Только для клиента в production в браузере требуем API_BASE_URL
     throw new Error('API_BASE_URL is required for client in production');
   }
-  
-  const frontendUrl = normalizeUrl(frontendUrlRaw, 'FRONTEND_URL', false) || 'http://localhost:5173';
+
+  const frontendUrl =
+    normalizeUrl(frontendUrlRaw, 'FRONTEND_URL', false) || 'http://localhost:5173';
 
   return {
     apiBaseUrl,
     frontendUrl,
   };
 }
-

@@ -23,4 +23,3 @@ export function validateIdParam(id: string | undefined): number {
   }
   return parsed.data;
 }
-

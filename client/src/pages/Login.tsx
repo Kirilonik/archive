@@ -39,12 +39,14 @@ export function Login() {
 
   const handleContainerClick = (_e: React.MouseEvent) => {
     if (googleLoading) return;
-    
+
     const container = googleContainerRef.current;
     if (!container) return;
 
     // Ищем iframe Google внутри контейнера и программно кликаем на него
-    const iframe = container.querySelector('iframe[title*="Google"], iframe[title*="Google аккаунтом"]') as HTMLIFrameElement | null;
+    const iframe = container.querySelector(
+      'iframe[title*="Google"], iframe[title*="Google аккаунтом"]',
+    ) as HTMLIFrameElement | null;
     if (iframe) {
       try {
         // Кликаем в центре iframe
@@ -56,10 +58,10 @@ export function Login() {
           clientX: rect.left + rect.width / 2,
           clientY: rect.top + rect.height / 2,
         });
-        
+
         // Пробуем несколько способов клика
         iframe.dispatchEvent(clickEvent);
-        
+
         // Также пробуем напрямую кликнуть на iframe
         if (iframe.contentWindow) {
           try {
@@ -99,14 +101,25 @@ export function Login() {
           </div>
           <div>
             <label className="block text-sm text-textMuted mb-1">Пароль</label>
-            <input type="password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input
+              type="password"
+              className="input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
         </div>
         <div className="flex items-center justify-between mt-4">
-          <button className="btn btn-primary px-4 py-2" disabled={loading} onClick={submit}>Войти</button>
+          <button className="btn btn-primary px-4 py-2" disabled={loading} onClick={submit}>
+            Войти
+          </button>
           <div className="flex flex-col items-end gap-1">
-            <Link className="text-textMuted hover:text-text" to="/register">Регистрация</Link>
-            <Link className="text-textMuted hover:text-text text-sm" to="/forgot-password">Забыл пароль?</Link>
+            <Link className="text-textMuted hover:text-text" to="/register">
+              Регистрация
+            </Link>
+            <Link className="text-textMuted hover:text-text text-sm" to="/forgot-password">
+              Забыл пароль?
+            </Link>
           </div>
         </div>
         <div className="mt-6 flex justify-center">
@@ -148,8 +161,8 @@ export function Login() {
             <div className="absolute inset-0" style={{ zIndex: 20, cursor: 'pointer' }}>
               <GoogleLogin
                 containerProps={{
-                  style: { 
-                    width: '100%', 
+                  style: {
+                    width: '100%',
                     height: '100%',
                     opacity: 0.01, // Практически невидим, но видимый достаточно для получения событий
                     pointerEvents: 'auto',

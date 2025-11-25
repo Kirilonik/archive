@@ -41,5 +41,3 @@ export interface UserProfile {
 
 export { resolveAppConfig } from './config/app-config.js';
 export type { AppConfig } from './config/app-config.js';
-
-

@@ -12,15 +12,32 @@ interface Props {
   my_rating?: number;
 }
 
-export function Card({ kind, id, title, poster_url, poster_url_preview, rating_kinopoisk, status, genres, my_rating }: Props) {
+export function Card({
+  kind,
+  id,
+  title,
+  poster_url,
+  poster_url_preview,
+  rating_kinopoisk,
+  status,
+  genres,
+  my_rating,
+}: Props) {
   const href = kind === 'film' ? `/films/${id}` : `/series/${id}`;
   const imageSrc = poster_url_preview || poster_url;
-  const kpRating = typeof rating_kinopoisk === 'number' ? Math.round(rating_kinopoisk * 10) / 10 : null;
+  const kpRating =
+    typeof rating_kinopoisk === 'number' ? Math.round(rating_kinopoisk * 10) / 10 : null;
   return (
     <Link to={href} className="card overflow-hidden p-0 relative">
       <div className="aspect-[2/3] bg-black/5 flex items-center justify-center relative">
         {imageSrc ? (
-          <img src={imageSrc} alt={title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+          <img
+            src={imageSrc}
+            alt={title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
         ) : (
           <span className="text-sm text-textMuted px-2 text-center">Нет постера</span>
         )}
@@ -41,7 +58,7 @@ export function Card({ kind, id, title, poster_url, poster_url_preview, rating_k
         {genres && genres.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {genres.slice(0, 3).map((g, i) => (
-          <span key={i} className="tag">
+              <span key={i} className="tag">
                 {g}
               </span>
             ))}
@@ -51,5 +68,3 @@ export function Card({ kind, id, title, poster_url, poster_url_preview, rating_k
     </Link>
   );
 }
-
-

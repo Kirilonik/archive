@@ -16,15 +16,17 @@ export const ipRateLimiter = rateLimit({
     // Пропускаем healthcheck и часто используемые эндпоинты
     const path = req.path;
     const originalUrl = req.originalUrl || '';
-    return path === '/api/health' || 
-           path === '/api/csrf-token' ||
-           path === '/api/auth/me' ||
-           originalUrl === '/api/health' ||
-           originalUrl === '/api/csrf-token' ||
-           originalUrl === '/api/auth/me' ||
-           originalUrl.startsWith('/api/health') ||
-           originalUrl.startsWith('/api/csrf-token') ||
-           originalUrl.startsWith('/api/auth/me');
+    return (
+      path === '/api/health' ||
+      path === '/api/csrf-token' ||
+      path === '/api/auth/me' ||
+      originalUrl === '/api/health' ||
+      originalUrl === '/api/csrf-token' ||
+      originalUrl === '/api/auth/me' ||
+      originalUrl.startsWith('/api/health') ||
+      originalUrl.startsWith('/api/csrf-token') ||
+      originalUrl.startsWith('/api/auth/me')
+    );
   },
 });
 
@@ -59,5 +61,3 @@ export const searchRateLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Слишком много запросов. Попробуйте позже.' },
 });
-
-

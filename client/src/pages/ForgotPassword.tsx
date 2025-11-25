@@ -10,7 +10,7 @@ export function ForgotPassword() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    
+
     if (!email || !email.includes('@')) {
       toast.error('Введите корректный email адрес');
       return;
@@ -36,11 +36,12 @@ export function ForgotPassword() {
     <main className="mx-auto max-w-md px-4 py-10">
       <div className="card">
         <h1 className="text-2xl font-semibold text-text mb-4">Восстановление пароля</h1>
-        
+
         {!submitted ? (
           <>
             <p className="text-textMuted text-sm mb-6">
-              Введите email адрес, который вы использовали при регистрации. Мы отправим вам инструкции по восстановлению пароля.
+              Введите email адрес, который вы использовали при регистрации. Мы отправим вам
+              инструкции по восстановлению пароля.
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -56,11 +57,7 @@ export function ForgotPassword() {
                 />
               </div>
               <div className="flex items-center justify-between mt-6">
-                <button
-                  type="submit"
-                  className="btn btn-primary px-4 py-2"
-                  disabled={loading}
-                >
+                <button type="submit" className="btn btn-primary px-4 py-2" disabled={loading}>
                   {loading ? 'Отправка...' : 'Отправить'}
                 </button>
                 <Link className="text-textMuted hover:text-text" to="/login">
@@ -72,16 +69,26 @@ export function ForgotPassword() {
         ) : (
           <div className="py-6">
             <div className="flex items-center justify-center mb-4">
-              <svg className="h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <svg
+                className="h-16 w-16 text-green-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-text mb-4 text-center">
-              Письмо отправлено на{' '}
-              <span className="text-primary font-medium">{email}</span>
+              Письмо отправлено на <span className="text-primary font-medium">{email}</span>
             </h2>
             <p className="text-center text-textMuted text-sm mb-6">
-              Пожалуйста, проверьте вашу почту и перейдите по ссылке в письме. Не забудьте проверить папку &quot;Спам&quot;.
+              Пожалуйста, проверьте вашу почту и перейдите по ссылке в письме. Не забудьте проверить
+              папку &quot;Спам&quot;.
             </p>
             <div className="text-center">
               <Link to="/login" className="btn btn-primary">
@@ -94,4 +101,3 @@ export function ForgotPassword() {
     </main>
   );
 }
-

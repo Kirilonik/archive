@@ -12,4 +12,3 @@ scrape_configs:
       - targets: ['server:4000'] # Адрес вашего сервера в Docker сети
     metrics_path: '/api/metrics' # Путь к эндпоинту метрик
     scrape_interval: 15s
-

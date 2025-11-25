@@ -1,4 +1,8 @@
-import type { FilmsRepository, FilmCatalogCreateInput, UserFilmRow } from '../../domain/films/film.types.js';
+import type {
+  FilmsRepository,
+  FilmCatalogCreateInput,
+  UserFilmRow,
+} from '../../domain/films/film.types.js';
 import type { KinopoiskClient, KpEnriched } from '../../domain/integrations/kinopoisk.types.js';
 import type { FilmCreateDto, FilmUpdateDto } from '../../app/validators/films.schema.js';
 import type { StatsService } from '../stats/stats.service.js';
@@ -229,4 +233,3 @@ export class FilmService {
     this.invalidateStats(userId);
   }
 }
-

@@ -26,11 +26,23 @@ export interface EpisodeRow {
 export interface EpisodesRepository {
   findSeasonCatalogId(seasonUserId: number, userId: number): Promise<number | null>;
   listEpisodes(seasonCatalogId: number, userId: number): Promise<EpisodeRow[]>;
-  findUserEpisodeByCatalog(userId: number, episodeCatalogId: number): Promise<{ id: number; watched: boolean } | null>;
-  createUserEpisode(userId: number, episodeCatalogId: number): Promise<{ id: number; watched: boolean }>;
-  updateEpisodeCatalog(episodeCatalogId: number, data: { title?: string | null; releaseDate?: string | null; duration?: number | null }): Promise<void>;
+  findUserEpisodeByCatalog(
+    userId: number,
+    episodeCatalogId: number,
+  ): Promise<{ id: number; watched: boolean } | null>;
+  createUserEpisode(
+    userId: number,
+    episodeCatalogId: number,
+  ): Promise<{ id: number; watched: boolean }>;
+  updateEpisodeCatalog(
+    episodeCatalogId: number,
+    data: { title?: string | null; releaseDate?: string | null; duration?: number | null },
+  ): Promise<void>;
   getUserEpisode(userEpisodeId: number, userId: number): Promise<EpisodeRow | null>;
   deleteUserEpisode(userEpisodeId: number, userId: number): Promise<void>;
-  markUserEpisode(userEpisodeId: number, userId: number, watched: boolean): Promise<{ id: number; watched: boolean } | null>;
+  markUserEpisode(
+    userEpisodeId: number,
+    userId: number,
+    watched: boolean,
+  ): Promise<{ id: number; watched: boolean } | null>;
 }
-

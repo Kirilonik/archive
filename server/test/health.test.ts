@@ -20,5 +20,3 @@ describe('health', () => {
     expect(res.body.timestamp).toBeDefined();
   });
 });
-
-

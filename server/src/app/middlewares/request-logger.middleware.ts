@@ -22,7 +22,10 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
     const durationNs = finishedAt - startedAt;
     const durationMs = Number(durationNs) / 1_000_000;
 
-    const log = res.statusCode >= 500 ? childLogger.error.bind(childLogger) : childLogger.info.bind(childLogger);
+    const log =
+      res.statusCode >= 500
+        ? childLogger.error.bind(childLogger)
+        : childLogger.info.bind(childLogger);
 
     log(
       {
@@ -37,5 +40,3 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
 
   next();
 }
-
-

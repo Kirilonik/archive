@@ -39,7 +39,10 @@ export function RatingEditModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[20px] px-4" onClick={() => !saving && onCancel()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[20px] px-4"
+      onClick={() => !saving && onCancel()}
+    >
       <div className="card card-modal max-w-md w-full" onClick={(e) => e.stopPropagation()}>
         <div className="text-lg font-semibold text-text mb-2">Изменить оценку</div>
         <div className="text-sm text-textMuted mb-4">Обновите свою оценку для «{title}».</div>
@@ -61,4 +64,3 @@ export function RatingEditModal({
     </div>
   );
 }
-

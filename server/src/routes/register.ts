@@ -29,5 +29,3 @@ export function registerRoutes(app: Express): void {
   app.use('/api/users', authMiddleware, usersRouter);
   app.use('/api/search', searchRateLimiter, searchRouter);
 }
-
-

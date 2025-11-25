@@ -1,7 +1,11 @@
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { EpisodeService } from '../../application/episodes/episode.service.js';
-import { episodeCreateSchema, episodeUpdateSchema, episodeMarkSchema } from '../validators/episodes.schema.js';
+import {
+  episodeCreateSchema,
+  episodeUpdateSchema,
+  episodeMarkSchema,
+} from '../validators/episodes.schema.js';
 import { validateIdParam } from '../validators/params.schema.js';
 import { isErrorWithStatus } from '../../shared/error-utils.js';
 
@@ -107,4 +111,3 @@ export class EpisodesController {
     }
   };
 }
-

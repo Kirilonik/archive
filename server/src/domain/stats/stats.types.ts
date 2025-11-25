@@ -69,4 +69,3 @@ export interface StatsRepository {
   getSummary(userId: number): Promise<UserSummaryStats>;
   getDetailed(userId: number): Promise<UserDetailedStats>;
 }
-

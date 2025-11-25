@@ -134,4 +134,3 @@ describe('auth routes', () => {
     expect(response.status).toBe(401);
   });
 });
-

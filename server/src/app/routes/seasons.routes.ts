@@ -14,4 +14,3 @@ export function createSeasonsRouter(controller: SeasonsController) {
 }
 
 export const seasonsRouter = createSeasonsRouter(container.seasons.controller);
-

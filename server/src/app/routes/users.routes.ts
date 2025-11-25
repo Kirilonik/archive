@@ -9,9 +9,13 @@ export function createUsersRouter(controller: UsersController) {
   router.get('/:id', authMiddleware, generalRateLimiter, controller.getProfile);
   router.put('/:id', authMiddleware, writeRateLimiter, controller.updateProfile);
   router.delete('/:id', authMiddleware, writeRateLimiter, controller.deleteUser);
-  router.get('/:id/stats/detailed', authMiddleware, generalRateLimiter, controller.getDetailedStats);
+  router.get(
+    '/:id/stats/detailed',
+    authMiddleware,
+    generalRateLimiter,
+    controller.getDetailedStats,
+  );
   return router;
 }
 
 export const usersRouter = createUsersRouter(container.users.controller);
-

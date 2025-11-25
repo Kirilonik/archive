@@ -57,12 +57,20 @@ export interface AuthRepository {
   createUser(input: RegisterUserInput): Promise<AuthUser>;
   createUserFromGoogle(input: CreateGoogleUserInput): Promise<AuthUser>;
   attachGoogleAccount(input: AttachGoogleAccountInput): Promise<AuthUser>;
-  createEmailVerificationToken(userId: number, token: string, expiresAt: Date): Promise<EmailVerificationToken>;
+  createEmailVerificationToken(
+    userId: number,
+    token: string,
+    expiresAt: Date,
+  ): Promise<EmailVerificationToken>;
   findEmailVerificationToken(token: string): Promise<EmailVerificationToken | null>;
   markEmailVerificationTokenAsUsed(tokenId: number): Promise<void>;
   markUserEmailAsVerified(userId: number): Promise<void>;
   deleteExpiredEmailVerificationTokens(): Promise<number>;
-  createPasswordResetToken(userId: number, token: string, expiresAt: Date): Promise<PasswordResetToken>;
+  createPasswordResetToken(
+    userId: number,
+    token: string,
+    expiresAt: Date,
+  ): Promise<PasswordResetToken>;
   findPasswordResetToken(token: string): Promise<PasswordResetToken | null>;
   markPasswordResetTokenAsUsed(tokenId: number): Promise<void>;
   updateUserPassword(userId: number, passwordHash: string): Promise<void>;
@@ -78,4 +86,3 @@ export interface TokenPair {
   accessToken: string;
   refreshToken: string;
 }
-

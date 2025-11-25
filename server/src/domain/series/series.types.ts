@@ -84,13 +84,30 @@ export interface SeriesRepository {
   findCatalogIdByKpId(kpId: number): Promise<number | null>;
   findCatalogIdByTitleYear(title: string, year: number | null): Promise<number | null>;
   createCatalogEntry(input: SeriesCatalogCreateInput): Promise<number>;
-  findUserSeriesDuplicateByTitleYear(title: string, year: number | null, userId: number): Promise<UserSeriesRow | null>;
-  createUserSeries(params: { userId: number; seriesCatalogId: number; myRating?: number | null; opinion?: string | null; status?: string | null }): Promise<number>;
-  updateUserSeries(userSeriesId: number, userId: number, data: { myRating?: number | null; opinion?: string | null; status?: string | null }): Promise<void>;
+  findUserSeriesDuplicateByTitleYear(
+    title: string,
+    year: number | null,
+    userId: number,
+  ): Promise<UserSeriesRow | null>;
+  createUserSeries(params: {
+    userId: number;
+    seriesCatalogId: number;
+    myRating?: number | null;
+    opinion?: string | null;
+    status?: string | null;
+  }): Promise<number>;
+  updateUserSeries(
+    userSeriesId: number,
+    userId: number,
+    data: { myRating?: number | null; opinion?: string | null; status?: string | null },
+  ): Promise<void>;
   deleteUserSeries(userSeriesId: number, userId: number): Promise<void>;
   getOrCreateSeasonCatalog(seriesCatalogId: number, seasonNumber: number): Promise<number>;
-  getOrCreateEpisodeCatalog(seasonCatalogId: number, episodeNumber: number, options: { title?: string | null; releaseDate?: string | null; duration?: number | null }): Promise<number>;
+  getOrCreateEpisodeCatalog(
+    seasonCatalogId: number,
+    episodeNumber: number,
+    options: { title?: string | null; releaseDate?: string | null; duration?: number | null },
+  ): Promise<number>;
   ensureUserSeason(userId: number, seasonCatalogId: number): Promise<void>;
   ensureUserEpisode(userId: number, episodeCatalogId: number): Promise<void>;
 }
-

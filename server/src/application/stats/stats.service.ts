@@ -1,4 +1,8 @@
-import type { StatsRepository, UserSummaryStats, UserDetailedStats } from '../../domain/stats/stats.types.js';
+import type {
+  StatsRepository,
+  UserSummaryStats,
+  UserDetailedStats,
+} from '../../domain/stats/stats.types.js';
 
 interface CacheEntry<T> {
   data: T;
@@ -37,4 +41,3 @@ export class StatsService {
     this.detailedCache.delete(userId);
   }
 }
-

@@ -17,4 +17,3 @@ export function createSeriesRouter(controller: SeriesController) {
 }
 
 export const seriesRouter = createSeriesRouter(container.series.controller);
-

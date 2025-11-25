@@ -37,8 +37,16 @@ export function SeriesDetails() {
   const [activeSeason, setActiveSeason] = useState<number | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
 
-  const { items: conceptArtItems, loading: conceptLoading, error: conceptError } = useMediaAssets(id, 'series', 'concept-art');
-  const { items: posterItems, loading: posterLoading, error: posterError } = useMediaAssets(id, 'series', 'posters');
+  const {
+    items: conceptArtItems,
+    loading: conceptLoading,
+    error: conceptError,
+  } = useMediaAssets(id, 'series', 'concept-art');
+  const {
+    items: posterItems,
+    loading: posterLoading,
+    error: posterError,
+  } = useMediaAssets(id, 'series', 'posters');
 
   useEffect(() => {
     if (!id) return;
@@ -62,7 +70,6 @@ export function SeriesDetails() {
       cancelled = true;
     };
   }, [id]);
-
 
   const episodesUrl = activeSeason ? `/api/episodes/${activeSeason}` : '';
 
@@ -141,12 +148,12 @@ export function SeriesDetails() {
   async function markSeasonWatched(seasonId: number, watched: boolean) {
     // оптимистично обновляем сезон
     setSeasons((prev) => prev.map((s) => (s.id === seasonId ? { ...s, watched } : s)));
-    
+
     // Если это активный сезон, оптимистично обновляем все эпизоды
     if (activeSeason === seasonId) {
       setEpisodes((prev) => prev.map((e) => ({ ...e, watched })));
     }
-    
+
     try {
       const resp = await apiFetch(`/api/seasons/${seasonId}/watched`, {
         method: 'PATCH',
@@ -155,7 +162,9 @@ export function SeriesDetails() {
       });
       if (!resp.ok) {
         // откатываем оптимистичное обновление
-        setSeasons((prev) => prev.map((s) => (s.id === seasonId ? { ...s, watched: !watched } : s)));
+        setSeasons((prev) =>
+          prev.map((s) => (s.id === seasonId ? { ...s, watched: !watched } : s)),
+        );
         if (activeSeason === seasonId) {
           // Перезагружаем эпизоды, чтобы откатить изменения
           if (episodesUrl) {
@@ -176,15 +185,17 @@ export function SeriesDetails() {
         toast.error(errorMessage);
         return;
       }
-      
+
       // Перезагружаем эпизоды активного сезона, если это тот же сезон
       if (activeSeason === seasonId && episodesUrl) {
         reloadActiveSeasonEpisodes();
       }
-      
-      toast.success(watched 
-        ? 'Сезон и все эпизоды отмечены как просмотренные' 
-        : 'Отметка просмотра снята со сезона и всех эпизодов');
+
+      toast.success(
+        watched
+          ? 'Сезон и все эпизоды отмечены как просмотренные'
+          : 'Отметка просмотра снята со сезона и всех эпизодов',
+      );
     } catch (error: any) {
       // откатываем оптимистичное обновление
       setSeasons((prev) => prev.map((s) => (s.id === seasonId ? { ...s, watched: !watched } : s)));
@@ -199,13 +210,16 @@ export function SeriesDetails() {
     }
   }
 
-
   if (!series) return <main className="mx-auto max-w-5xl px-4 py-6 text-text">Загрузка...</main>;
 
-  const kpRating = typeof series?.rating_kinopoisk === 'number' ? Math.round(series.rating_kinopoisk * 10) / 10 : null;
-  const episodeDuration = typeof series?.film_length === 'number' ? formatDuration(series.film_length) : null;
-  const myRatingValue = typeof series?.my_rating === 'number' ? Math.round(series.my_rating * 10) / 10 : null;
-
+  const kpRating =
+    typeof series?.rating_kinopoisk === 'number'
+      ? Math.round(series.rating_kinopoisk * 10) / 10
+      : null;
+  const episodeDuration =
+    typeof series?.film_length === 'number' ? formatDuration(series.film_length) : null;
+  const myRatingValue =
+    typeof series?.my_rating === 'number' ? Math.round(series.my_rating * 10) / 10 : null;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
@@ -213,7 +227,11 @@ export function SeriesDetails() {
         <div className="grid grid-cols-1 md:grid-cols-[220px,1fr] gap-6 items-start">
           <div className="w-full overflow-hidden rounded-soft bg-black/30 aspect-[2/3]">
             {series.poster_url ? (
-              <img src={series.poster_url} alt={series.title} className="w-full h-full object-cover" />
+              <img
+                src={series.poster_url}
+                alt={series.title}
+                className="w-full h-full object-cover"
+              />
             ) : null}
           </div>
           <div>
@@ -237,7 +255,12 @@ export function SeriesDetails() {
                       Я {myRatingValue ?? '—'}
                       <span className="absolute inset-0 rounded-full bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                       <span className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-white drop-shadow">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="w-4 h-4 text-white drop-shadow"
+                        >
                           <path d="M15.414 3.586a2 2 0 0 1 0 2.828l-.793.793-2.828-2.828.793-.793a2 2 0 0 1 2.828 0ZM10.5 5.207 3 12.707V16h3.293l7.5-7.5-3.293-3.293Z" />
                         </svg>
                       </span>
@@ -257,15 +280,18 @@ export function SeriesDetails() {
                 <div className="flex flex-col sm:flex-row gap-2">
                   {(series.web_url || series.kp_id) && (
                     <a
-                      href={series.web_url || (series.kp_id ? `https://www.kinopoisk.ru/series/${series.kp_id}/` : '#')}
+                      href={
+                        series.web_url ||
+                        (series.kp_id ? `https://www.kinopoisk.ru/series/${series.kp_id}/` : '#')
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn px-3 py-1 flex items-center gap-2"
                       title="Открыть на Кинопоиске"
                     >
-                      <img 
-                        src="/kinopoisk-logo-colored-on-whitebackground-rus.png" 
-                        alt="Кинопоиск" 
+                      <img
+                        src="/kinopoisk-logo-colored-on-whitebackground-rus.png"
+                        alt="Кинопоиск"
                         className="h-5 w-auto"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
@@ -295,20 +321,28 @@ export function SeriesDetails() {
                 </div>
               )}
               <div className="flex flex-wrap gap-3 items-center">
-                {typeof series.budget === 'number' && <span>Бюджет: {series.budget.toLocaleString()} ₽</span>}
-                {typeof series.revenue === 'number' && <span>Сборы: {series.revenue.toLocaleString()} ₽</span>}
+                {typeof series.budget === 'number' && (
+                  <span>Бюджет: {series.budget.toLocaleString()} ₽</span>
+                )}
+                {typeof series.revenue === 'number' && (
+                  <span>Сборы: {series.revenue.toLocaleString()} ₽</span>
+                )}
                 {episodeDuration && <span>Длительность серии: {episodeDuration}</span>}
               </div>
             </div>
             {Array.isArray(series.genres) && series.genres.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {series.genres.map((g: string, i: number) => (
-                  <span key={i} className="tag">{g}</span>
+                  <span key={i} className="tag">
+                    {g}
+                  </span>
                 ))}
               </div>
             )}
             {series.description && (
-              <div className="text-sm text-textMuted mt-4 leading-relaxed max-w-2xl">{series.description}</div>
+              <div className="text-sm text-textMuted mt-4 leading-relaxed max-w-2xl">
+                {series.description}
+              </div>
             )}
           </div>
         </div>
@@ -335,7 +369,9 @@ export function SeriesDetails() {
         <div className="flex items-center justify-between mb-3">
           <div className="text-xl font-semibold text-text">Моё мнение</div>
           {!opinionEditMode && (
-            <button className="btn px-3 py-1" onClick={() => setOpinionEditMode(true)}>Редактировать</button>
+            <button className="btn px-3 py-1" onClick={() => setOpinionEditMode(true)}>
+              Редактировать
+            </button>
           )}
         </div>
         {!opinionEditMode ? (
@@ -350,12 +386,22 @@ export function SeriesDetails() {
               placeholder="Поделитесь своим мнением в Markdown"
             />
             <div className="flex gap-2 justify-end">
-              <button className="btn px-3 py-1" onClick={() => { setOpinionEditMode(false); setOpinionDraft(series.opinion ?? ''); }}>Отмена</button>
+              <button
+                className="btn px-3 py-1"
+                onClick={() => {
+                  setOpinionEditMode(false);
+                  setOpinionDraft(series.opinion ?? '');
+                }}
+              >
+                Отмена
+              </button>
               <button
                 className="btn btn-primary px-3 py-1"
                 disabled={saving}
                 onClick={handleSaveOpinion}
-              >Сохранить</button>
+              >
+                Сохранить
+              </button>
             </div>
           </div>
         )}
@@ -424,7 +470,8 @@ export function SeriesDetails() {
         {activeSeason && (
           <div className="mt-6">
             <h3 className="text-lg font-semibold text-text mb-3">
-              {seasons.find(s => s.id === activeSeason) && `Сезон ${seasons.find(s => s.id === activeSeason)?.number}`}
+              {seasons.find((s) => s.id === activeSeason) &&
+                `Сезон ${seasons.find((s) => s.id === activeSeason)?.number}`}
             </h3>
             <div className="space-y-2">
               {episodes.length === 0 ? (
@@ -444,16 +491,10 @@ export function SeriesDetails() {
                             title={e.watched ? 'Снять отметку' : 'Отметить как просмотренный'}
                           />
                         </div>
-                        {e.title && (
-                          <div className="text-text font-medium mb-2">{e.title}</div>
-                        )}
+                        {e.title && <div className="text-text font-medium mb-2">{e.title}</div>}
                         <div className="flex flex-wrap gap-4 text-sm text-textMuted">
-                          {e.release_date && (
-                            <span>📅 {formatDate(e.release_date)}</span>
-                          )}
-                          {e.duration && (
-                            <span>⏱ {formatDuration(e.duration)}</span>
-                          )}
+                          {e.release_date && <span>📅 {formatDate(e.release_date)}</span>}
+                          {e.duration && <span>⏱ {formatDuration(e.duration)}</span>}
                         </div>
                       </div>
                     </div>
@@ -467,5 +508,3 @@ export function SeriesDetails() {
     </main>
   );
 }
-
-

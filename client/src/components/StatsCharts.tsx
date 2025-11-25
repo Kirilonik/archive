@@ -69,12 +69,27 @@ export const GenresChart = memo(({ data }: GenresChartProps) => {
   if (!data || data.length === 0) {
     return <ChartEmptyFallback title="Распределение по жанрам" />;
   }
-  const colors = [palette.purple, palette.orange, palette.pink, palette.blue, palette.teal, palette.yellow];
+  const colors = [
+    palette.purple,
+    palette.orange,
+    palette.pink,
+    palette.blue,
+    palette.teal,
+    palette.yellow,
+  ];
   return (
     <ChartContainer title="Распределение по жанрам">
       <BarChart data={data} margin={{ left: 4 }}>
         <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
-        <XAxis dataKey="genre" stroke={textMuted} tick={{ fill: textMuted, fontSize: 12 }} interval={0} angle={-20} textAnchor="end" height={60} />
+        <XAxis
+          dataKey="genre"
+          stroke={textMuted}
+          tick={{ fill: textMuted, fontSize: 12 }}
+          interval={0}
+          angle={-20}
+          textAnchor="end"
+          height={60}
+        />
         <YAxis stroke={textMuted} tick={{ fill: textMuted }} allowDecimals={false} />
         <Tooltip
           contentStyle={tooltipStyle}
@@ -104,7 +119,12 @@ export const YearsChart = memo(({ data }: YearsChartProps) => {
     <ChartContainer title="Распределение по годам">
       <LineChart data={chartData} margin={{ left: 4 }}>
         <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
-        <XAxis dataKey="label" stroke={textMuted} tick={{ fill: textMuted }} interval="preserveStartEnd" />
+        <XAxis
+          dataKey="label"
+          stroke={textMuted}
+          tick={{ fill: textMuted }}
+          interval="preserveStartEnd"
+        />
         <YAxis stroke={textMuted} tick={{ fill: textMuted }} allowDecimals={false} />
         <Tooltip
           contentStyle={tooltipStyle}
@@ -113,7 +133,13 @@ export const YearsChart = memo(({ data }: YearsChartProps) => {
           formatter={countTooltipFormatter}
           labelFormatter={(label) => `Год: ${label}`}
         />
-        <Line type="monotone" dataKey="count" stroke={palette.purple} strokeWidth={2} dot={{ r: 3 }} />
+        <Line
+          type="monotone"
+          dataKey="count"
+          stroke={palette.purple}
+          strokeWidth={2}
+          dot={{ r: 3 }}
+        />
       </LineChart>
     </ChartContainer>
   );
@@ -155,7 +181,8 @@ interface FilmsVsSeriesChartProps {
 }
 
 export const FilmsVsSeriesChart = memo(({ films, series }: FilmsVsSeriesChartProps) => {
-  if (films === 0 && series === 0) return <ChartEmptyFallback title="Соотношение фильмов и сериалов" />;
+  if (films === 0 && series === 0)
+    return <ChartEmptyFallback title="Соотношение фильмов и сериалов" />;
   const data = [
     { name: 'Фильмы', value: films, color: palette.purple },
     { name: 'Сериалы', value: series, color: palette.pink },
@@ -171,7 +198,14 @@ export const FilmsVsSeriesChart = memo(({ films, series }: FilmsVsSeriesChartPro
           labelFormatter={(label) => `Тип: ${label}`}
         />
         <Legend formatter={(value) => <span style={{ color: textColor }}>{value}</span>} />
-        <Pie data={data} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={4}>
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="name"
+          innerRadius={60}
+          outerRadius={90}
+          paddingAngle={4}
+        >
           {data.map((entry, index) => (
             <Cell key={index} fill={entry.color} />
           ))}
@@ -192,7 +226,12 @@ export const MonthlyChart = memo(({ data }: MonthlyChartProps) => {
     <ChartContainer title="Динамика добавления">
       <LineChart data={chartData} margin={{ left: 4 }}>
         <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
-        <XAxis dataKey="month" stroke={textMuted} tick={{ fill: textMuted }} interval="preserveStart" />
+        <XAxis
+          dataKey="month"
+          stroke={textMuted}
+          tick={{ fill: textMuted }}
+          interval="preserveStart"
+        />
         <YAxis stroke={textMuted} tick={{ fill: textMuted }} allowDecimals={false} />
         <Tooltip
           contentStyle={tooltipStyle}
@@ -201,7 +240,13 @@ export const MonthlyChart = memo(({ data }: MonthlyChartProps) => {
           formatter={countTooltipFormatter}
           labelFormatter={(label) => `Месяц: ${label}`}
         />
-        <Line type="monotone" dataKey="count" stroke={palette.orange} strokeWidth={2} dot={{ r: 3 }} />
+        <Line
+          type="monotone"
+          dataKey="count"
+          stroke={palette.orange}
+          strokeWidth={2}
+          dot={{ r: 3 }}
+        />
       </LineChart>
     </ChartContainer>
   );
@@ -217,7 +262,15 @@ export const AvgRatingByGenreChart = memo(({ data }: AvgRatingByGenreChartProps)
     <ChartContainer title="Средняя оценка по жанрам">
       <BarChart data={data} margin={{ left: 4 }}>
         <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
-        <XAxis dataKey="genre" stroke={textMuted} tick={{ fill: textMuted }} interval={0} angle={-20} textAnchor="end" height={60} />
+        <XAxis
+          dataKey="genre"
+          stroke={textMuted}
+          tick={{ fill: textMuted }}
+          interval={0}
+          angle={-20}
+          textAnchor="end"
+          height={60}
+        />
         <YAxis stroke={textMuted} tick={{ fill: textMuted }} domain={[0, 10]} />
         <Tooltip
           contentStyle={tooltipStyle}
@@ -250,7 +303,14 @@ export const StatusesChart = memo(({ data }: StatusesChartProps) => {
           labelFormatter={(label) => `Статус: ${label}`}
         />
         <Legend formatter={(value) => <span style={{ color: textColor }}>{value}</span>} />
-        <Pie data={data} dataKey="count" nameKey="status" innerRadius={50} outerRadius={85} paddingAngle={3}>
+        <Pie
+          data={data}
+          dataKey="count"
+          nameKey="status"
+          innerRadius={50}
+          outerRadius={85}
+          paddingAngle={3}
+        >
           {data.map((entry, index) => (
             <Cell key={index} fill={colors[index % colors.length]} />
           ))}
@@ -270,7 +330,15 @@ export const DirectorsChart = memo(({ data }: DirectorsChartProps) => {
     <ChartContainer title="Топ режиссеров">
       <BarChart data={data} margin={{ left: 4 }}>
         <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
-        <XAxis dataKey="director" stroke={textMuted} tick={{ fill: textMuted }} interval={0} angle={-25} textAnchor="end" height={70} />
+        <XAxis
+          dataKey="director"
+          stroke={textMuted}
+          tick={{ fill: textMuted }}
+          interval={0}
+          angle={-25}
+          textAnchor="end"
+          height={70}
+        />
         <YAxis stroke={textMuted} tick={{ fill: textMuted }} allowDecimals={false} />
         <Tooltip
           contentStyle={tooltipStyle}
@@ -302,4 +370,3 @@ function ChartEmptyFallback({ title }: { title: string }) {
     </div>
   );
 }
-

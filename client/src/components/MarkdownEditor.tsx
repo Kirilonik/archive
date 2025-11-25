@@ -11,7 +11,12 @@ interface MarkdownEditorProps {
   placeholder?: string;
 }
 
-export function MarkdownEditor({ value, onChange, height = 280, placeholder }: MarkdownEditorProps) {
+export function MarkdownEditor({
+  value,
+  onChange,
+  height = 280,
+  placeholder,
+}: MarkdownEditorProps) {
   return (
     <div className="markdown-editor" data-color-mode="dark">
       <MDEditor

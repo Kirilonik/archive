@@ -13,5 +13,3 @@ export function SearchBar({ value, onChange }: Props) {
     />
   );
 }
-
-

@@ -11,7 +11,10 @@ import { env } from '../../config/env.js';
 import type { OAuth2Client } from 'google-auth-library';
 import { logger } from '../../shared/logger.js';
 import type { EmailService } from '../../infrastructure/email/email.service.js';
-import { createEmailVerificationTemplate, createPasswordResetTemplate } from '../../infrastructure/email/email.templates.js';
+import {
+  createEmailVerificationTemplate,
+  createPasswordResetTemplate,
+} from '../../infrastructure/email/email.templates.js';
 
 export class AuthService {
   constructor(
@@ -26,7 +29,9 @@ export class AuthService {
   }
 
   private signRefreshToken(payload: { id: number; email: string }): string {
-    return jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: `${env.REFRESH_TOKEN_TTL_DAYS}d` });
+    return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
+      expiresIn: `${env.REFRESH_TOKEN_TTL_DAYS}d`,
+    });
   }
 
   private buildTokens(user: Pick<AuthUser, 'id' | 'email'>): TokenPair {
@@ -35,42 +40,50 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async register(input: { name?: string | null; email: string; password: string }): Promise<{ user: AuthUser }> {
+  async register(input: {
+    name?: string | null;
+    email: string;
+    password: string;
+  }): Promise<{ user: AuthUser }> {
     const existing = await this.repository.findByEmail(input.email);
     if (existing) {
       const err = new Error('User exists') as Error & { status: number };
       err.status = 409;
       throw err;
     }
-    
+
     const passwordHash = await this.passwordHasher.hash(input.password);
     const user = await this.repository.createUser({
       name: input.name ?? null,
       email: input.email,
       passwordHash,
     });
-    
+
     process.nextTick(() => {
       this.sendVerificationEmail(user.id, user.email, user.name).catch((error) => {
         logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email');
       });
     });
-    
+
     return { user };
   }
-  
+
   /**
    * Создает токен подтверждения email и отправляет письмо
    */
-  private async sendVerificationEmail(userId: number, email: string, userName: string | null): Promise<void> {
+  private async sendVerificationEmail(
+    userId: number,
+    email: string,
+    userName: string | null,
+  ): Promise<void> {
     const token = this.generateVerificationToken();
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + env.EMAIL_VERIFICATION_TOKEN_TTL_HOURS);
-    
+
     await this.repository.createEmailVerificationToken(userId, token, expiresAt);
-    
+
     const verificationUrl = `${env.FRONTEND_URL}/verify-email?token=${token}`;
-    
+
     try {
       await this.emailService.sendEmail({
         to: email,
@@ -82,7 +95,7 @@ export class AuthService {
       logger.error({ error, userId, email }, 'Ошибка при отправке письма подтверждения');
     }
   }
-  
+
   /**
    * Генерирует безопасный случайный токен для подтверждения email
    */
@@ -96,34 +109,35 @@ export class AuthService {
   private generatePasswordResetToken(): string {
     return crypto.randomBytes(32).toString('hex');
   }
-  
+
   /**
    * Подтверждает email пользователя по токену
    */
   async verifyEmail(token: string): Promise<void> {
     const tokenRecord = await this.repository.findEmailVerificationToken(token);
-    
+
     if (!tokenRecord) {
-      const error = new Error('Токен подтверждения не найден или уже использован') as Error & { status: number };
+      const error = new Error('Токен подтверждения не найден или уже использован') as Error & {
+        status: number;
+      };
       error.status = 400;
       throw error;
     }
-    
+
     if (tokenRecord.expiresAt < new Date()) {
       const error = new Error('Токен подтверждения истек') as Error & { status: number };
       error.status = 400;
       throw error;
     }
-    
+
     // Отмечаем токен как использованный
     await this.repository.markEmailVerificationTokenAsUsed(tokenRecord.id);
-    
+
     // Отмечаем email как подтвержденный
     await this.repository.markUserEmailAsVerified(tokenRecord.userId);
-    
+
     logger.info({ userId: tokenRecord.userId }, 'Email успешно подтвержден');
   }
-  
 
   private ensureUserHasPassword(user: AuthUserWithPassword | null): AuthUserWithPassword | null {
     if (!user) return null;
@@ -136,27 +150,32 @@ export class AuthService {
    * Всегда выполняет сравнение пароля, даже если пользователь не найден
    * Проверяет подтверждение email
    */
-  async login(input: { email: string; password: string }): Promise<{ user: AuthUser; tokens: TokenPair } | null> {
+  async login(input: {
+    email: string;
+    password: string;
+  }): Promise<{ user: AuthUser; tokens: TokenPair } | null> {
     const user = await this.repository.findByEmail(input.email);
-    
+
     // Защита от timing attacks: всегда выполняем сравнение пароля
     // Если пользователь не найден или не имеет пароля, используем null hash
     const passwordHash = user?.passwordHash ?? null;
     const ok = await this.passwordHasher.compare(input.password, passwordHash);
-    
+
     // Проверяем, что пользователь существует, имеет пароль и пароль верный
     if (!user || !user.passwordHash || !ok) {
       return null;
     }
-    
+
     // Проверяем, что email подтвержден (для локальной регистрации)
     if (user.authProvider === 'local' && !user.emailVerified) {
-      const error = new Error('Email не подтвержден. Пожалуйста, проверьте вашу почту и подтвердите email адрес.') as Error & { status: number; requiresEmailVerification: boolean };
+      const error = new Error(
+        'Email не подтвержден. Пожалуйста, проверьте вашу почту и подтвердите email адрес.',
+      ) as Error & { status: number; requiresEmailVerification: boolean };
       error.status = 403;
       (error as any).requiresEmailVerification = true;
       throw error;
     }
-    
+
     const stripped: AuthUser = {
       id: user.id,
       email: user.email,
@@ -171,7 +190,12 @@ export class AuthService {
 
   verifyRefreshToken(token: string): { id: number; email: string; iat: number; exp: number } {
     try {
-      return jwt.verify(token, env.JWT_REFRESH_SECRET) as { id: number; email: string; iat: number; exp: number };
+      return jwt.verify(token, env.JWT_REFRESH_SECRET) as {
+        id: number;
+        email: string;
+        iat: number;
+        exp: number;
+      };
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'name' in error) {
         if (error.name === 'JsonWebTokenError' && 'message' in error) {
@@ -193,23 +217,35 @@ export class AuthService {
         idToken,
         audience: env.GOOGLE_CLIENT_ID,
       });
-      payload = ticket.getPayload() as { sub?: string; email?: string; name?: string; picture?: string } | undefined;
+      payload = ticket.getPayload() as
+        | { sub?: string; email?: string; name?: string; picture?: string }
+        | undefined;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      const errorCode = err && typeof err === 'object' && 'code' in err ? String(err.code) : undefined;
-      logger.warn({ 
-        error: errorMessage, 
-        code: errorCode,
-        type: 'google_id_token_verification_error' 
-      }, 'Google ID token verification failed');
-      const error = new Error('Не удалось проверить Google токен') as Error & { status: number; cause: unknown };
+      const errorCode =
+        err && typeof err === 'object' && 'code' in err ? String(err.code) : undefined;
+      logger.warn(
+        {
+          error: errorMessage,
+          code: errorCode,
+          type: 'google_id_token_verification_error',
+        },
+        'Google ID token verification failed',
+      );
+      const error = new Error('Не удалось проверить Google токен') as Error & {
+        status: number;
+        cause: unknown;
+      };
       error.status = 401;
       error.cause = err;
       throw error;
     }
 
     if (!payload?.sub) {
-      logger.warn({ payload: payload ? 'present but missing sub' : 'missing' }, 'Invalid Google token payload');
+      logger.warn(
+        { payload: payload ? 'present but missing sub' : 'missing' },
+        'Invalid Google token payload',
+      );
       const error = new Error('Некорректный ответ Google') as Error & { status: number };
       error.status = 401;
       throw error;
@@ -254,7 +290,7 @@ export class AuthService {
    */
   async requestPasswordReset(email: string): Promise<void> {
     const user = await this.repository.findByEmail(email);
-    
+
     if (!user) {
       return;
     }
@@ -273,16 +309,21 @@ export class AuthService {
 
     // Отправляем email с токеном
     const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${token}`;
-    
+
     // Запускаем отправку email асинхронно
     process.nextTick(() => {
-      this.emailService.sendEmail({
-        to: user.email,
-        subject: 'Сброс пароля',
-        html: createPasswordResetTemplate(resetUrl, user.name),
-      }).catch((error) => {
-        logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email сброса пароля');
-      });
+      this.emailService
+        .sendEmail({
+          to: user.email,
+          subject: 'Сброс пароля',
+          html: createPasswordResetTemplate(resetUrl, user.name),
+        })
+        .catch((error) => {
+          logger.error(
+            { error, userId: user.id, email: user.email },
+            'Ошибка при отправке email сброса пароля',
+          );
+        });
     });
 
     logger.info({ userId: user.id, email: user.email }, 'Запрос сброса пароля обработан');
@@ -292,11 +333,12 @@ export class AuthService {
    * Сбрасывает пароль пользователя по токену
    */
   async resetPassword(token: string, newPassword: string): Promise<void> {
-
     const tokenRecord = await this.repository.findPasswordResetToken(token);
 
     if (!tokenRecord) {
-      const error = new Error('Токен сброса пароля не найден или уже использован') as Error & { status: number };
+      const error = new Error('Токен сброса пароля не найден или уже использован') as Error & {
+        status: number;
+      };
       error.status = 400;
       throw error;
     }
@@ -315,4 +357,3 @@ export class AuthService {
     logger.info({ userId: tokenRecord.userId }, 'Пароль успешно сброшен');
   }
 }
-

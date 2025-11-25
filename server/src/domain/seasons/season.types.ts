@@ -19,12 +19,21 @@ export interface SeasonRow {
 export interface SeasonsRepository {
   findSeriesCatalogId(seriesUserId: number, userId: number): Promise<number | null>;
   listSeasons(seriesCatalogId: number, userId: number): Promise<SeasonRow[]>;
-  findUserSeasonByCatalog(userId: number, seasonCatalogId: number): Promise<{ id: number; watched: boolean } | null>;
-  createUserSeason(userId: number, seasonCatalogId: number): Promise<{ id: number; watched: boolean }>;
+  findUserSeasonByCatalog(
+    userId: number,
+    seasonCatalogId: number,
+  ): Promise<{ id: number; watched: boolean } | null>;
+  createUserSeason(
+    userId: number,
+    seasonCatalogId: number,
+  ): Promise<{ id: number; watched: boolean }>;
   getUserSeason(userSeasonId: number, userId: number): Promise<{ seasonCatalogId: number } | null>;
   deleteUserSeason(userSeasonId: number, userId: number): Promise<void>;
-  markUserSeason(userSeasonId: number, userId: number, watched: boolean): Promise<{ id: number; watched: boolean } | null>;
+  markUserSeason(
+    userSeasonId: number,
+    userId: number,
+    watched: boolean,
+  ): Promise<{ id: number; watched: boolean } | null>;
   listSeasonEpisodeCatalogIds(seasonCatalogId: number): Promise<number[]>;
   syncUserEpisode(userId: number, episodeCatalogId: number, watched: boolean): Promise<void>;
 }
-

@@ -10,12 +10,12 @@
  */
 export function formatMinutes(amount?: number | null, roundToHours = false): string | null {
   if (!amount || amount <= 0) return null;
-  
+
   if (roundToHours) {
     const hours = Math.round(amount / 60);
     return `${hours} ч`;
   }
-  
+
   const hours = Math.floor(amount / 60);
   const minutes = amount % 60;
   if (hours > 0) {
@@ -46,7 +46,11 @@ export function formatDate(dateStr: string | null | undefined): string {
   }
 }
 
-export function formatBudget(amount?: number | null, symbol?: string | null, code?: string | null): string | null {
+export function formatBudget(
+  amount?: number | null,
+  symbol?: string | null,
+  code?: string | null,
+): string | null {
   if (amount == null) return null;
   let value = amount;
   let suffix = '';
@@ -65,4 +69,3 @@ export function formatBudget(amount?: number | null, symbol?: string | null, cod
   if (code) return `${formattedValue}${suffix} ${code}`;
   return `${amount.toLocaleString()} ₽`;
 }
-

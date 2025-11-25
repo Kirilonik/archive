@@ -19,4 +19,3 @@ export function createAuthRouter(controller: AuthController) {
 }
 
 export const authRouter = createAuthRouter(container.auth.controller);
-

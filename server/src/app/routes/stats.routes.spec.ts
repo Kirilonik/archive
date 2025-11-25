@@ -162,4 +162,3 @@ describe('users stats routes', () => {
     expect(response.status).toBe(401);
   });
 });
-

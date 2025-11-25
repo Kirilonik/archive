@@ -31,7 +31,7 @@ export function Register() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    
+
     // Очищаем предыдущие ошибки
     setError(null);
     setPasswordError(null);
@@ -53,33 +53,33 @@ export function Register() {
       setLoading(true);
       setError(null);
       setPasswordError(null);
-      
+
       await registerUser({ name: name || undefined, email, password });
-      
+
       // После успешной регистрации переходим на страницу с информацией о подтверждении email
       setLoading(false);
-      
+
       // Переход на страницу подтверждения email
-      navigate('/check-email', { 
-        state: { email }
+      navigate('/check-email', {
+        state: { email },
       });
     } catch (e: any) {
       let message = e?.message || 'Ошибка регистрации';
       const status = e?.status;
-      
+
       // Если пользователь уже существует (409), предлагаем войти
       if (status === 409 || message.includes('уже существует') || message.includes('User exists')) {
         message = 'Пользователь с таким email уже зарегистрирован.';
         setError(message);
       } else {
         setError(message);
-        
+
         // Если ошибка связана с паролем, показываем её под полем пароля
         if (message.includes('пароль') || message.includes('Пароль')) {
           setPasswordError(message);
         }
       }
-      
+
       // Очищаем состояние загрузки, чтобы можно было попробовать снова
       setLoading(false);
     }
@@ -93,10 +93,10 @@ export function Register() {
           <div className="space-y-3">
             <div>
               <label className="block text-sm text-textMuted mb-1">Имя</label>
-              <input 
-                className="input" 
+              <input
+                className="input"
                 type="text"
-                value={name} 
+                value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={loading}
                 autoComplete="name"
@@ -104,10 +104,10 @@ export function Register() {
             </div>
             <div>
               <label className="block text-sm text-textMuted mb-1">Email</label>
-              <input 
-                className="input" 
+              <input
+                className="input"
                 type="email"
-                value={email} 
+                value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
                   setError(null);
@@ -119,10 +119,10 @@ export function Register() {
             </div>
             <div>
               <label className="block text-sm text-textMuted mb-1">Пароль</label>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 className={`input ${passwordError ? 'border-red-400' : ''}`}
-                value={password} 
+                value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
                   setPasswordError(null);
@@ -145,22 +145,20 @@ export function Register() {
             </div>
           </div>
           <div className="flex items-center justify-between mt-4">
-            <button 
-              type="submit"
-              className="btn btn-primary px-4 py-2" 
-              disabled={loading}
-            >
+            <button type="submit" className="btn btn-primary px-4 py-2" disabled={loading}>
               {loading ? 'Создание...' : 'Создать'}
             </button>
-            <Link className="text-textMuted hover:text-text" to="/login">У меня уже есть аккаунт</Link>
+            <Link className="text-textMuted hover:text-text" to="/login">
+              У меня уже есть аккаунт
+            </Link>
           </div>
           {error && !passwordError && (
             <div className="mt-4 text-sm text-red-400" role="alert">
               <p className="mb-2">{error}</p>
               {error.includes('уже зарегистрирован') && (
                 <div className="mt-3">
-                  <Link 
-                    to="/login" 
+                  <Link
+                    to="/login"
                     state={{ email }}
                     className="block text-primary hover:underline text-sm"
                   >

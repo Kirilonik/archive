@@ -88,9 +88,22 @@ export interface FilmsRepository {
   findCatalogIdByKpId(kpId: number): Promise<number | null>;
   findCatalogIdByTitleYear(title: string, year: number | null): Promise<number | null>;
   createCatalogEntry(input: FilmCatalogCreateInput): Promise<number>;
-  findUserFilmDuplicateByTitleYear(title: string, year: number | null, userId: number): Promise<UserFilmRow | null>;
-  createUserFilm(params: { userId: number; filmCatalogId: number; myRating?: number | null; opinion?: string | null; status?: string | null }): Promise<number>;
-  updateUserFilm(userFilmId: number, userId: number, data: { myRating?: number | null; opinion?: string | null; status?: string | null }): Promise<void>;
+  findUserFilmDuplicateByTitleYear(
+    title: string,
+    year: number | null,
+    userId: number,
+  ): Promise<UserFilmRow | null>;
+  createUserFilm(params: {
+    userId: number;
+    filmCatalogId: number;
+    myRating?: number | null;
+    opinion?: string | null;
+    status?: string | null;
+  }): Promise<number>;
+  updateUserFilm(
+    userFilmId: number,
+    userId: number,
+    data: { myRating?: number | null; opinion?: string | null; status?: string | null },
+  ): Promise<void>;
   deleteUserFilm(userFilmId: number, userId: number): Promise<void>;
 }
-

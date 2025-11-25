@@ -30,23 +30,21 @@ export function registerSwagger(app: Express) {
       openapi: '3.0.3',
       info: {
         title: 'Archive API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       components: {
         securitySchemes: {
           bearerAuth: {
             type: 'http',
             scheme: 'bearer',
-            bearerFormat: 'JWT'
-          }
-        }
+            bearerFormat: 'JWT',
+          },
+        },
       },
-      security: [{ bearerAuth: [] }]
+      security: [{ bearerAuth: [] }],
     },
-    apis: [] as string[]
+    apis: [] as string[],
   };
   const spec = swaggerJSDoc(options as any);
   app.use('/api/docs', swaggerGuard, swaggerUi.serve, swaggerUi.setup(spec, { explorer: true }));
 }
-
-

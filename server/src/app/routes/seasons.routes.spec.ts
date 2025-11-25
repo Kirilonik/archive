@@ -89,4 +89,3 @@ describe('seasons routes', () => {
     expect(listSeasons).not.toHaveBeenCalled();
   });
 });
-

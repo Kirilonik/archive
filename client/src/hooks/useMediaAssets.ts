@@ -42,14 +42,14 @@ export function useMediaAssets(
       try {
         const response = await apiFetch(`/api/${type}s/${id}/${mediaType}`);
         if (cancelled) return;
-        
+
         // Если 404 - просто нет данных, это не ошибка
         if (response.status === 404) {
           setItems([]);
           setLoading(false);
           return;
         }
-        
+
         // Если другой статус ошибки - обрабатываем как ошибку
         if (!response.ok) {
           const error = await response.json().catch(() => ({}));
@@ -60,23 +60,26 @@ export function useMediaAssets(
           }
           return;
         }
-        
+
         // Успешный ответ
-        const payload = await response.json() as MediaAssetsApiResponse;
+        const payload = (await response.json()) as MediaAssetsApiResponse;
         if (cancelled) return;
-        
+
         const loadedItems: ConceptArtItem[] = Array.isArray(payload?.items)
           ? payload.items
-              .filter((item): item is MediaAssetApiItem => 
-                typeof item === 'object' && 
-                item !== null && 
-                typeof item.previewUrl === 'string' && 
-                typeof item.imageUrl === 'string'
+              .filter(
+                (item): item is MediaAssetApiItem =>
+                  typeof item === 'object' &&
+                  item !== null &&
+                  typeof item.previewUrl === 'string' &&
+                  typeof item.imageUrl === 'string',
               )
-              .map((item): ConceptArtItem => ({
-                previewUrl: item.previewUrl!,
-                imageUrl: item.imageUrl!,
-              }))
+              .map(
+                (item): ConceptArtItem => ({
+                  previewUrl: item.previewUrl!,
+                  imageUrl: item.imageUrl!,
+                }),
+              )
           : [];
         setItems(loadedItems);
       } catch {
@@ -101,4 +104,3 @@ export function useMediaAssets(
 
   return { items, loading, error };
 }
-

@@ -19,7 +19,7 @@ jobs:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -69,7 +69,7 @@ jobs:
     name: Secret Scanning
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -97,11 +97,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     timeout-minutes: 20
-    
+
     strategy:
       matrix:
         service: [server, client]
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -137,7 +137,7 @@ jobs:
     name: Configuration Security Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -145,25 +145,25 @@ jobs:
       - name: Check for exposed secrets in config files
         run: |
           echo "🔍 Checking configuration files for potential secrets..."
-          
+
           # Проверка .env файлов в репозитории (не должно быть)
           if find . -name ".env" -o -name "*.env" | grep -v node_modules | grep -v ".git"; then
             echo "⚠️ Warning: Found .env files in repository"
             find . -name ".env" -o -name "*.env" | grep -v node_modules | grep -v ".git"
           fi
-          
+
           # Проверка docker-compose файлов на хардкод секретов
           if grep -r "password.*=" docker-compose*.yml 2>/dev/null | grep -v "#" | grep -v "\$\{"; then
             echo "⚠️ Warning: Potential hardcoded passwords in docker-compose files"
             grep -r "password.*=" docker-compose*.yml 2>/dev/null | grep -v "#" | grep -v "\$\{"
           fi
-          
+
           echo "✅ Configuration check completed"
 
       - name: Check Dockerfile security best practices
         run: |
           echo "🔍 Checking Dockerfile security practices..."
-          
+
           for dockerfile in $(find . -name "Dockerfile*" -not -path "./node_modules/*"); do
             echo "Checking $dockerfile..."
             
@@ -177,7 +177,7 @@ jobs:
               echo "⚠️ $dockerfile: Package updates should be done in same layer"
             fi
           done
-          
+
           echo "✅ Dockerfile security check completed"
 
   # Итоговый отчет
@@ -186,7 +186,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [dependency-scan, secret-scan, docker-scan, config-scan]
     if: always()
-    
+
     steps:
       - name: Generate security summary
         run: |
@@ -199,7 +199,7 @@ jobs:
           echo "| Docker Scan | ${{ needs.docker-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Config Scan | ${{ needs.config-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ needs.dependency-scan.result }}" != "success" ] || \
              [ "${{ needs.secret-scan.result }}" != "success" ] || \
              [ "${{ needs.docker-scan.result }}" != "success" ]; then
@@ -207,4 +207,3 @@ jobs:
           else
             echo "✅ **All security checks passed**" >> $GITHUB_STEP_SUMMARY
           fi
-

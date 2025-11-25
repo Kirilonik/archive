@@ -16,25 +16,20 @@ interface ProfileChartsProps {
 }
 
 function ProfileChartsComponent({ stats }: ProfileChartsProps) {
-  const {
-    genres,
-    years,
-    ratings,
-    filmsVsSeries,
-    monthly,
-    avgRatingByGenre,
-    statuses,
-    directors,
-  } = useMemo(() => ({
-    genres: stats?.genres ?? [],
-    years: stats?.years ?? [],
-    ratings: stats?.ratings ?? [],
-    filmsVsSeries: stats?.filmsVsSeries ?? { films: 0, series: 0 },
-    monthly: stats?.monthly ?? [],
-    avgRatingByGenre: stats?.avgRatingByGenre ?? [],
-    statuses: stats?.statuses ?? [],
-    directors: stats?.directors ?? [],
-  }), [stats]);
+  const { genres, years, ratings, filmsVsSeries, monthly, avgRatingByGenre, statuses, directors } =
+    useMemo(
+      () => ({
+        genres: stats?.genres ?? [],
+        years: stats?.years ?? [],
+        ratings: stats?.ratings ?? [],
+        filmsVsSeries: stats?.filmsVsSeries ?? { films: 0, series: 0 },
+        monthly: stats?.monthly ?? [],
+        avgRatingByGenre: stats?.avgRatingByGenre ?? [],
+        statuses: stats?.statuses ?? [],
+        directors: stats?.directors ?? [],
+      }),
+      [stats],
+    );
 
   return (
     <div className="space-y-6">

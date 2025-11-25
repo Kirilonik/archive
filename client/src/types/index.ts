@@ -134,4 +134,3 @@ export interface DetailedStats {
   statuses?: Array<{ status: string; count: number }>;
   directors?: Array<{ director: string; count: number }>;
 }
-

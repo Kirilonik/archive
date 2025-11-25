@@ -6,13 +6,6 @@
     "noEmit": false
   },
   "include": ["src"],
-  "exclude": [
-    "src/**/*.spec.ts",
-    "src/**/__tests__/**"
-  ],
-  "references": [
-    { "path": "../shared" }
-  ]
+  "exclude": ["src/**/*.spec.ts", "src/**/__tests__/**"],
+  "references": [{ "path": "../shared" }]
 }
-
-
