@@ -4,9 +4,8 @@
     "outDir": "dist",
     "rootDir": "src",
     "noEmit": false,
-    "composite": true
+    "moduleResolution": "bundler"
   },
   "include": ["src"],
-  "exclude": ["src/**/*.spec.ts", "src/**/__tests__/**"],
-  "references": [{ "path": "../shared" }]
+  "exclude": ["src/**/*.spec.ts", "src/**/__tests__/**"]
 }
