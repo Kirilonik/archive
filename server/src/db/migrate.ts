@@ -39,11 +39,31 @@ export async function runMigrations() {
       .filter((f) => f.endsWith('.sql'))
       .sort((a, b) => a.localeCompare(b));
 
+    // Нормализуем базовый путь для проверки безопасности
+    const baseDir = path.resolve(dir);
+
     for (const file of files) {
       const name = file;
+      
+      // Защита от path traversal: проверяем, что имя файла не содержит опасных символов
+      if (file.includes('..') || path.isAbsolute(file)) {
+        logger.warn({ file, dir }, '[migrate] Skipping file with suspicious path');
+        continue;
+      }
+      
+      // Безопасное формирование пути: используем path.join и проверяем, что результат внутри baseDir
+      const filePath = path.join(baseDir, file);
+      const resolvedPath = path.resolve(filePath);
+      
+      // Проверяем, что результирующий путь находится внутри базовой директории
+      if (!resolvedPath.startsWith(baseDir + path.sep) && resolvedPath !== baseDir) {
+        logger.warn({ file, resolvedPath, baseDir }, '[migrate] Skipping file outside base directory');
+        continue;
+      }
+      
       const { rows } = await client.query('SELECT 1 FROM migrations WHERE name=$1', [name]);
       if (rows.length) continue;
-      const sql = fs.readFileSync(path.join(dir, file), 'utf8');
+      const sql = fs.readFileSync(resolvedPath, 'utf8');
       if (!sql.trim()) {
         await client.query('INSERT INTO migrations(name) VALUES ($1)', [name]);
         continue;

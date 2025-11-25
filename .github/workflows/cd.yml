@@ -125,13 +125,18 @@ jobs:
             docker compose -f docker-compose.prod.yml down || true
             
             echo "🧹 Cleaning up old images..."
+            # Удаляем образы проекта перед сборкой
+            docker compose -f docker-compose.prod.yml down --rmi local --volumes --remove-orphans || true
+            # Удаляем образы по имени проекта
+            docker images | grep -E "media-archive-prod-(client|server)" | awk '{print $3}' | xargs -r docker rmi -f || true
+            # Общая очистка неиспользуемых ресурсов
             docker system prune -af --volumes || true
             
             echo "🔨 Building and starting containers..."
-            docker compose -f docker-compose.prod.yml build --no-cache
+            docker compose -f docker-compose.prod.yml build --no-cache --pull
             
             echo "🚀 Starting services..."
-            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
             
             echo "⏳ Waiting for services to be healthy..."
             sleep 10
