@@ -28,6 +28,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Триггер для автоматического обновления updated_at
+-- Удаляем триггер если существует (для идемпотентности миграции)
+DROP TRIGGER IF EXISTS youtube_oauth_tokens_updated_at_trigger ON youtube_oauth_tokens;
 CREATE TRIGGER youtube_oauth_tokens_updated_at_trigger
   BEFORE UPDATE ON youtube_oauth_tokens
   FOR EACH ROW
