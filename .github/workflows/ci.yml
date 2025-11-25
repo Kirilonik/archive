@@ -52,6 +52,13 @@ jobs:
       - name: Build shared package (for type checking)
         run: npm -w shared run build
 
+      - name: Reinstall dependencies to update workspace links
+        run: |
+          echo "Reinstalling dependencies to update workspace links..."
+          npm install
+          echo "Checking workspace resolution:"
+          npm ls @media/shared || echo "⚠️ @media/shared not found in workspace"
+
       - name: Type check shared package
         run: npx tsc -p shared/tsconfig.json --noEmit
 
