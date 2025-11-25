@@ -58,6 +58,12 @@ jobs:
           npm install
           echo "Checking workspace resolution:"
           npm ls @media/shared || echo "⚠️ @media/shared not found in workspace"
+          echo "Checking shared package.json:"
+          cat shared/package.json | grep -A 10 '"exports"'
+          echo "Checking if shared/dist/index.d.ts exists:"
+          test -f shared/dist/index.d.ts && echo "✅ shared/dist/index.d.ts exists" || echo "❌ shared/dist/index.d.ts not found"
+          echo "Checking server node_modules:"
+          ls -la server/node_modules/@media/ 2>/dev/null || echo "⚠️ server/node_modules/@media/ not found"
 
       - name: Type check shared package
         run: npx tsc -p shared/tsconfig.json --noEmit
