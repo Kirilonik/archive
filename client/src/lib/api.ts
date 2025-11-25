@@ -245,7 +245,9 @@ export async function apiJson<T>(input: RequestInfo | URL, init?: RequestInit): 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     const message = typeof error?.error === 'string' ? error.error : 'Неизвестная ошибка';
-    throw new Error(message);
+    const errorWithStatus = new Error(message) as Error & { status?: number };
+    errorWithStatus.status = response.status;
+    throw errorWithStatus;
   }
   return response.json() as Promise<T>;
 }

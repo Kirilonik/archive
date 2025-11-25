@@ -4,6 +4,7 @@ import { Home } from '../pages/Home';
 import { Profile } from '../pages/Profile';
 import { FilmDetails } from '../pages/FilmDetails';
 import { SeriesDetails } from '../pages/SeriesDetails';
+import { YouTube } from '../pages/YouTube';
 import { Header } from '../components/Header';
 import { Login } from '../pages/Login';
 import { Register } from '../pages/Register';
@@ -64,6 +65,7 @@ export function AppRouter() {
         <Route element={<ProtectedLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/youtube" element={<YouTube />} />
           <Route path="/films/:id" element={<FilmDetails />} />
           <Route path="/series/:id" element={<SeriesDetails />} />
         </Route>
