@@ -10,7 +10,7 @@
   "scripts": {
     "build": "npm -ws run build",
     "dev": "npm -w server run dev",
-    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx --ignore-pattern 'landing/**'",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "npm -w server run test",
@@ -37,6 +37,7 @@
     ],
     "**/*.{json,css,md,yml,yaml}": [
       "prettier --write"
-    ]
+    ],
+    "landing/**": []
   }
 }

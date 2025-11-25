@@ -16,7 +16,7 @@ const jsxA11yRecommendedRules = jsxA11yPlugin.configs.recommended?.rules ?? {};
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/build/**', '**/node_modules/**', 'eslint.config.js'],
+    ignores: ['**/dist/**', '**/build/**', '**/node_modules/**', 'eslint.config.js', 'landing/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
