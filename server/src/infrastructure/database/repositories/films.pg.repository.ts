@@ -36,55 +36,36 @@ export class FilmsPgRepository implements FilmsRepository {
       paramIndex++;
     }
 
-    const where = conditions.join(' AND ');
+    // Безопасное формирование WHERE через join параметризованных условий
+    // Все условия формируются статически в коде, значения параметризованы через $1, $2 и т.д.
+    const whereClause = conditions.join(' AND ');
     const limitParamIndex = paramIndex;
     const offsetParamIndex = paramIndex + 1;
 
+    // Базовые части SQL запроса (без интерполяции пользовательских данных)
+    const fromJoin = 'FROM user_films uf JOIN films_catalog fc ON uf.film_catalog_id = fc.id';
+    const wherePart = 'WHERE ' + whereClause;
+
     const [countResult, listResult] = await Promise.all([
       pool.query<{ total: number }>(
-        `SELECT COUNT(*)::int as total
-         FROM user_films uf
-         JOIN films_catalog fc ON uf.film_catalog_id = fc.id
-         WHERE ${where}`,
+        'SELECT COUNT(*)::int as total ' + fromJoin + ' ' + wherePart,
         values,
       ),
       pool.query<UserFilmRow>(
-        `SELECT 
-        uf.id as user_film_id,
-        uf.user_id,
-        uf.film_catalog_id,
-        fc.title,
-        fc.poster_url,
-        fc.poster_url_preview,
-        fc.logo_url,
-        fc.rating,
-        fc.rating_kinopoisk,
-        fc.year,
-        fc.description,
-        fc.kp_is_series,
-        fc.kp_episodes_count,
-        fc.kp_seasons_count,
-        fc.kp_id,
-        fc.web_url,
-        fc.director,
-        fc.budget,
-        fc.budget_currency_code,
-        fc.budget_currency_symbol,
-        fc.revenue,
-        fc.genres,
-        fc.actors,
-        fc.film_length,
-        uf.my_rating,
-        uf.opinion,
-        uf.status as user_status,
-        uf.created_at,
-        uf.updated_at
-      FROM user_films uf
-      JOIN films_catalog fc ON uf.film_catalog_id = fc.id
-      WHERE ${where}
-      ORDER BY uf.created_at DESC
-      LIMIT $${limitParamIndex}
-      OFFSET $${offsetParamIndex}`,
+        'SELECT ' +
+          'uf.id as user_film_id, uf.user_id, uf.film_catalog_id, fc.title, fc.poster_url, ' +
+          'fc.poster_url_preview, fc.logo_url, fc.rating, fc.rating_kinopoisk, fc.year, ' +
+          'fc.description, fc.kp_is_series, fc.kp_episodes_count, fc.kp_seasons_count, ' +
+          'fc.kp_id, fc.web_url, fc.director, fc.budget, fc.budget_currency_code, ' +
+          'fc.budget_currency_symbol, fc.revenue, fc.genres, fc.actors, fc.film_length, ' +
+          'uf.my_rating, uf.opinion, uf.status as user_status, uf.created_at, uf.updated_at ' +
+          fromJoin +
+          ' ' +
+          wherePart +
+          ' ORDER BY uf.created_at DESC LIMIT $' +
+          limitParamIndex +
+          ' OFFSET $' +
+          offsetParamIndex,
         [...values, params.limit, params.offset],
       ),
     ]);
@@ -189,46 +170,28 @@ export class FilmsPgRepository implements FilmsRepository {
     year: number | null,
     userId: number,
   ): Promise<UserFilmRow | null> {
+    // Безопасное формирование SQL с параметризованными значениями
     const params: unknown[] = [userId, title];
-    let sql = `
-      SELECT 
-        uf.id as user_film_id,
-        uf.user_id,
-        uf.film_catalog_id,
-        fc.title,
-        fc.poster_url,
-        fc.poster_url_preview,
-        fc.logo_url,
-        fc.rating,
-        fc.rating_kinopoisk,
-        fc.year,
-        fc.description,
-        fc.kp_is_series,
-        fc.kp_episodes_count,
-        fc.kp_seasons_count,
-        fc.kp_id,
-        fc.web_url,
-        fc.director,
-        fc.budget,
-        fc.budget_currency_code,
-        fc.budget_currency_symbol,
-        fc.revenue,
-        fc.genres,
-        fc.actors,
-        fc.film_length,
-        uf.my_rating,
-        uf.opinion,
-        uf.status as user_status,
-        uf.created_at,
-        uf.updated_at
-      FROM user_films uf
-      JOIN films_catalog fc ON uf.film_catalog_id = fc.id
-      WHERE uf.user_id = $1 AND LOWER(fc.title) = LOWER($2)
-    `;
+    const conditions = ['uf.user_id = $1', 'LOWER(fc.title) = LOWER($2)'];
+    
     if (typeof year === 'number') {
       params.push(year);
-      sql += ' AND COALESCE(fc.year, 0) = COALESCE($3, 0)';
+      conditions.push('COALESCE(fc.year, 0) = COALESCE($3, 0)');
     }
+    
+    // Безопасное формирование SQL с параметризованными значениями
+    const whereClause = conditions.join(' AND ');
+    const sql =
+      'SELECT ' +
+      'uf.id as user_film_id, uf.user_id, uf.film_catalog_id, fc.title, fc.poster_url, ' +
+      'fc.poster_url_preview, fc.logo_url, fc.rating, fc.rating_kinopoisk, fc.year, ' +
+      'fc.description, fc.kp_is_series, fc.kp_episodes_count, fc.kp_seasons_count, ' +
+      'fc.kp_id, fc.web_url, fc.director, fc.budget, fc.budget_currency_code, ' +
+      'fc.budget_currency_symbol, fc.revenue, fc.genres, fc.actors, fc.film_length, ' +
+      'uf.my_rating, uf.opinion, uf.status as user_status, uf.created_at, uf.updated_at ' +
+      'FROM user_films uf JOIN films_catalog fc ON uf.film_catalog_id = fc.id ' +
+      'WHERE ' +
+      whereClause;
     const { rows } = await pool.query<UserFilmRow>(sql, params);
     return rows[0] ?? null;
   }

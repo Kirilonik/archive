@@ -36,53 +36,36 @@ export class SeriesPgRepository implements SeriesRepository {
       paramIndex++;
     }
 
-    const where = conditions.join(' AND ');
+    // Безопасное формирование WHERE через join параметризованных условий
+    // Все условия формируются статически в коде, значения параметризованы через $1, $2 и т.д.
+    const whereClause = conditions.join(' AND ');
     const limitParamIndex = paramIndex;
     const offsetParamIndex = paramIndex + 1;
 
+    // Базовые части SQL запроса (без интерполяции пользовательских данных)
+    const fromJoin = 'FROM user_series us JOIN series_catalog sc ON us.series_catalog_id = sc.id';
+    const wherePart = 'WHERE ' + whereClause;
+
     const [countResult, listResult] = await Promise.all([
       pool.query<{ total: number }>(
-        `SELECT COUNT(*)::int as total
-         FROM user_series us
-         JOIN series_catalog sc ON us.series_catalog_id = sc.id
-         WHERE ${where}`,
+        'SELECT COUNT(*)::int as total ' + fromJoin + ' ' + wherePart,
         values,
       ),
       pool.query<UserSeriesRow>(
-        `SELECT 
-        us.id as user_series_id,
-        us.user_id,
-        us.series_catalog_id,
-        sc.title,
-        sc.poster_url,
-        sc.poster_url_preview,
-        sc.logo_url,
-        sc.rating,
-        sc.rating_kinopoisk,
-        sc.year,
-        sc.description,
-        sc.kp_is_series,
-        sc.kp_episodes_count,
-        sc.kp_seasons_count,
-        sc.kp_id,
-        sc.web_url,
-        sc.director,
-        sc.budget,
-        sc.revenue,
-        sc.genres,
-        sc.actors,
-        sc.film_length,
-        us.my_rating,
-        us.opinion,
-        us.status as user_status,
-        us.created_at,
-        us.updated_at
-      FROM user_series us
-      JOIN series_catalog sc ON us.series_catalog_id = sc.id
-      WHERE ${where}
-      ORDER BY us.created_at DESC
-      LIMIT $${limitParamIndex}
-      OFFSET $${offsetParamIndex}`,
+        'SELECT ' +
+          'us.id as user_series_id, us.user_id, us.series_catalog_id, sc.title, sc.poster_url, ' +
+          'sc.poster_url_preview, sc.logo_url, sc.rating, sc.rating_kinopoisk, sc.year, ' +
+          'sc.description, sc.kp_is_series, sc.kp_episodes_count, sc.kp_seasons_count, ' +
+          'sc.kp_id, sc.web_url, sc.director, sc.budget, sc.revenue, sc.genres, sc.actors, ' +
+          'sc.film_length, us.my_rating, us.opinion, us.status as user_status, ' +
+          'us.created_at, us.updated_at ' +
+          fromJoin +
+          ' ' +
+          wherePart +
+          ' ORDER BY us.created_at DESC LIMIT $' +
+          limitParamIndex +
+          ' OFFSET $' +
+          offsetParamIndex,
         [...values, params.limit, params.offset],
       ),
     ]);
@@ -182,44 +165,28 @@ export class SeriesPgRepository implements SeriesRepository {
     year: number | null,
     userId: number,
   ): Promise<UserSeriesRow | null> {
+    // Безопасное формирование SQL с параметризованными значениями
     const params: unknown[] = [userId, title];
-    let sql = `
-      SELECT 
-        us.id as user_series_id,
-        us.user_id,
-        us.series_catalog_id,
-        sc.title,
-        sc.poster_url,
-        sc.poster_url_preview,
-        sc.logo_url,
-        sc.rating,
-        sc.rating_kinopoisk,
-        sc.year,
-        sc.description,
-        sc.kp_is_series,
-        sc.kp_episodes_count,
-        sc.kp_seasons_count,
-        sc.kp_id,
-        sc.web_url,
-        sc.director,
-        sc.budget,
-        sc.revenue,
-        sc.genres,
-        sc.actors,
-        sc.film_length,
-        us.my_rating,
-        us.opinion,
-        us.status as user_status,
-        us.created_at,
-        us.updated_at
-      FROM user_series us
-      JOIN series_catalog sc ON us.series_catalog_id = sc.id
-      WHERE us.user_id = $1 AND LOWER(sc.title) = LOWER($2)
-    `;
+    const conditions = ['us.user_id = $1', 'LOWER(sc.title) = LOWER($2)'];
+    
     if (typeof year === 'number') {
       params.push(year);
-      sql += ' AND COALESCE(sc.year, 0) = COALESCE($3, 0)';
+      conditions.push('COALESCE(sc.year, 0) = COALESCE($3, 0)');
     }
+    
+    // Безопасное формирование SQL с параметризованными значениями
+    const whereClause = conditions.join(' AND ');
+    const sql =
+      'SELECT ' +
+      'us.id as user_series_id, us.user_id, us.series_catalog_id, sc.title, sc.poster_url, ' +
+      'sc.poster_url_preview, sc.logo_url, sc.rating, sc.rating_kinopoisk, sc.year, ' +
+      'sc.description, sc.kp_is_series, sc.kp_episodes_count, sc.kp_seasons_count, ' +
+      'sc.kp_id, sc.web_url, sc.director, sc.budget, sc.revenue, sc.genres, sc.actors, ' +
+      'sc.film_length, us.my_rating, us.opinion, us.status as user_status, ' +
+      'us.created_at, us.updated_at ' +
+      'FROM user_series us JOIN series_catalog sc ON us.series_catalog_id = sc.id ' +
+      'WHERE ' +
+      whereClause;
     const { rows } = await pool.query<UserSeriesRow>(sql, params);
     return rows[0] ?? null;
   }
