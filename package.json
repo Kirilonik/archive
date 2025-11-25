@@ -5,8 +5,7 @@
   "type": "module",
   "workspaces": [
     "client",
-    "server",
-    "shared"
+    "server"
   ],
   "scripts": {
     "build": "npm -ws run build",

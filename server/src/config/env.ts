@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { resolveAppConfig } from '@media/shared';
+import { resolveAppConfig } from './app-config.js';
 
 function parseCorsOrigins(value: string | undefined): string[] {
   if (!value) return [];

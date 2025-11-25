@@ -49,25 +49,6 @@ jobs:
         run: npm run lint
         continue-on-error: false
 
-      - name: Build shared package (for type checking)
-        run: npm -w shared run build
-
-      - name: Reinstall dependencies to update workspace links
-        run: |
-          echo "Reinstalling dependencies to update workspace links..."
-          npm install
-          echo "Checking workspace resolution:"
-          npm ls @media/shared || echo "⚠️ @media/shared not found in workspace"
-          echo "Checking shared package.json:"
-          cat shared/package.json | grep -A 10 '"exports"'
-          echo "Checking if shared/dist/index.d.ts exists:"
-          test -f shared/dist/index.d.ts && echo "✅ shared/dist/index.d.ts exists" || echo "❌ shared/dist/index.d.ts not found"
-          echo "Checking server node_modules:"
-          ls -la server/node_modules/@media/ 2>/dev/null || echo "⚠️ server/node_modules/@media/ not found"
-
-      - name: Type check shared package
-        run: npx tsc -p shared/tsconfig.json --noEmit
-
       - name: Type check server
         run: npx tsc -p server/tsconfig.json --noEmit
 
@@ -126,29 +107,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify workspace setup
-        run: |
-          echo "Checking workspace packages:"
-          npm ls @media/shared || echo "⚠️ @media/shared not found in node_modules"
-          ls -la server/node_modules/@media/ 2>/dev/null || echo "⚠️ @media directory not found"
-          echo "Checking shared package:"
-          ls -la shared/ || echo "shared directory not found"
-
-      - name: Build shared package
-        run: npm -w shared run build
-
-      - name: Verify shared build artifacts
-        run: |
-          echo "Checking shared/dist contents:"
-          ls -la shared/dist/ || echo "shared/dist not found"
-          test -f shared/dist/index.d.ts || (echo "ERROR: shared/dist/index.d.ts not found" && exit 1)
-          echo "✅ Shared declaration files found"
-          echo "Checking if TypeScript can find it:"
-          cat shared/dist/index.d.ts | head -3
-
-      - name: Reinstall to ensure workspace links
-        run: npm install
-
       - name: Build server
         run: npm -w server run build
 
@@ -186,41 +144,11 @@ jobs:
           lcov-file: ./server/coverage/lcov.info
           delete-old-comments: true
 
-  # Сборка shared пакета (нужен для server и client)
-  build-shared:
-    name: Build Shared Package
-    runs-on: ubuntu-latest
-    needs: [code-quality, test]
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build shared package
-        run: npm -w shared run build
-
-      - name: Upload shared build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: shared-build
-          path: shared/dist/**
-          retention-days: 7
-
   # Сборка приложений
   build:
     name: Build Applications
     runs-on: ubuntu-latest
-    needs: [build-shared]
+    needs: [code-quality, test]
     timeout-minutes: 20
 
     strategy:
@@ -239,27 +167,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Build shared package
-        run: npm -w shared run build
-
-      - name: Verify shared build artifacts
-        if: matrix.package == 'server'
-        run: |
-          echo "Checking shared/dist contents:"
-          ls -la shared/dist/ || echo "shared/dist not found"
-          test -f shared/dist/index.d.ts || (echo "ERROR: shared/dist/index.d.ts not found" && exit 1)
-          echo "✅ Shared declaration files found"
-          echo "Checking shared package.json:"
-          cat shared/package.json | grep -A 5 '"exports"'
-
-      - name: Reinstall dependencies to update workspace links
-        if: matrix.package == 'server'
-        run: |
-          echo "Reinstalling dependencies to update workspace links..."
-          npm install
-          echo "Checking workspace resolution:"
-          npm ls @media/shared || echo "⚠️ @media/shared not found in workspace"
 
       - name: Build ${{ matrix.package }}
         run: npm -w ${{ matrix.package }} run build

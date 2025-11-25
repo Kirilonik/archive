@@ -59,3 +59,4 @@ export function resolveAppConfig(env: EnvRecord): AppConfig {
     frontendUrl,
   };
 }
+
