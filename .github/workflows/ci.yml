@@ -49,6 +49,9 @@ jobs:
         run: npm run lint
         continue-on-error: false
 
+      - name: Build shared package (for type checking)
+        run: npm -w shared run build
+
       - name: Type check shared package
         run: npx tsc -p shared/tsconfig.json --noEmit
 
