@@ -108,50 +108,37 @@ jobs:
             set -e
             echo "📂 Navigating to project directory..."
             cd $DEPLOY_PATH || { echo "❌ Directory not found: $DEPLOY_PATH"; exit 1; }
-            
+
             echo "📥 Fetching latest changes..."
             git fetch origin
-            
+
             echo "🔄 Checking out branch: ${{ github.ref_name }}"
             BRANCH_NAME="${{ github.ref_name }}"
             git checkout \$BRANCH_NAME || git checkout -b \$BRANCH_NAME origin/\$BRANCH_NAME
-            
+
             echo "⬇️ Pulling latest code..."
             git pull origin \$BRANCH_NAME
-            
+
             echo "📋 Current commit: $(git rev-parse HEAD)"
             echo "📝 Commit message: $(git log -1 --pretty=%B)"
-            
-            echo "🐳 Stopping existing containers..."
-            docker compose -f docker-compose.prod.yml down || true
-            
+
             echo "📊 Checking disk space..."
             df -h / || true
             df -h /var/lib/docker || true
-            
-            echo "🧹 Cleaning up old images and containers..."
-            # Удаляем образы проекта перед сборкой
-            docker compose -f docker-compose.prod.yml down --rmi local --volumes --remove-orphans || true
-            # Удаляем образы по имени проекта
-            docker images | grep -E "media-archive-prod-(client|server)" | awk '{print $3}' | xargs -r docker rmi -f || true
-            # Удаляем все остановленные контейнеры
-            docker container prune -f || true
-            # Общая очистка неиспользуемых ресурсов
-            docker system prune -af --volumes || true
-            
+
             echo "🔧 Checking Docker daemon status..."
             docker info > /dev/null 2>&1 || {
               echo "⚠️ Docker daemon issue detected, attempting to restart..."
               sudo systemctl restart docker || true
               sleep 5
             }
-            
-            echo "🔨 Building and starting containers..."
-            # Пробуем собрать с retry на случай временных проблем с Docker
+
+            echo "🔨 Building new images (old containers continue running)..."
+            # Собираем новые образы БЕЗ остановки старых контейнеров для zero-downtime
             MAX_BUILD_RETRIES=3
             BUILD_RETRY=0
             while [ $BUILD_RETRY -lt $MAX_BUILD_RETRIES ]; do
-              if docker compose -f docker-compose.prod.yml build --no-cache --pull; then
+              if docker compose -f docker-compose.prod.yml build --pull; then
                 echo "✅ Build successful"
                 break
               else
@@ -159,8 +146,6 @@ jobs:
                 if [ $BUILD_RETRY -lt $MAX_BUILD_RETRIES ]; then
                   echo "⚠️ Build failed, retrying... ($BUILD_RETRY/$MAX_BUILD_RETRIES)"
                   sleep 10
-                  # Дополнительная очистка перед повтором
-                  docker system prune -af || true
                 else
                   echo "❌ Build failed after $MAX_BUILD_RETRIES attempts"
                   docker compose -f docker-compose.prod.yml logs || true
@@ -168,12 +153,45 @@ jobs:
                 fi
               fi
             done
+
+            echo "🔄 Rolling update: Updating server (zero-downtime)..."
+            # Обновляем server с проверкой health - старый продолжит работать пока новый не станет healthy
+            docker compose -f docker-compose.prod.yml up -d --no-deps server
             
-            echo "🚀 Starting services..."
-            docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
-            
-            echo "⏳ Waiting for services to be healthy..."
-            sleep 10
+            echo "⏳ Waiting for new server to be healthy..."
+            MAX_HEALTH_RETRIES=30
+            HEALTH_RETRY=0
+            SERVER_HEALTHY=false
+            while [ $HEALTH_RETRY -lt $MAX_HEALTH_RETRIES ]; do
+              if docker compose -f docker-compose.prod.yml ps server | grep -q "healthy\|Up"; then
+                # Дополнительная проверка через health endpoint
+                if curl -f -s http://localhost:4000/api/health > /dev/null 2>&1; then
+                  echo "✅ New server is healthy"
+                  SERVER_HEALTHY=true
+                  break
+                fi
+              fi
+              HEALTH_RETRY=$((HEALTH_RETRY + 1))
+              echo "⏳ Waiting for server health... ($HEALTH_RETRY/$MAX_HEALTH_RETRIES)"
+              sleep 2
+            done
+
+            if [ "$SERVER_HEALTHY" != "true" ]; then
+              echo "❌ New server failed to become healthy, rolling back..."
+              docker compose -f docker-compose.prod.yml up -d --no-deps server || true
+              exit 1
+            fi
+
+            echo "🔄 Rolling update: Updating client..."
+            # Обновляем client после того как server готов
+            docker compose -f docker-compose.prod.yml up -d --no-deps client
+
+            echo "⏳ Waiting for new client to be healthy..."
+            sleep 5
+
+            echo "🧹 Cleaning up old images (after successful deployment)..."
+            # Очищаем старые образы только после успешного деплоя
+            docker image prune -f || true
           ENDSSH
 
       - name: Health check
@@ -192,14 +210,14 @@ jobs:
             set -e
             echo "📂 Navigating to project directory..."
             cd $DEPLOY_PATH || { echo "❌ Directory not found: $DEPLOY_PATH"; exit 1; }
-            
+
             echo "📊 Container status:"
             docker compose -f docker-compose.prod.yml ps
-            
+
             echo "🔍 Checking container health..."
             MAX_RETRIES=10
             RETRY_COUNT=0
-            
+
             while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
               if docker compose -f docker-compose.prod.yml ps | grep -q "healthy\|Up"; then
                 echo "✅ Containers are running"
@@ -209,7 +227,7 @@ jobs:
               echo "⏳ Waiting for containers... ($RETRY_COUNT/$MAX_RETRIES)"
               sleep 5
             done
-            
+
             if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
               echo "❌ Containers failed to start properly"
               docker compose -f docker-compose.prod.yml logs --tail=50
