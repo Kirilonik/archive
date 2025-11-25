@@ -194,6 +194,7 @@ export function Login() {
                   size="large"
                   auto_select={false}
                   use_fedcm_for_prompt={false}
+                  ux_mode="popup"
                 />
               </div>
             </div>

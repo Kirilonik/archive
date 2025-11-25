@@ -62,11 +62,11 @@ export class YouTubeController {
 
       // Редирект на фронтенд с успехом
       const frontendUrl = env.FRONTEND_URL || 'http://localhost:5173';
-      res.redirect(`${frontendUrl}/profile?youtube_connected=true`);
+      res.redirect(`${frontendUrl}/app/profile?youtube_connected=true`);
     } catch (error) {
       logger.error({ err: error }, 'Error handling YouTube OAuth callback');
       const frontendUrl = env.FRONTEND_URL || 'http://localhost:5173';
-      res.redirect(`${frontendUrl}/profile?youtube_error=true`);
+      res.redirect(`${frontendUrl}/app/profile?youtube_error=true`);
     }
   };
 
