@@ -5,12 +5,6 @@ WORKDIR /work
 # Общая база TS
 COPY tsconfig.base.json ./tsconfig.base.json
 
-# Устанавливаем зависимости и собираем shared
-COPY shared/package.json shared/tsconfig.json ./shared/
-RUN cd shared && npm ci || npm install
-COPY shared/src ./shared/src
-RUN cd shared && npm run build || npx typescript -p tsconfig.json
-
 # Устанавливаем зависимости и собираем server
 COPY server/package.json server/tsconfig.json ./server/
 RUN cd server && npm ci || npm install

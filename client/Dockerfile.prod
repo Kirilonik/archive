@@ -3,15 +3,8 @@ FROM node:20-alpine AS builder
 
 WORKDIR /work
 
-# Копируем shared для типов
+# Копируем tsconfig.base.json
 COPY tsconfig.base.json ./tsconfig.base.json
-COPY shared ./shared
-
-# Устанавливаем зависимости и собираем shared
-COPY shared/package.json shared/tsconfig.json ./shared/
-RUN cd shared && npm ci || npm install
-COPY shared/src ./shared/src
-RUN cd shared && npm run build || npx typescript -p tsconfig.json
 
 # Устанавливаем зависимости клиента
 COPY client/package.json client/package-lock.json* ./client/

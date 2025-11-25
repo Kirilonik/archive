@@ -5,20 +5,12 @@ WORKDIR /work
 # Общая база TS
 COPY tsconfig.base.json ./tsconfig.base.json
 
-# Устанавливаем зависимости shared
-COPY shared/package.json shared/tsconfig.json ./shared/
-RUN cd shared && npm ci || npm install
-
 # Устанавливаем зависимости server
 COPY server/package.json server/tsconfig.json ./server/
 RUN cd server && npm ci || npm install
 
 # Копируем исходники (будут перезаписаны volume mount, но нужны для первой сборки)
-COPY shared/src ./shared/src
 COPY server/src ./server/src
-
-# Собираем shared один раз (для типов)
-RUN cd shared && npm run build || npx typescript -p tsconfig.json
 
 # Копируем скрипт запуска
 COPY server/start-dev.sh /work/server/start-dev.sh

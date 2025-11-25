@@ -1,9 +1,7 @@
 FROM node:20-alpine
 
-# Структура с shared для TS типов на этапе tsc
 WORKDIR /work
 COPY tsconfig.base.json ./tsconfig.base.json
-COPY shared ./shared
 
 COPY client/package.json client/package-lock.json* ./client/
 RUN cd client && npm ci || npm install
