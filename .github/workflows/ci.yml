@@ -238,6 +238,10 @@ jobs:
           test -f shared/dist/index.d.ts || (echo "ERROR: shared/dist/index.d.ts not found" && exit 1)
           echo "✅ Shared declaration files found"
 
+      - name: Reinstall dependencies to update workspace links
+        if: matrix.package == 'server'
+        run: npm install
+
       - name: Build ${{ matrix.package }}
         run: npm -w ${{ matrix.package }} run build
 
