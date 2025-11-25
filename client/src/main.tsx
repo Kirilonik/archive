@@ -6,24 +6,31 @@ import { AppRouter } from './routes/AppRouter';
 import './styles/globals.css';
 import { AuthProvider } from './context/AuthContext';
 
-const defaultGoogleClientId =
-  '466743662626-7c6hg0i82n1fmnuir2niu1pof4qbhvui.apps.googleusercontent.com';
 const envGoogleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined)?.trim();
-const googleClientId =
-  envGoogleClientId && envGoogleClientId.length > 0 ? envGoogleClientId : defaultGoogleClientId;
+const googleClientId = envGoogleClientId && envGoogleClientId.length > 0 ? envGoogleClientId : null;
 
-if (!googleClientId || googleClientId.length === 0) {
-  console.error('Google Client ID не настроен! Google OAuth не будет работать.');
+if (!googleClientId) {
+  console.warn(
+    'Google Client ID не настроен (VITE_GOOGLE_CLIENT_ID). Google OAuth не будет работать.',
+  );
 }
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+const App = () => (
   <React.StrictMode>
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <GoogleOAuthProvider clientId={googleClientId}>
+      {googleClientId ? (
+        <GoogleOAuthProvider clientId={googleClientId}>
+          <AuthProvider>
+            <AppRouter />
+          </AuthProvider>
+        </GoogleOAuthProvider>
+      ) : (
         <AuthProvider>
           <AppRouter />
         </AuthProvider>
-      </GoogleOAuthProvider>
+      )}
     </BrowserRouter>
-  </React.StrictMode>,
+  </React.StrictMode>
 );
+
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(<App />);

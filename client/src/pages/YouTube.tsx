@@ -118,7 +118,16 @@ export function YouTube() {
       window.location.href = data.authUrl;
     } catch (error: any) {
       console.error('Error getting auth URL:', error);
-      toast.error('Ошибка получения URL авторизации');
+      const status = error?.status;
+      if (status === 401 || status === 403) {
+        toast.error('Необходима авторизация. Пожалуйста, войдите в систему.');
+        // Перенаправляем на страницу входа через небольшую задержку
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500);
+      } else {
+        toast.error('Ошибка получения URL авторизации. Попробуйте позже.');
+      }
       setConnecting(false);
     }
   };

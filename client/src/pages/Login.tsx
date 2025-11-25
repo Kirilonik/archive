@@ -5,6 +5,8 @@ import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { PasswordInput } from '../components/PasswordInput';
 
+const googleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined)?.trim();
+
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -120,81 +122,83 @@ export function Login() {
             </Link>
           </div>
         </div>
-        <div className="mt-6 flex justify-center">
-          <div
-            ref={googleContainerRef}
-            className="relative flex h-11 w-11 items-center justify-center cursor-pointer"
-            title="Войти через Google"
-            onClick={handleContainerClick}
-          >
-            {/* Кастомная кнопка - визуальная обертка под GoogleLogin, не блокирует клики */}
-            <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-              <div className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white text-black shadow hover:shadow-lg disabled:opacity-50">
-                {googleLoading ? (
-                  <div className="h-6 w-6 border-2 border-gray-300 border-t-black rounded-full animate-spin" />
-                ) : (
-                  <svg viewBox="0 0 48 48" className="h-6 w-6">
-                    <path
-                      fill="#EA4335"
-                      d="M24 9.5c3.54 0 6.71 1.23 9.21 3.25l6.85-6.85C35.88 2.38 30.26 0 24 0 14.7 0 6.88 5.4 3.05 13.26l7.98 6.19C12.7 13.57 17.9 9.5 24 9.5z"
-                    />
-                    <path
-                      fill="#4285F4"
-                      d="M46.5 24.5c0-1.59-.15-3.13-.44-4.62H24v9.27h12.65c-.55 2.96-2.24 5.47-4.77 7.16l7.47 5.8C43.87 38.19 46.5 31.88 46.5 24.5z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M11.03 28.45c-.5-1.48-.79-3.06-.79-4.7s.29-3.22.79-4.7l-7.98-6.19C1.39 16.17 0 20.44 0 24.75s1.39 8.58 3.05 11.89l7.98-6.19z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M24 47.5c6.26 0 11.53-2.07 15.38-5.62l-7.47-5.8c-2.07 1.39-4.73 2.2-7.91 2.2-6.1 0-11.3-4.07-13.17-9.65l-7.98 6.19C6.88 42.6 14.7 47.5 24 47.5z"
-                    />
-                    <path fill="none" d="M0 0h48v48H0z" />
-                  </svg>
-                )}
+        {googleClientId && (
+          <div className="mt-6 flex justify-center">
+            <div
+              ref={googleContainerRef}
+              className="relative flex h-11 w-11 items-center justify-center cursor-pointer"
+              title="Войти через Google"
+              onClick={handleContainerClick}
+            >
+              {/* Кастомная кнопка - визуальная обертка под GoogleLogin, не блокирует клики */}
+              <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                <div className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white text-black shadow hover:shadow-lg disabled:opacity-50">
+                  {googleLoading ? (
+                    <div className="h-6 w-6 border-2 border-gray-300 border-t-black rounded-full animate-spin" />
+                  ) : (
+                    <svg viewBox="0 0 48 48" className="h-6 w-6">
+                      <path
+                        fill="#EA4335"
+                        d="M24 9.5c3.54 0 6.71 1.23 9.21 3.25l6.85-6.85C35.88 2.38 30.26 0 24 0 14.7 0 6.88 5.4 3.05 13.26l7.98 6.19C12.7 13.57 17.9 9.5 24 9.5z"
+                      />
+                      <path
+                        fill="#4285F4"
+                        d="M46.5 24.5c0-1.59-.15-3.13-.44-4.62H24v9.27h12.65c-.55 2.96-2.24 5.47-4.77 7.16l7.47 5.8C43.87 38.19 46.5 31.88 46.5 24.5z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M11.03 28.45c-.5-1.48-.79-3.06-.79-4.7s.29-3.22.79-4.7l-7.98-6.19C1.39 16.17 0 20.44 0 24.75s1.39 8.58 3.05 11.89l7.98-6.19z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M24 47.5c6.26 0 11.53-2.07 15.38-5.62l-7.47-5.8c-2.07 1.39-4.73 2.2-7.91 2.2-6.1 0-11.3-4.07-13.17-9.65l-7.98 6.19C6.88 42.6 14.7 47.5 24 47.5z"
+                      />
+                      <path fill="none" d="M0 0h48v48H0z" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+              {/* GoogleLogin - поверх кастомной кнопки, полностью кликабелен и видим (но прозрачен) */}
+              <div className="absolute inset-0" style={{ zIndex: 20, cursor: 'pointer' }}>
+                <GoogleLogin
+                  containerProps={{
+                    style: {
+                      width: '100%',
+                      height: '100%',
+                      opacity: 0.01, // Практически невидим, но видимый достаточно для получения событий
+                      pointerEvents: 'auto',
+                    },
+                  }}
+                  onSuccess={async (credentialResponse) => {
+                    if (!credentialResponse.credential) {
+                      toast.error('Не удалось получить токен Google');
+                      return;
+                    }
+                    try {
+                      setGoogleLoading(true);
+                      await loginWithGoogle(credentialResponse.credential);
+                      navigate('/');
+                    } catch (error: any) {
+                      toast.error(error?.message ?? 'Ошибка входа через Google');
+                    } finally {
+                      setGoogleLoading(false);
+                    }
+                  }}
+                  onError={() => {
+                    if (!googleLoading) {
+                      toast.error('Вход через Google отменён');
+                    }
+                  }}
+                  shape="circle"
+                  theme="outline"
+                  size="large"
+                  auto_select={false}
+                  use_fedcm_for_prompt={false}
+                />
               </div>
             </div>
-            {/* GoogleLogin - поверх кастомной кнопки, полностью кликабелен и видим (но прозрачен) */}
-            <div className="absolute inset-0" style={{ zIndex: 20, cursor: 'pointer' }}>
-              <GoogleLogin
-                containerProps={{
-                  style: {
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0.01, // Практически невидим, но видимый достаточно для получения событий
-                    pointerEvents: 'auto',
-                  },
-                }}
-                onSuccess={async (credentialResponse) => {
-                  if (!credentialResponse.credential) {
-                    toast.error('Не удалось получить токен Google');
-                    return;
-                  }
-                  try {
-                    setGoogleLoading(true);
-                    await loginWithGoogle(credentialResponse.credential);
-                    navigate('/');
-                  } catch (error: any) {
-                    toast.error(error?.message ?? 'Ошибка входа через Google');
-                  } finally {
-                    setGoogleLoading(false);
-                  }
-                }}
-                onError={() => {
-                  if (!googleLoading) {
-                    toast.error('Вход через Google отменён');
-                  }
-                }}
-                shape="circle"
-                theme="outline"
-                size="large"
-                auto_select={false}
-                use_fedcm_for_prompt={false}
-              />
-            </div>
           </div>
-        </div>
+        )}
       </div>
     </main>
   );
