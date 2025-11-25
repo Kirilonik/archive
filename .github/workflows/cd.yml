@@ -104,19 +104,20 @@ jobs:
           VPS_SSH_PORT: ${{ steps.ssh_port.outputs.port }}
           DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
         run: |
-          ssh -p $VPS_SSH_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
+          ssh -p $VPS_SSH_PORT $VPS_USER@$VPS_HOST << ENDSSH
             set -e
             echo "📂 Navigating to project directory..."
-            cd ${{ env.DEPLOY_PATH }} || { echo "❌ Directory not found: ${{ env.DEPLOY_PATH }}"; exit 1; }
+            cd $DEPLOY_PATH || { echo "❌ Directory not found: $DEPLOY_PATH"; exit 1; }
             
             echo "📥 Fetching latest changes..."
             git fetch origin
             
             echo "🔄 Checking out branch: ${{ github.ref_name }}"
-            git checkout ${{ github.ref_name }} || git checkout -b ${{ github.ref_name }} origin/${{ github.ref_name }}
+            BRANCH_NAME="${{ github.ref_name }}"
+            git checkout \$BRANCH_NAME || git checkout -b \$BRANCH_NAME origin/\$BRANCH_NAME
             
             echo "⬇️ Pulling latest code..."
-            git pull origin ${{ github.ref_name }}
+            git pull origin \$BRANCH_NAME
             
             echo "📋 Current commit: $(git rev-parse HEAD)"
             echo "📝 Commit message: $(git log -1 --pretty=%B)"
