@@ -1,19 +1,69 @@
-name: CI
+name: CI Pipeline
 
 on:
   push:
     branches:
       - main
       - master
+      - develop
   pull_request:
+    branches:
+      - main
+      - master
+      - develop
 
+# Отменяем предыдущие запуски для того же коммита
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  build-and-test:
+  # Проверка кода (lint, format, type-check)
+  code-quality:
+    name: Code Quality Checks
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check code formatting
+        run: npm run format:check || (echo "❌ Code formatting check failed. Run 'npm run format' to fix." && exit 1)
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: false
+
+      - name: Type check shared package
+        run: npx tsc -p shared/tsconfig.json --noEmit
+
+      - name: Type check server
+        run: npx tsc -p server/tsconfig.json --noEmit
+
+      - name: Type check client
+        run: npx tsc -p client/tsconfig.json --noEmit
+
+  # Тестирование
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
     services:
       postgres:
         image: postgres:16
@@ -28,6 +78,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+
     env:
       NODE_ENV: test
       PORT: 4000
@@ -38,12 +89,14 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: postgres
       PGDATABASE: media_archive_test
-      JWT_SECRET: test-access-secret
-      JWT_REFRESH_SECRET: test-refresh-secret
+      JWT_SECRET: test-access-secret-min-32-characters-long-for-testing
+      JWT_REFRESH_SECRET: test-refresh-secret-min-32-characters-long-for-testing
       ACCESS_TOKEN_TTL_MINUTES: 15
       REFRESH_TOKEN_TTL_DAYS: 30
       KINOPOISK_API_KEY: test-key
       GOOGLE_CLIENT_ID: test-client-id.apps.googleusercontent.com
+      NODE_OPTIONS: --experimental-vm-modules
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -51,8 +104,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -60,20 +113,187 @@ jobs:
       - name: Build shared package
         run: npm -w shared run build
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Test
-        env:
-          NODE_OPTIONS: --experimental-vm-modules
-        run: npm run test
-
-      - name: Build server
-        run: npm -w server run build
-
       - name: Run database migrations
-        run: node server/dist/db/migrate.js
+        run: |
+          npm -w server run build
+          node server/dist/db/migrate.js
+        continue-on-error: false
 
-      - name: Build client
-        run: npm -w client run build
+      - name: Run tests with coverage
+        run: npm run test -- --coverage --coverageReporters=text --coverageReporters=lcov --coverageReporters=json-summary
 
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./server/coverage/lcov.info
+          flags: server
+          name: server-coverage
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload coverage to artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: |
+            server/coverage/**
+            !server/coverage/**.log
+          retention-days: 30
+
+      - name: Coverage comment
+        if: github.event_name == 'pull_request'
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          lcov-file: ./server/coverage/lcov.info
+          delete-old-comments: true
+
+  # Сборка приложений
+  build:
+    name: Build Applications
+    runs-on: ubuntu-latest
+    needs: [code-quality, test]
+    timeout-minutes: 20
+    
+    strategy:
+      matrix:
+        package: [shared, server, client]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared package (if needed)
+        if: matrix.package != 'shared'
+        run: npm -w shared run build
+
+      - name: Build ${{ matrix.package }}
+        run: npm -w ${{ matrix.package }} run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.package }}-build
+          path: |
+            ${{ matrix.package }}/dist/**
+            ${{ matrix.package == 'shared' && 'shared/dist/**' || format('{0}/dist/**', matrix.package) }}
+          retention-days: 7
+          if-no-files-found: warn
+
+  # Проверка безопасности зависимостей
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Check for known vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Check for secrets in code
+        uses: trufflesecurity/trufflehog@main
+        continue-on-error: true
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+
+  # Сборка Docker образов (только для main/master)
+  docker-build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    timeout-minutes: 30
+    
+    strategy:
+      matrix:
+        service: [server, client]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./${{ matrix.service }}/Dockerfile${{ matrix.service == 'client' && '.prod' || '' }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            API_BASE_URL=${{ secrets.API_BASE_URL || 'http://localhost:4000' }}
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID || '' }}
+
+  # Итоговый статус
+  ci-status:
+    name: CI Status
+    runs-on: ubuntu-latest
+    needs: [code-quality, test, build, security, docker-build]
+    if: always()
+    
+    steps:
+      - name: Check CI status
+        run: |
+          if [ "${{ needs.code-quality.result }}" != "success" ] || \
+             [ "${{ needs.test.result }}" != "success" ] || \
+             [ "${{ needs.build.result }}" != "success" ]; then
+            echo "❌ CI Pipeline failed"
+            exit 1
+          fi
+          echo "✅ CI Pipeline passed successfully"

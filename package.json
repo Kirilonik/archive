@@ -13,6 +13,7 @@
     "dev": "npm -w server run dev",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "npm -w server run test"
   },
   "devDependencies": {

@@ -1,0 +1,261 @@
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types:
+      - completed
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  DEPLOY_PATH: /opt/media-archive/archive
+
+jobs:
+  # Проверка, что CI прошел успешно
+  check-ci:
+    name: Check CI Status
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Verify CI passed
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" != "success" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            echo "❌ CI Pipeline did not pass. Deployment cancelled."
+            exit 1
+          fi
+          echo "✅ CI Pipeline passed. Proceeding with deployment."
+
+  # Деплой на сервер
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: check-ci
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ secrets.FRONTEND_URL || 'https://your-domain.com' }}
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.VPS_SSH_PORT || 22 }} -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Display deployment info
+        run: |
+          echo "🚀 Starting deployment..."
+          echo "📦 Branch: ${{ github.ref_name }}"
+          echo "🔖 Commit: ${{ github.sha }}"
+          echo "👤 Author: ${{ github.actor }}"
+          echo "🌐 Environment: ${{ github.event.inputs.environment || 'production' }}"
+          echo "📍 Server: ${{ secrets.VPS_HOST }}"
+
+      - name: Deploy to server
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT || 22 }}
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+        run: |
+          ssh -p $VPS_SSH_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
+            set -e
+            echo "📂 Navigating to project directory..."
+            cd ${{ env.DEPLOY_PATH }} || { echo "❌ Directory not found: ${{ env.DEPLOY_PATH }}"; exit 1; }
+            
+            echo "📥 Fetching latest changes..."
+            git fetch origin
+            
+            echo "🔄 Checking out branch: ${{ github.ref_name }}"
+            git checkout ${{ github.ref_name }} || git checkout -b ${{ github.ref_name }} origin/${{ github.ref_name }}
+            
+            echo "⬇️ Pulling latest code..."
+            git pull origin ${{ github.ref_name }}
+            
+            echo "📋 Current commit: $(git rev-parse HEAD)"
+            echo "📝 Commit message: $(git log -1 --pretty=%B)"
+            
+            echo "🐳 Stopping existing containers..."
+            docker compose -f docker-compose.prod.yml down || true
+            
+            echo "🧹 Cleaning up old images..."
+            docker system prune -af --volumes || true
+            
+            echo "🔨 Building and starting containers..."
+            docker compose -f docker-compose.prod.yml build --no-cache
+            
+            echo "🚀 Starting services..."
+            docker compose -f docker-compose.prod.yml up -d
+            
+            echo "⏳ Waiting for services to be healthy..."
+            sleep 10
+          ENDSSH
+
+      - name: Health check
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT || 22 }}
+          API_URL: ${{ secrets.API_BASE_URL || 'http://localhost:4000' }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL || 'http://localhost:8080' }}
+        run: |
+          echo "🏥 Performing health checks..."
+          
+          # Проверка контейнеров
+          ssh -p $VPS_SSH_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
+            echo "📊 Container status:"
+            docker compose -f docker-compose.prod.yml ps
+            
+            echo "🔍 Checking container health..."
+            MAX_RETRIES=10
+            RETRY_COUNT=0
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if docker compose -f docker-compose.prod.yml ps | grep -q "healthy\|Up"; then
+                echo "✅ Containers are running"
+                break
+              fi
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "⏳ Waiting for containers... ($RETRY_COUNT/$MAX_RETRIES)"
+              sleep 5
+            done
+            
+            if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+              echo "❌ Containers failed to start properly"
+              docker compose -f docker-compose.prod.yml logs --tail=50
+              exit 1
+            fi
+          ENDSSH
+          
+          # Проверка API
+          echo "🔌 Checking API health endpoint..."
+          API_HEALTH_URL="${API_URL}/api/health"
+          MAX_RETRIES=15
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if curl -f -s "$API_HEALTH_URL" > /dev/null 2>&1; then
+              echo "✅ API health check passed"
+              curl -s "$API_HEALTH_URL" || echo "Health check response received"
+              break
+            fi
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "⏳ Waiting for API... ($RETRY_COUNT/$MAX_RETRIES)"
+            sleep 3
+          done
+          
+          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo "❌ API health check failed"
+            exit 1
+          fi
+          
+          # Проверка фронтенда
+          echo "🌐 Checking frontend..."
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if curl -f -s "$FRONTEND_URL" > /dev/null 2>&1; then
+              echo "✅ Frontend is accessible"
+              break
+            fi
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "⏳ Waiting for frontend... ($RETRY_COUNT/$MAX_RETRIES)"
+            sleep 3
+          done
+          
+          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo "⚠️ Frontend check failed (non-critical)"
+          fi
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | ${{ github.event.inputs.environment || 'production' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Author** | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Time** | $(date -u +'%Y-%m-%d %H:%M:%S UTC') |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ **Deployment completed successfully**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🌐 **Frontend**: ${{ secrets.FRONTEND_URL || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+            echo "🔌 **API**: ${{ secrets.API_BASE_URL || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Deployment failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Please check the logs above for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Rollback on failure
+        if: failure()
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT || 22 }}
+        run: |
+          echo "⚠️ Deployment failed. Attempting rollback..."
+          ssh -p $VPS_SSH_PORT $VPS_USER@$VPS_HOST << 'ENDSSH' || true
+            cd ${{ env.DEPLOY_PATH }}
+            echo "🔄 Rolling back to previous commit..."
+            git reset --hard HEAD~1 || git reset --hard origin/${{ github.ref_name }} || true
+            echo "🔨 Rebuilding containers..."
+            docker compose -f docker-compose.prod.yml up -d --build || true
+            echo "✅ Rollback completed"
+          ENDSSH
+
+  # Уведомления
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always()
+    
+    steps:
+      - name: Deployment notification
+        run: |
+          STATUS="${{ needs.deploy.result }}"
+          EMOJI="✅"
+          if [ "$STATUS" != "success" ]; then
+            EMOJI="❌"
+          fi
+          
+          echo "$EMOJI Deployment $STATUS"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
+          
+          # Здесь можно добавить отправку в Telegram, Slack, Email и т.д.
+          # Пример для Telegram:
+          # curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          #   -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          #   -d "text=$EMOJI Deployment $STATUS%0ABranch: ${{ github.ref_name }}%0ACommit: ${{ github.sha }}"
+
