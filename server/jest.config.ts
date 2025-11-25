@@ -10,8 +10,6 @@ const config: Config = {
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^@media/shared$': '<rootDir>/../shared/dist/index.js',
-    '^@media/shared/(.*)$': '<rootDir>/../shared/dist/$1',
   },
   // setupFiles выполняется ДО загрузки тестов, но ПОСЛЕ установки тестового окружения
   // Это позволяет установить переменные окружения до импорта модулей
