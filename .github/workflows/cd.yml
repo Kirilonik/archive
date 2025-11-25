@@ -156,12 +156,16 @@ jobs:
 
             echo "🔄 Rolling update: Updating server (zero-downtime)..."
             # Обновляем server с проверкой health - старый продолжит работать пока новый не станет healthy
-            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans server
+            if ! docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans server; then
+              echo "❌ Ошибка при обновлении server"
+              docker compose -f docker-compose.prod.yml logs server --tail=50
+              exit 1
+            fi
 
             echo "⏳ Waiting for new server to be healthy..."
             # Даем время серверу запуститься
             sleep 5
-            
+
             MAX_HEALTH_RETRIES=40
             HEALTH_RETRY=0
             SERVER_HEALTHY=0
@@ -176,9 +180,9 @@ jobs:
               if [ $((HEALTH_RETRY % 5)) -eq 0 ]; then
                 echo "⏳ Waiting for server health... ($HEALTH_RETRY/$MAX_HEALTH_RETRIES)"
                 echo "📊 Server status:"
-                docker compose -f docker-compose.prod.yml ps server 2>/dev/null || true
+                docker compose -f docker-compose.prod.yml ps server 2>/dev/null || echo "⚠️ Could not get server status"
               fi
-              sleep 2
+              sleep 2 || true
             done
 
             if [ $SERVER_HEALTHY -eq 0 ]; then
@@ -202,7 +206,7 @@ jobs:
 
             echo "⏳ Waiting for new client to be ready..."
             sleep 5
-            
+
             # Проверяем что client доступен
             if curl -f -s http://localhost:8080/ > /dev/null 2>&1; then
               echo "✅ Client is ready"
@@ -213,6 +217,14 @@ jobs:
             echo "🧹 Cleaning up old images (after successful deployment)..."
             # Очищаем старые образы только после успешного деплоя
             docker image prune -f || true
+            
+            echo "✅ Zero-downtime deployment completed successfully"
+            
+            # Финальная проверка всех сервисов (не критично)
+            echo "📊 Final service status:"
+            docker compose -f docker-compose.prod.yml ps || echo "⚠️ Could not get final status"
+            
+            echo "🎉 Deployment successful!"
           ENDSSH
 
       - name: Health check
