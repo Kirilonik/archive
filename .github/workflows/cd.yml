@@ -180,13 +180,18 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_PORT: ${{ steps.ssh_port.outputs.port }}
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
           API_URL: ${{ steps.urls.outputs.api_url }}
           FRONTEND_URL: ${{ steps.urls.outputs.frontend_url }}
         run: |
           echo "🏥 Performing health checks..."
 
           # Проверка контейнеров
-          ssh -p $VPS_SSH_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
+          ssh -p $VPS_SSH_PORT $VPS_USER@$VPS_HOST << ENDSSH
+            set -e
+            echo "📂 Navigating to project directory..."
+            cd $DEPLOY_PATH || { echo "❌ Directory not found: $DEPLOY_PATH"; exit 1; }
+            
             echo "📊 Container status:"
             docker compose -f docker-compose.prod.yml ps
             
@@ -283,10 +288,12 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_PORT: ${{ steps.ssh_port.outputs.port }}
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
         run: |
           echo "⚠️ Deployment failed. Attempting rollback..."
-          ssh -p $VPS_SSH_PORT $VPS_USER@$VPS_HOST << 'ENDSSH' || true
-            cd ${{ env.DEPLOY_PATH }}
+          ssh -p $VPS_SSH_PORT $VPS_USER@$VPS_HOST << ENDSSH || true
+            set -e
+            cd $DEPLOY_PATH || { echo "❌ Directory not found: $DEPLOY_PATH"; exit 1; }
             echo "🔄 Rolling back to previous commit..."
             git reset --hard HEAD~1 || git reset --hard origin/${{ github.ref_name }} || true
             echo "🔨 Rebuilding containers..."
