@@ -15,6 +15,7 @@ import {
   createEmailVerificationTemplate,
   createPasswordResetTemplate,
 } from '../../infrastructure/email/email.templates.js';
+import type { TelegramNotificationService } from '../telegram/telegram.service.js';
 
 export class AuthService {
   constructor(
@@ -22,6 +23,7 @@ export class AuthService {
     private readonly passwordHasher: PasswordHasher,
     private readonly googleClient: OAuth2Client,
     private readonly emailService: EmailService,
+    private readonly telegramNotificationService?: TelegramNotificationService,
   ) {}
 
   private signAccessToken(payload: { id: number; email: string }): string {
@@ -63,6 +65,22 @@ export class AuthService {
       this.sendVerificationEmail(user.id, user.email, user.name).catch((error) => {
         logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email');
       });
+
+      // Отправляем уведомление в Telegram о новом пользователе
+      if (this.telegramNotificationService?.isConfigured()) {
+        this.telegramNotificationService
+          .notifyNewUser({
+            userId: user.id,
+            email: user.email,
+            name: user.name,
+          })
+          .catch((error) => {
+            logger.error(
+              { error, userId: user.id, email: user.email },
+              'Ошибка при отправке Telegram уведомления о новом пользователе',
+            );
+          });
+      }
     });
 
     return { user };

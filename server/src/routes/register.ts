@@ -9,6 +9,7 @@ import { usersRouter } from '../app/routes/users.routes.js';
 import { router as searchRouter } from './routes.search.js';
 import { authRouter } from '../app/routes/auth.routes.js';
 import { createYouTubeRouter } from '../app/routes/youtube.routes.js';
+import { createTelegramRouter } from '../app/routes/telegram.routes.js';
 import { authMiddleware } from '../middlewares/auth.js';
 import { registerSwagger } from '../docs/swagger.js';
 import { searchRateLimiter, generalRateLimiter } from '../middlewares/rate-limiters.js';
@@ -37,4 +38,8 @@ export function registerRoutes(app: Express): void {
   app.get('/api/youtube/auth/callback', youtubeRouter);
   // Остальные требуют авторизации
   app.use('/api/youtube', authMiddleware, youtubeRouter);
+
+  // Telegram notification routes
+  const telegramRouter = createTelegramRouter(container.telegram.controller);
+  app.use('/api/telegram', telegramRouter);
 }

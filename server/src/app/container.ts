@@ -29,6 +29,9 @@ import { EpisodeService } from '../application/episodes/episode.service.js';
 import { EpisodesController } from './controllers/episodes.controller.js';
 import { StatsPgRepository } from '../infrastructure/database/repositories/stats.pg.repository.js';
 import { StatsService } from '../application/stats/stats.service.js';
+import { TelegramService } from '../infrastructure/integrations/telegram.service.js';
+import { TelegramNotificationService } from '../application/telegram/telegram.service.js';
+import { TelegramController } from './controllers/telegram.controller.js';
 import { env } from '../config/env.js';
 
 const usersRepository = new UsersPgRepository();
@@ -42,7 +45,15 @@ const authRepository = new AuthPgRepository();
 const passwordHasher = new BcryptPasswordHasher();
 const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 const emailService = new EmailService();
-const authService = new AuthService(authRepository, passwordHasher, googleClient, emailService);
+const telegramService = new TelegramService();
+const telegramNotificationService = new TelegramNotificationService(telegramService);
+const authService = new AuthService(
+  authRepository,
+  passwordHasher,
+  googleClient,
+  emailService,
+  telegramNotificationService,
+);
 const authController = new AuthController(authService, (userId) => userService.getUserById(userId));
 
 const kinopoiskClient = new KinopoiskHttpClient();
@@ -116,5 +127,10 @@ export const container = {
     repository: episodesRepository,
     service: episodeService,
     controller: episodesController,
+  },
+  telegram: {
+    service: telegramService,
+    notificationService: telegramNotificationService,
+    controller: new TelegramController(telegramNotificationService),
   },
 };

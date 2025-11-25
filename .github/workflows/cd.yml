@@ -309,21 +309,52 @@ jobs:
     if: always()
 
     steps:
-      - name: Deployment notification
+      - name: Set default URLs
+        id: urls
         run: |
-          STATUS="${{ needs.deploy.result }}"
-          EMOJI="✅"
-          if [ "$STATUS" != "success" ]; then
-            EMOJI="❌"
+          API_URL="${{ secrets.API_BASE_URL }}"
+          if [ -z "$API_URL" ]; then
+            echo "api_url=http://localhost:4000" >> $GITHUB_OUTPUT
+          else
+            echo "api_url=$API_URL" >> $GITHUB_OUTPUT
           fi
 
-          echo "$EMOJI Deployment $STATUS"
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Commit: ${{ github.sha }}"
-          echo "Author: ${{ github.actor }}"
+      - name: Calculate deployment duration
+        id: duration
+        run: |
+          # Получаем время начала деплоя из предыдущего job
+          # Если не удалось получить, оставляем пустым
+          echo "duration=" >> $GITHUB_OUTPUT
 
-          # Здесь можно добавить отправку в Telegram, Slack, Email и т.д.
-          # Пример для Telegram:
-          # curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          #   -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
-          #   -d "text=$EMOJI Deployment $STATUS%0ABranch: ${{ github.ref_name }}%0ACommit: ${{ github.sha }}"
+      - name: Send Telegram notification
+        env:
+          API_URL: ${{ steps.urls.outputs.api_url }}
+          DEPLOY_SECRET: ${{ secrets.TELEGRAM_DEPLOY_SECRET }}
+        run: |
+          STATUS="${{ needs.deploy.result }}"
+          ENVIRONMENT="${{ github.event.inputs.environment || 'production' }}"
+          
+          if [ -z "$DEPLOY_SECRET" ]; then
+            echo "⚠️ TELEGRAM_DEPLOY_SECRET is not set. Skipping Telegram notification."
+            exit 0
+          fi
+
+          if [ -z "$API_URL" ]; then
+            echo "⚠️ API_BASE_URL is not set. Skipping Telegram notification."
+            exit 0
+          fi
+
+          # Отправляем уведомление через API
+          curl -X POST "$API_URL/api/telegram/deploy" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $DEPLOY_SECRET" \
+            -d "{
+              \"status\": \"$STATUS\",
+              \"branch\": \"${{ github.ref_name }}\",
+              \"commit\": \"${{ github.sha }}\",
+              \"author\": \"${{ github.actor }}\",
+              \"environment\": \"$ENVIRONMENT\"
+            }" \
+            --fail-with-body \
+            --silent \
+            --show-error || echo "⚠️ Failed to send Telegram notification (non-critical)"

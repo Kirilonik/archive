@@ -80,6 +80,9 @@ const envSchema = z
     SMTP_FROM: z.string().email().optional(),
     EMAIL_VERIFICATION_TOKEN_TTL_HOURS: z.coerce.number().int().positive().default(24),
     PASSWORD_RESET_TOKEN_TTL_HOURS: z.coerce.number().int().positive().default(1),
+    TELEGRAM_BOT_TOKEN: z.string().optional(),
+    TELEGRAM_CHAT_ID: z.string().optional(),
+    TELEGRAM_DEPLOY_SECRET: z.string().optional(),
   })
   .transform((values) => ({
     ...values,
@@ -139,4 +142,8 @@ export const env = {
   SMTP_FROM: parsed.data.SMTP_FROM || 'noreply@example.com',
   EMAIL_VERIFICATION_TOKEN_TTL_HOURS: parsed.data.EMAIL_VERIFICATION_TOKEN_TTL_HOURS || 24,
   PASSWORD_RESET_TOKEN_TTL_HOURS: parsed.data.PASSWORD_RESET_TOKEN_TTL_HOURS || 1,
+  // Telegram настройки
+  TELEGRAM_BOT_TOKEN: parsed.data.TELEGRAM_BOT_TOKEN || '',
+  TELEGRAM_CHAT_ID: parsed.data.TELEGRAM_CHAT_ID || '',
+  TELEGRAM_DEPLOY_SECRET: parsed.data.TELEGRAM_DEPLOY_SECRET || '',
 };
