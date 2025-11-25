@@ -45,7 +45,6 @@ jobs:
     needs: check-ci
     environment:
       name: ${{ github.event.inputs.environment || 'production' }}
-      url: ${{ secrets.FRONTEND_URL || 'https://your-domain.com' }}
     timeout-minutes: 30
     
     steps:
@@ -59,10 +58,35 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
+      - name: Set default SSH port
+        id: ssh_port
+        run: |
+          if [ -z "${{ secrets.VPS_SSH_PORT }}" ]; then
+            echo "port=22" >> $GITHUB_OUTPUT
+          else
+            echo "port=${{ secrets.VPS_SSH_PORT }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set default URLs
+        id: urls
+        run: |
+          API_URL="${{ secrets.API_BASE_URL }}"
+          FRONTEND_URL="${{ secrets.FRONTEND_URL }}"
+          if [ -z "$API_URL" ]; then
+            echo "api_url=http://localhost:4000" >> $GITHUB_OUTPUT
+          else
+            echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+          fi
+          if [ -z "$FRONTEND_URL" ]; then
+            echo "frontend_url=http://localhost:8080" >> $GITHUB_OUTPUT
+          else
+            echo "frontend_url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+          fi
+
       - name: Add server to known hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p ${{ secrets.VPS_SSH_PORT || 22 }} -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p ${{ steps.ssh_port.outputs.port }} -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
       - name: Display deployment info
         run: |
@@ -77,7 +101,7 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT || 22 }}
+          VPS_SSH_PORT: ${{ steps.ssh_port.outputs.port }}
           DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
         run: |
           ssh -p $VPS_SSH_PORT $VPS_USER@$VPS_HOST << 'ENDSSH'
@@ -117,9 +141,9 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT || 22 }}
-          API_URL: ${{ secrets.API_BASE_URL || 'http://localhost:4000' }}
-          FRONTEND_URL: ${{ secrets.FRONTEND_URL || 'http://localhost:8080' }}
+          VPS_SSH_PORT: ${{ steps.ssh_port.outputs.port }}
+          API_URL: ${{ steps.urls.outputs.api_url }}
+          FRONTEND_URL: ${{ steps.urls.outputs.frontend_url }}
         run: |
           echo "🏥 Performing health checks..."
           
@@ -207,8 +231,8 @@ jobs:
           if [ "${{ job.status }}" == "success" ]; then
             echo "✅ **Deployment completed successfully**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "🌐 **Frontend**: ${{ secrets.FRONTEND_URL || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
-            echo "🔌 **API**: ${{ secrets.API_BASE_URL || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+            echo "🌐 **Frontend**: ${{ steps.urls.outputs.frontend_url }}" >> $GITHUB_STEP_SUMMARY
+            echo "🔌 **API**: ${{ steps.urls.outputs.api_url }}" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Deployment failed**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -220,7 +244,7 @@ jobs:
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT || 22 }}
+          VPS_SSH_PORT: ${{ steps.ssh_port.outputs.port }}
         run: |
           echo "⚠️ Deployment failed. Attempting rollback..."
           ssh -p $VPS_SSH_PORT $VPS_USER@$VPS_HOST << 'ENDSSH' || true
