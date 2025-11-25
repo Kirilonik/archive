@@ -161,13 +161,14 @@ jobs:
             echo "⏳ Waiting for new server to be healthy..."
             MAX_HEALTH_RETRIES=30
             HEALTH_RETRY=0
-            SERVER_HEALTHY=false
+            SERVER_HEALTHY=0
             while [ $HEALTH_RETRY -lt $MAX_HEALTH_RETRIES ]; do
-              if docker compose -f docker-compose.prod.yml ps server | grep -q "healthy\|Up"; then
-                # Дополнительная проверка через health endpoint
-                if curl -f -s http://localhost:4000/api/health > /dev/null 2>&1; then
-                  echo "✅ New server is healthy"
-                  SERVER_HEALTHY=true
+              # Проверяем через health endpoint
+              if curl -f -s http://localhost:4000/api/health > /dev/null 2>&1; then
+                # Дополнительная проверка через docker compose health
+                if docker compose -f docker-compose.prod.yml ps server 2>/dev/null | grep -qE "(healthy|Up.*healthy)"; then
+                  echo "✅ New server is healthy (attempt $((HEALTH_RETRY + 1)))"
+                  SERVER_HEALTHY=1
                   break
                 fi
               fi
@@ -176,9 +177,12 @@ jobs:
               sleep 2
             done
 
-            if [ "$SERVER_HEALTHY" != "true" ]; then
-              echo "❌ New server failed to become healthy, rolling back..."
-              docker compose -f docker-compose.prod.yml up -d --no-deps server || true
+            if [ $SERVER_HEALTHY -eq 0 ]; then
+              echo "❌ New server failed to become healthy after $MAX_HEALTH_RETRIES attempts"
+              echo "📋 Server logs:"
+              docker compose -f docker-compose.prod.yml logs server --tail=50
+              echo "📊 Server status:"
+              docker compose -f docker-compose.prod.yml ps server
               exit 1
             fi
 

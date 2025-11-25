@@ -83,28 +83,29 @@ jobs:
 
             # Zero-downtime deployment: собираем образы БЕЗ остановки старых контейнеров
             echo "🔨 Сборка новых образов (старые контейнеры продолжают работать)..."
-            docker compose -f docker-compose.prod.yml build --pull || { 
-              echo "❌ Ошибка при сборке образов"; 
+            docker compose -f docker-compose.prod.yml build --pull || {
+              echo "❌ Ошибка при сборке образов";
               exit 1;
             }
 
             # Rolling update: обновляем server с проверкой health
             echo "🔄 Rolling update: Обновление server (zero-downtime)..."
-            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans server || { 
-              echo "❌ Ошибка при обновлении server"; 
+            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans server || {
+              echo "❌ Ошибка при обновлении server";
               docker compose -f docker-compose.prod.yml logs server --tail=50;
               exit 1;
             }
 
             # Ждем пока новый server станет healthy
             echo "⏳ Ожидание готовности нового server..."
-            SERVER_HEALTHY=false
+            SERVER_HEALTHY=0
             for i in {1..30}; do
+              # Проверяем через health endpoint
               if curl -f -s http://localhost:4000/api/health > /dev/null 2>&1; then
                 # Дополнительная проверка через docker compose health
-                if docker compose -f docker-compose.prod.yml ps server | grep -q "healthy\|Up"; then
+                if docker compose -f docker-compose.prod.yml ps server 2>/dev/null | grep -qE "(healthy|Up.*healthy)"; then
                   echo "✅ Новый server готов (попытка $i)"
-                  SERVER_HEALTHY=true
+                  SERVER_HEALTHY=1
                   break
                 fi
               fi
@@ -112,16 +113,19 @@ jobs:
               sleep 2
             done
 
-            if [ "$SERVER_HEALTHY" != "true" ]; then
-              echo "❌ Новый server не прошел health check, откат..."
-              docker compose -f docker-compose.prod.yml up -d --no-deps server || true
+            if [ $SERVER_HEALTHY -eq 0 ]; then
+              echo "❌ Новый server не прошел health check после 30 попыток"
+              echo "📋 Логи server:"
+              docker compose -f docker-compose.prod.yml logs server --tail=50
+              echo "📊 Статус server:"
+              docker compose -f docker-compose.prod.yml ps server
               exit 1
             fi
 
             # Обновляем client после того как server готов
             echo "🔄 Rolling update: Обновление client..."
-            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans client || { 
-              echo "❌ Ошибка при обновлении client"; 
+            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans client || {
+              echo "❌ Ошибка при обновлении client";
               docker compose -f docker-compose.prod.yml logs client --tail=50;
               exit 1;
             }
