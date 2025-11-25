@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { TelegramController } from '../controllers/telegram.controller.js';
-import { generalRateLimiter } from '../../../middlewares/rate-limiters.js';
+import { generalRateLimiter } from '../../middlewares/rate-limiters.js';
 
 export function createTelegramRouter(controller: TelegramController) {
   const router = Router();
