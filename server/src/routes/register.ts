@@ -8,10 +8,12 @@ import { episodesRouter } from '../app/routes/episodes.routes.js';
 import { usersRouter } from '../app/routes/users.routes.js';
 import { router as searchRouter } from './routes.search.js';
 import { authRouter } from '../app/routes/auth.routes.js';
+import { createYouTubeRouter } from '../app/routes/youtube.routes.js';
 import { authMiddleware } from '../middlewares/auth.js';
 import { registerSwagger } from '../docs/swagger.js';
 import { searchRateLimiter, generalRateLimiter } from '../middlewares/rate-limiters.js';
 import { getCsrfToken } from '../middlewares/csrf.js';
+import { container } from '../app/container.js';
 
 export function registerRoutes(app: Express): void {
   registerSwagger(app);
@@ -28,4 +30,11 @@ export function registerRoutes(app: Express): void {
   app.use('/api/episodes', episodesRouter);
   app.use('/api/users', authMiddleware, usersRouter);
   app.use('/api/search', searchRateLimiter, searchRouter);
+  
+  // YouTube OAuth routes
+  const youtubeRouter = createYouTubeRouter(container.integrations.youtube.controller);
+  // Callback не требует auth middleware (публичный endpoint)
+  app.get('/api/youtube/auth/callback', youtubeRouter);
+  // Остальные требуют авторизации
+  app.use('/api/youtube', authMiddleware, youtubeRouter);
 }

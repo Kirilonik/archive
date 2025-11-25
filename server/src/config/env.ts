@@ -64,7 +64,9 @@ const envSchema = z
 
     KINOPOISK_API_URL: z.string().url().default('https://kinopoiskapiunofficial.tech'),
     KINOPOISK_API_KEY: z.string().optional(),
+    YOUTUBE_API_KEY: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
     API_BASE_URL: z.string().optional(),
     FRONTEND_URL: z.string().optional(),
     CORS_ALLOWED_ORIGINS: z.string().optional(),
@@ -119,7 +121,9 @@ export const env = {
   allowedOrigins,
   // Для миграций эти переменные могут быть не установлены
   KINOPOISK_API_KEY: parsed.data.KINOPOISK_API_KEY || '',
+  YOUTUBE_API_KEY: parsed.data.YOUTUBE_API_KEY || '',
   GOOGLE_CLIENT_ID: parsed.data.GOOGLE_CLIENT_ID || '',
+  GOOGLE_CLIENT_SECRET: parsed.data.GOOGLE_CLIENT_SECRET || '',
   // Для миграций используем дефолтные значения JWT секретов
   JWT_SECRET:
     parsed.data.JWT_SECRET || (isMigration ? 'migration-temp-secret-key-min-32-chars' : ''),

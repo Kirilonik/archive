@@ -9,6 +9,12 @@ import { EmailService } from '../infrastructure/email/email.service.js';
 import { AuthService } from '../application/auth/auth.service.js';
 import { AuthController } from './controllers/auth.controller.js';
 import { KinopoiskHttpClient } from '../infrastructure/integrations/kinopoisk.client.js';
+import { YouTubeHttpClient } from '../infrastructure/integrations/youtube.client.js';
+import { YouTubeHistoryTakeoutParser } from '../infrastructure/integrations/youtube-history.parser.js';
+import { YouTubeStatsService } from '../infrastructure/integrations/youtube-stats.service.js';
+import { YouTubeOAuthPgRepository } from '../infrastructure/database/repositories/youtube-oauth.pg.repository.js';
+import { YouTubeOAuthService } from '../application/youtube/youtube-oauth.service.js';
+import { YouTubeController } from './controllers/youtube.controller.js';
 import { FilmsPgRepository } from '../infrastructure/database/repositories/films.pg.repository.js';
 import { FilmService } from '../application/films/film.service.js';
 import { FilmsController } from './controllers/films.controller.js';
@@ -40,6 +46,17 @@ const authService = new AuthService(authRepository, passwordHasher, googleClient
 const authController = new AuthController(authService, (userId) => userService.getUserById(userId));
 
 const kinopoiskClient = new KinopoiskHttpClient();
+const youtubeClient = new YouTubeHttpClient();
+const youtubeHistoryParser = new YouTubeHistoryTakeoutParser();
+const youtubeStatsService = new YouTubeStatsService(youtubeClient);
+const youtubeOAuthRepository = new YouTubeOAuthPgRepository();
+const youtubeOAuthService = new YouTubeOAuthService(
+  youtubeOAuthRepository,
+  env.GOOGLE_CLIENT_ID,
+  env.GOOGLE_CLIENT_SECRET,
+  `${env.API_BASE_URL || 'http://localhost:3000'}/api/youtube/auth/callback`,
+);
+const youtubeController = new YouTubeController(youtubeOAuthService, youtubeClient);
 const filmsRepository = new FilmsPgRepository();
 const filmService = new FilmService(filmsRepository, kinopoiskClient, statsService);
 const filmsController = new FilmsController(filmService);
@@ -72,6 +89,13 @@ export const container = {
   },
   integrations: {
     kinopoisk: kinopoiskClient,
+    youtube: {
+      client: youtubeClient,
+      historyParser: youtubeHistoryParser,
+      statsService: youtubeStatsService,
+      oauthService: youtubeOAuthService,
+      controller: youtubeController,
+    },
   },
   films: {
     repository: filmsRepository,
