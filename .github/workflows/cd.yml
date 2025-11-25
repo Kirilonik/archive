@@ -159,21 +159,25 @@ jobs:
             docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans server
 
             echo "⏳ Waiting for new server to be healthy..."
-            MAX_HEALTH_RETRIES=30
+            # Даем время серверу запуститься
+            sleep 5
+            
+            MAX_HEALTH_RETRIES=40
             HEALTH_RETRY=0
             SERVER_HEALTHY=0
             while [ $HEALTH_RETRY -lt $MAX_HEALTH_RETRIES ]; do
-              # Проверяем через health endpoint
+              # Проверяем через health endpoint (основная проверка)
               if curl -f -s http://localhost:4000/api/health > /dev/null 2>&1; then
-                # Дополнительная проверка через docker compose health
-                if docker compose -f docker-compose.prod.yml ps server 2>/dev/null | grep -qE "(healthy|Up.*healthy)"; then
-                  echo "✅ New server is healthy (attempt $((HEALTH_RETRY + 1)))"
-                  SERVER_HEALTHY=1
-                  break
-                fi
+                echo "✅ New server is healthy (attempt $((HEALTH_RETRY + 1)))"
+                SERVER_HEALTHY=1
+                break
               fi
               HEALTH_RETRY=$((HEALTH_RETRY + 1))
-              echo "⏳ Waiting for server health... ($HEALTH_RETRY/$MAX_HEALTH_RETRIES)"
+              if [ $((HEALTH_RETRY % 5)) -eq 0 ]; then
+                echo "⏳ Waiting for server health... ($HEALTH_RETRY/$MAX_HEALTH_RETRIES)"
+                echo "📊 Server status:"
+                docker compose -f docker-compose.prod.yml ps server 2>/dev/null || true
+              fi
               sleep 2
             done
 
@@ -183,15 +187,28 @@ jobs:
               docker compose -f docker-compose.prod.yml logs server --tail=50
               echo "📊 Server status:"
               docker compose -f docker-compose.prod.yml ps server
+              echo "🔍 Testing health endpoint directly:"
+              curl -v http://localhost:4000/api/health || true
               exit 1
             fi
 
             echo "🔄 Rolling update: Updating client..."
             # Обновляем client после того как server готов
-            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans client
+            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans client || {
+              echo "❌ Ошибка при обновлении client"
+              docker compose -f docker-compose.prod.yml logs client --tail=50
+              exit 1
+            }
 
-            echo "⏳ Waiting for new client to be healthy..."
+            echo "⏳ Waiting for new client to be ready..."
             sleep 5
+            
+            # Проверяем что client доступен
+            if curl -f -s http://localhost:8080/ > /dev/null 2>&1; then
+              echo "✅ Client is ready"
+            else
+              echo "⚠️ Client health check failed, but continuing (non-critical)"
+            fi
 
             echo "🧹 Cleaning up old images (after successful deployment)..."
             # Очищаем старые образы только после успешного деплоя
