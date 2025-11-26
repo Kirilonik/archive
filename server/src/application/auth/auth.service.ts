@@ -47,24 +47,57 @@ export class AuthService {
     email: string;
     password: string;
   }): Promise<{ user: AuthUser }> {
+    logger.info({ email: input.email, name: input.name }, 'Начало регистрации пользователя');
+
     const existing = await this.repository.findByEmail(input.email);
     if (existing) {
+      logger.warn({ email: input.email }, 'Попытка регистрации с существующим email');
       const err = new Error('User exists') as Error & { status: number };
       err.status = 409;
       throw err;
     }
 
+    logger.debug({ email: input.email }, 'Хеширование пароля');
     const passwordHash = await this.passwordHasher.hash(input.password);
+
+    logger.debug({ email: input.email }, 'Создание пользователя в БД');
     const user = await this.repository.createUser({
       name: input.name ?? null,
       email: input.email,
       passwordHash,
     });
 
+    logger.info(
+      { userId: user.id, email: user.email, name: user.name },
+      'Пользователь успешно создан, планируется отправка email подтверждения',
+    );
+
     process.nextTick(() => {
-      this.sendVerificationEmail(user.id, user.email, user.name).catch((error) => {
-        logger.error({ error, userId: user.id, email: user.email }, 'Ошибка при отправке email');
-      });
+      logger.debug(
+        { userId: user.id, email: user.email },
+        'process.nextTick: начало отправки email подтверждения',
+      );
+
+      this.sendVerificationEmail(user.id, user.email, user.name)
+        .then(() => {
+          logger.info(
+            { userId: user.id, email: user.email },
+            'process.nextTick: email подтверждения успешно отправлен',
+          );
+        })
+        .catch((error) => {
+          logger.error(
+            {
+              error: error instanceof Error ? error.message : String(error),
+              errorStack: error instanceof Error ? error.stack : undefined,
+              errorCode: (error as any)?.code,
+              errorResponseCode: (error as any)?.responseCode,
+              userId: user.id,
+              email: user.email,
+            },
+            'process.nextTick: Ошибка при отправке email подтверждения',
+          );
+        });
 
       // Отправляем уведомление в Telegram о новом пользователе
       if (this.telegramNotificationService?.isConfigured()) {
@@ -94,23 +127,77 @@ export class AuthService {
     email: string,
     userName: string | null,
   ): Promise<void> {
-    const token = this.generateVerificationToken();
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + env.EMAIL_VERIFICATION_TOKEN_TTL_HOURS);
-
-    await this.repository.createEmailVerificationToken(userId, token, expiresAt);
-
-    const verificationUrl = `${env.FRONTEND_URL}/app/verify-email?token=${token}`;
+    logger.debug({ userId, email, userName }, 'sendVerificationEmail: начало метода');
 
     try {
+      logger.debug({ userId, email }, 'sendVerificationEmail: генерация токена');
+      const token = this.generateVerificationToken();
+      logger.debug(
+        { userId, email, tokenLength: token.length },
+        'sendVerificationEmail: токен сгенерирован',
+      );
+
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + env.EMAIL_VERIFICATION_TOKEN_TTL_HOURS);
+      logger.debug(
+        {
+          userId,
+          email,
+          expiresAt: expiresAt.toISOString(),
+          ttlHours: env.EMAIL_VERIFICATION_TOKEN_TTL_HOURS,
+        },
+        'sendVerificationEmail: время истечения токена установлено',
+      );
+
+      logger.debug({ userId, email }, 'sendVerificationEmail: сохранение токена в БД');
+      await this.repository.createEmailVerificationToken(userId, token, expiresAt);
+      logger.info({ userId, email }, 'sendVerificationEmail: токен успешно сохранен в БД');
+
+      const verificationUrl = `${env.FRONTEND_URL}/app/verify-email?token=${token}`;
+      logger.debug(
+        { userId, email, verificationUrl, frontendUrl: env.FRONTEND_URL },
+        'sendVerificationEmail: URL подтверждения создан',
+      );
+
+      logger.debug({ userId, email }, 'sendVerificationEmail: создание HTML шаблона письма');
+      const emailHtml = createEmailVerificationTemplate(verificationUrl, userName);
+      logger.debug(
+        { userId, email, htmlLength: emailHtml.length },
+        'sendVerificationEmail: HTML шаблон создан',
+      );
+
+      logger.info(
+        { userId, email, to: email, subject: 'Подтверждение email адреса' },
+        'sendVerificationEmail: вызов emailService.sendEmail',
+      );
+
       await this.emailService.sendEmail({
         to: email,
         subject: 'Подтверждение email адреса',
-        html: createEmailVerificationTemplate(verificationUrl, userName),
+        html: emailHtml,
       });
-      logger.info({ userId, email }, 'Письмо подтверждения email отправлено');
+
+      logger.info(
+        { userId, email, verificationUrl },
+        'sendVerificationEmail: письмо подтверждения email успешно отправлено',
+      );
     } catch (error) {
-      logger.error({ error, userId, email }, 'Ошибка при отправке письма подтверждения');
+      const errorDetails: any = {
+        userId,
+        email,
+        error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+      };
+
+      if (error && typeof error === 'object') {
+        if ('code' in error) errorDetails.errorCode = (error as any).code;
+        if ('responseCode' in error) errorDetails.errorResponseCode = (error as any).responseCode;
+        if ('command' in error) errorDetails.errorCommand = (error as any).command;
+        if ('response' in error) errorDetails.errorResponse = (error as any).response;
+      }
+
+      logger.error(errorDetails, 'sendVerificationEmail: ошибка при отправке письма подтверждения');
+      throw error; // Пробрасываем ошибку дальше, чтобы она была обработана в process.nextTick
     }
   }
 

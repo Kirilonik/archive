@@ -79,7 +79,7 @@ export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set()
         setItems([]);
         setOpen(false);
       }
-    }, 1000);
+    }, 500);
 
     // Очистка таймера при размонтировании
     return () => {
