@@ -40,8 +40,9 @@ services:
       KINOPOISK_API_KEY: ${KINOPOISK_API_KEY}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       # Таймауты для undici (Node.js fetch)
-      UNDICI_CONNECT_TIMEOUT: 30000
-      UNDICI_SOCKET_TIMEOUT: 30000
+      # Увеличены до 60 секунд для надежного подключения к внешним API (Kinopoisk)
+      UNDICI_CONNECT_TIMEOUT: 60000
+      UNDICI_SOCKET_TIMEOUT: 60000
       # SMTP настройки для отправки email
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT:-465}

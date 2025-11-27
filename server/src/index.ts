@@ -1,14 +1,12 @@
 // Устанавливаем таймауты для undici (Node.js fetch) ДО всех импортов
 // Это критически важно, так как undici читает эти переменные при первом использовании fetch
+// ВАЖНО: Устанавливаем значения явно, чтобы перезаписать любые значения из окружения
 if (typeof process !== 'undefined' && process.env) {
   // Увеличиваем таймауты для подключения к внешним API (например, Kinopoisk)
   // Дефолтные значения: 10 секунд на подключение, 10 секунд на сокет
-  if (!process.env.UNDICI_CONNECT_TIMEOUT) {
-    process.env.UNDICI_CONNECT_TIMEOUT = '60000'; // 60 секунд на подключение
-  }
-  if (!process.env.UNDICI_SOCKET_TIMEOUT) {
-    process.env.UNDICI_SOCKET_TIMEOUT = '60000'; // 60 секунд на сокет
-  }
+  // Устанавливаем 60 секунд для надежного подключения к внешним API
+  process.env.UNDICI_CONNECT_TIMEOUT = '60000'; // 60 секунд на подключение
+  process.env.UNDICI_SOCKET_TIMEOUT = '60000'; // 60 секунд на сокет
 }
 
 import express from 'express';

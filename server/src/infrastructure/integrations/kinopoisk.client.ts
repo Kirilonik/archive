@@ -7,6 +7,10 @@ import type {
   KpSuggestItem,
 } from '../../domain/integrations/kinopoisk.types.js';
 import { logger } from '../../shared/logger.js';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 // Таймауты для undici должны быть установлены в index.ts ДО всех импортов
 // Здесь мы только проверяем, что они установлены, и логируем предупреждение, если нет
@@ -26,34 +30,13 @@ const API_URL = env.KINOPOISK_API_URL;
 const API_KEY = env.KINOPOISK_API_KEY;
 
 function getHeaders(): Record<string, string> {
-  // Заголовки, имитирующие запрос из реального браузера Chrome
+  // Минимальные заголовки, как в curl запросе из консоли
+  // Убираем лишние заголовки, которые могут выдать серверный запрос
   const headers: Record<string, string> = {
-    // Основные заголовки браузера
+    Accept: '*/*',
+    'Accept-Language': 'ru,en;q=0.9',
     'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    Accept: 'application/json, text/plain, */*',
-    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-    'Accept-Encoding': 'gzip, deflate, br, zstd',
-    'Content-Type': 'application/json',
-
-    // Заголовки для имитации запроса с сайта Kinopoisk
-    Referer: 'https://www.kinopoisk.ru/',
-    Origin: 'https://www.kinopoisk.ru',
-
-    // Дополнительные заголовки, которые отправляет браузер
-    'Sec-Ch-Ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-    'Sec-Ch-Ua-Mobile': '?0',
-    'Sec-Ch-Ua-Platform': '"Windows"',
-    'Sec-Fetch-Dest': 'empty',
-    'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Site': 'same-site',
-
-    // Заголовки для кеширования
-    'Cache-Control': 'no-cache',
-    Pragma: 'no-cache',
-
-    // Заголовок для отслеживания запросов (опционально)
-    DNT: '1', // Do Not Track
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
   };
 
   if (API_KEY) {
@@ -87,7 +70,52 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     return null;
   }
 
-  private async fetchJson<T>(url: string, retries = 2): Promise<T | null> {
+  /**
+   * Альтернативный метод через curl (как fallback, если fetch не работает)
+   */
+  private async fetchJsonViaCurl<T>(url: string): Promise<T | null> {
+    try {
+      const headers = getHeaders();
+      const headerArgs: string[] = [];
+      for (const [key, value] of Object.entries(headers)) {
+        headerArgs.push('-H', `${key}: ${value}`);
+      }
+
+      const curlCommand = ['curl', '-s', '-S', '--max-time', '30', ...headerArgs, url].join(' ');
+      logger.debug({ url, method: 'curl' }, '[kinopoisk] Making request via curl');
+
+      const { stdout, stderr } = await execAsync(curlCommand, { timeout: 35000 });
+
+      if (stderr && !stdout) {
+        logger.error({ url, stderr }, '[kinopoisk] curl request failed');
+        return null;
+      }
+
+      if (!stdout || stdout.trim() === '') {
+        logger.warn({ url }, '[kinopoisk] curl returned empty response');
+        return null;
+      }
+
+      try {
+        return JSON.parse(stdout) as T;
+      } catch (parseError) {
+        logger.error(
+          {
+            url,
+            body: stdout.substring(0, 500),
+            parseError: parseError instanceof Error ? parseError.message : String(parseError),
+          },
+          '[kinopoisk] Failed to parse JSON response from curl',
+        );
+        return null;
+      }
+    } catch (error: any) {
+      logger.error({ err: error, url }, 'Error in curl request to Kinopoisk API');
+      return null;
+    }
+  }
+
+  private async fetchJson<T>(url: string, retries = 2, useCurlFallback = true): Promise<T | null> {
     // Используем таймаут 60 секунд, который должен совпадать с UNDICI_CONNECT_TIMEOUT
     const timeoutMs = 60000; // 60 секунд
     const controller = new AbortController();
@@ -186,6 +214,20 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       }
 
       logger.error({ ...errorDetails }, 'Error fetching from Kinopoisk API');
+
+      // Если это ошибка подключения и включен fallback через curl - пробуем curl
+      if (
+        useCurlFallback &&
+        (error?.name === 'AbortError' ||
+          error?.code === 'ETIMEDOUT' ||
+          error?.code === 'ECONNRESET' ||
+          error?.message?.includes('timeout') ||
+          error?.message?.includes('Connect Timeout'))
+      ) {
+        logger.info({ url }, '[kinopoisk] Trying curl fallback after fetch failure');
+        return this.fetchJsonViaCurl<T>(url);
+      }
+
       return null;
     }
   }
