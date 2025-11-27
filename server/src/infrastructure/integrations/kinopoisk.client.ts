@@ -30,13 +30,10 @@ const API_URL = env.KINOPOISK_API_URL;
 const API_KEY = env.KINOPOISK_API_KEY;
 
 function getHeaders(): Record<string, string> {
-  // Минимальные заголовки, как в curl запросе из консоли
-  // Убираем лишние заголовки, которые могут выдать серверный запрос
+  // Минимальные заголовки, точно как в рабочем примере из консоли
+  // Только X-API-KEY и Content-Type - ничего лишнего
   const headers: Record<string, string> = {
-    Accept: '*/*',
-    'Accept-Language': 'ru,en;q=0.9',
-    'User-Agent':
-      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Content-Type': 'application/json',
   };
 
   if (API_KEY) {
