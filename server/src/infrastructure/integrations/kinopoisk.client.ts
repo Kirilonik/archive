@@ -93,6 +93,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
             url,
             body: body.substring(0, 500), // Ограничиваем длину для логов
             headers: Object.fromEntries(resp.headers.entries()),
+            requestHeaders: headersForLog,
           },
           '[kinopoisk] request failed',
         );
@@ -101,7 +102,14 @@ export class KinopoiskHttpClient implements KinopoiskClient {
 
       const responseText = await resp.text();
       if (!responseText || responseText.trim() === '') {
-        logger.warn({ url, status: resp.status }, '[kinopoisk] Empty response body');
+        logger.warn(
+          {
+            url,
+            status: resp.status,
+            responseHeaders: Object.fromEntries(resp.headers.entries()),
+          },
+          '[kinopoisk] Empty response body',
+        );
         return null;
       }
 
@@ -353,15 +361,38 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       urlObj.searchParams.set('page', '1');
       const url = urlObj.toString();
 
-      logger.debug({ query, encodedUrl: url }, '[kinopoisk] suggest request');
+      logger.debug({ query, encodedUrl: url, apiUrl: API_URL }, '[kinopoisk] suggest request');
       const data = await this.fetchJson<any>(url);
       if (!data) {
-        logger.warn({ query, url }, 'Kinopoisk suggest returned null');
+        logger.warn({ query, url, apiUrl: API_URL }, 'Kinopoisk suggest returned null');
         return [];
       }
+
+      // Логируем структуру ответа для диагностики
+      logger.debug(
+        {
+          query,
+          url,
+          hasData: !!data,
+          hasFilms: !!data?.films,
+          filmsType: Array.isArray(data?.films) ? 'array' : typeof data?.films,
+          filmsLength: Array.isArray(data?.films) ? data.films.length : 'not array',
+          dataKeys: data ? Object.keys(data) : [],
+        },
+        '[kinopoisk] suggest response structure',
+      );
+
       const films = data?.films ?? [];
       if (films.length === 0) {
-        logger.debug({ query, url }, 'Kinopoisk suggest returned empty films array');
+        logger.warn(
+          {
+            query,
+            url,
+            apiUrl: API_URL,
+            responseData: data ? JSON.stringify(data).substring(0, 500) : 'null',
+          },
+          'Kinopoisk suggest returned empty films array',
+        );
       }
       return films.slice(0, 10).map((f: any) => {
         let filmId = f.kinopoiskId ?? null;
@@ -380,7 +411,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         };
       });
     } catch (error) {
-      logger.error({ err: error, query }, 'Error in Kinopoisk suggest');
+      logger.error({ err: error, query, apiUrl: API_URL }, 'Error in Kinopoisk suggest');
       return [];
     }
   }
