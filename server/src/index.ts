@@ -1,3 +1,16 @@
+// Устанавливаем таймауты для undici (Node.js fetch) ДО всех импортов
+// Это критически важно, так как undici читает эти переменные при первом использовании fetch
+if (typeof process !== 'undefined' && process.env) {
+  // Увеличиваем таймауты для подключения к внешним API (например, Kinopoisk)
+  // Дефолтные значения: 10 секунд на подключение, 10 секунд на сокет
+  if (!process.env.UNDICI_CONNECT_TIMEOUT) {
+    process.env.UNDICI_CONNECT_TIMEOUT = '60000'; // 60 секунд на подключение
+  }
+  if (!process.env.UNDICI_SOCKET_TIMEOUT) {
+    process.env.UNDICI_SOCKET_TIMEOUT = '60000'; // 60 секунд на сокет
+  }
+}
+
 import express from 'express';
 import cors from 'cors';
 import type { CorsOptions } from 'cors';
@@ -18,6 +31,15 @@ import { ipRateLimiter } from './middlewares/rate-limiters.js';
 import { securityLoggerMiddleware } from './middlewares/security-logger.js';
 
 async function bootstrap() {
+  // Логируем установленные таймауты для undici
+  logger.info(
+    {
+      UNDICI_CONNECT_TIMEOUT: process.env.UNDICI_CONNECT_TIMEOUT,
+      UNDICI_SOCKET_TIMEOUT: process.env.UNDICI_SOCKET_TIMEOUT,
+    },
+    'Undici timeout configuration',
+  );
+
   const app = express();
 
   // Настройка trust proxy для работы за Nginx/proxy

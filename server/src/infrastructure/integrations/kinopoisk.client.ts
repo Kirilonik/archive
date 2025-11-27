@@ -8,14 +8,17 @@ import type {
 } from '../../domain/integrations/kinopoisk.types.js';
 import { logger } from '../../shared/logger.js';
 
-// Устанавливаем таймауты для undici (Node.js fetch) ДО первого использования fetch
-// Дефолтные таймауты: 10 секунд на подключение, 10 секунд на сокет
+// Таймауты для undici должны быть установлены в index.ts ДО всех импортов
+// Здесь мы только проверяем, что они установлены, и логируем предупреждение, если нет
 if (typeof process !== 'undefined' && process.env) {
-  if (!process.env.UNDICI_CONNECT_TIMEOUT) {
-    process.env.UNDICI_CONNECT_TIMEOUT = '30000'; // 30 секунд на подключение
-  }
-  if (!process.env.UNDICI_SOCKET_TIMEOUT) {
-    process.env.UNDICI_SOCKET_TIMEOUT = '30000'; // 30 секунд на сокет
+  if (!process.env.UNDICI_CONNECT_TIMEOUT || !process.env.UNDICI_SOCKET_TIMEOUT) {
+    logger.warn(
+      {
+        UNDICI_CONNECT_TIMEOUT: process.env.UNDICI_CONNECT_TIMEOUT,
+        UNDICI_SOCKET_TIMEOUT: process.env.UNDICI_SOCKET_TIMEOUT,
+      },
+      'UNDICI timeout environment variables not set. Timeouts should be set in index.ts before imports',
+    );
   }
 }
 
@@ -23,21 +26,42 @@ const API_URL = env.KINOPOISK_API_URL;
 const API_KEY = env.KINOPOISK_API_KEY;
 
 function getHeaders(): Record<string, string> {
+  // Заголовки, имитирующие запрос из реального браузера Chrome
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
+    // Основные заголовки браузера
     'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    Accept: 'application/json, text/plain, */*',
     'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Encoding': 'gzip, deflate, br, zstd',
+    'Content-Type': 'application/json',
+
+    // Заголовки для имитации запроса с сайта Kinopoisk
     Referer: 'https://www.kinopoisk.ru/',
     Origin: 'https://www.kinopoisk.ru',
+
+    // Дополнительные заголовки, которые отправляет браузер
+    'Sec-Ch-Ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"Windows"',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-site',
+
+    // Заголовки для кеширования
+    'Cache-Control': 'no-cache',
+    Pragma: 'no-cache',
+
+    // Заголовок для отслеживания запросов (опционально)
+    DNT: '1', // Do Not Track
   };
+
   if (API_KEY) {
     headers['X-API-KEY'] = API_KEY;
   } else {
     logger.warn('KINOPOISK_API_KEY is not set');
   }
+
   return headers;
 }
 
@@ -64,7 +88,8 @@ export class KinopoiskHttpClient implements KinopoiskClient {
   }
 
   private async fetchJson<T>(url: string, retries = 2): Promise<T | null> {
-    const timeoutMs = 30000; // 30 секунд вместо дефолтных 10
+    // Используем таймаут 60 секунд, который должен совпадать с UNDICI_CONNECT_TIMEOUT
+    const timeoutMs = 60000; // 60 секунд
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -130,23 +155,37 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     } catch (error: any) {
       clearTimeout(timeoutId);
 
+      // Логируем детали ошибки для диагностики
+      const errorDetails = {
+        name: error?.name,
+        message: error?.message,
+        code: error?.code,
+        cause: error?.cause,
+        stack: error?.stack?.substring(0, 500),
+        url,
+        retries,
+        undiciConnectTimeout: process.env.UNDICI_CONNECT_TIMEOUT,
+        undiciSocketTimeout: process.env.UNDICI_SOCKET_TIMEOUT,
+      };
+
       // Если это таймаут или ошибка соединения, и есть попытки - повторяем
       if (
         retries > 0 &&
         (error?.name === 'AbortError' ||
           error?.code === 'ETIMEDOUT' ||
           error?.code === 'ECONNRESET' ||
-          error?.message?.includes('timeout'))
+          error?.message?.includes('timeout') ||
+          error?.message?.includes('Connect Timeout'))
       ) {
         logger.warn(
-          { url, retriesLeft: retries, error: error.message },
+          { ...errorDetails, retriesLeft: retries },
           'Kinopoisk request timeout, retrying',
         );
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Ждем 1 секунду перед повтором
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Ждем 2 секунды перед повтором
         return this.fetchJson<T>(url, retries - 1);
       }
 
-      logger.error({ err: error, url, retries }, 'Error fetching from Kinopoisk API');
+      logger.error({ ...errorDetails }, 'Error fetching from Kinopoisk API');
       return null;
     }
   }
