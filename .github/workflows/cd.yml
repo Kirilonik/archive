@@ -140,18 +140,24 @@ jobs:
             BUILD_RETRY=0
             BUILD_TIMEOUT=4800  # 80 минут таймаут для сборки (больше чем job timeout для буфера)
 
-            while [ $BUILD_RETRY -lt $MAX_BUILD_RETRIES ]; do
+            while [ "$BUILD_RETRY" -lt "$MAX_BUILD_RETRIES" ]; do
+              # Убеждаемся что переменные установлены (значения по умолчанию на случай если они потерялись)
+              BUILD_TIMEOUT=${BUILD_TIMEOUT:-4800}
+              MAX_BUILD_RETRIES=${MAX_BUILD_RETRIES:-3}
+              BUILD_RETRY=${BUILD_RETRY:-0}
+
               echo "🔨 Build attempt $((BUILD_RETRY + 1))/$MAX_BUILD_RETRIES"
               BUILD_TIMEOUT_MIN=$((BUILD_TIMEOUT / 60))
-              echo "⏱️ Build timeout: $BUILD_TIMEOUT seconds ($BUILD_TIMEOUT_MIN minutes)"
+              echo "⏱️ Build timeout: ${BUILD_TIMEOUT} seconds (${BUILD_TIMEOUT_MIN} minutes)"
               BUILD_START_TIME=$(date +%s)
 
               # Собираем с таймаутом и выводом прогресса в реальном времени
               # Используем timeout если доступен, иначе просто запускаем сборку
               if command -v timeout >/dev/null 2>&1; then
-                echo "⏱️ Using timeout command: $BUILD_TIMEOUT seconds"
+                echo "⏱️ Using timeout command: ${BUILD_TIMEOUT} seconds"
                 # Запускаем сборку с таймаутом и логированием прогресса
-                if timeout $BUILD_TIMEOUT docker compose -f docker-compose.prod.yml build --pull --progress=plain 2>&1 | tee /tmp/docker-build.log; then
+                # Используем явное значение переменной для избежания проблем с пустыми значениями
+                if timeout "${BUILD_TIMEOUT}" docker compose -f docker-compose.prod.yml build --pull --progress=plain 2>&1 | tee /tmp/docker-build.log; then
                   BUILD_SUCCESS=1
                   BUILD_END_TIME=$(date +%s)
                   BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
@@ -195,7 +201,7 @@ jobs:
                 break
               else
                 BUILD_RETRY=$((BUILD_RETRY + 1))
-                if [ $BUILD_RETRY -lt $MAX_BUILD_RETRIES ]; then
+                if [ "$BUILD_RETRY" -lt "$MAX_BUILD_RETRIES" ]; then
                   echo "⚠️ Build failed, retrying in 15 seconds... ($BUILD_RETRY/$MAX_BUILD_RETRIES)"
                   echo "🧹 Cleaning up Docker build cache..."
                   docker builder prune -f || true
