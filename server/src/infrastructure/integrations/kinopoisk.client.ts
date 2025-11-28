@@ -79,28 +79,56 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       }
 
       const curlCommand = ['curl', '-s', '-S', '--max-time', '30', ...headerArgs, url].join(' ');
-      logger.debug({ url, method: 'curl' }, '[kinopoisk] Making request via curl');
+      logger.debug(
+        { url, method: 'curl', command: curlCommand.replace(API_KEY || '', '***') },
+        '[kinopoisk] Making request via curl',
+      );
 
       const { stdout, stderr } = await execAsync(curlCommand, { timeout: 35000 });
 
+      // Логируем полный ответ для диагностики
+      logger.debug(
+        {
+          url,
+          method: 'curl',
+          stdoutLength: stdout?.length || 0,
+          stderr: stderr || null,
+          stdoutPreview: stdout ? stdout.substring(0, 500) : null,
+        },
+        '[kinopoisk] curl response',
+      );
+
       if (stderr && !stdout) {
-        logger.error({ url, stderr }, '[kinopoisk] curl request failed');
+        logger.error({ url, stderr, method: 'curl' }, '[kinopoisk] curl request failed');
         return null;
       }
 
       if (!stdout || stdout.trim() === '') {
-        logger.warn({ url }, '[kinopoisk] curl returned empty response');
+        logger.warn({ url, method: 'curl', stderr }, '[kinopoisk] curl returned empty response');
         return null;
       }
 
       try {
-        return JSON.parse(stdout) as T;
+        const parsed = JSON.parse(stdout) as T;
+        logger.debug(
+          {
+            url,
+            method: 'curl',
+            hasData: !!parsed,
+            dataKeys: parsed && typeof parsed === 'object' ? Object.keys(parsed) : [],
+            fullResponse: JSON.stringify(parsed).substring(0, 1000),
+          },
+          '[kinopoisk] curl parsed response',
+        );
+        return parsed;
       } catch (parseError) {
         logger.error(
           {
             url,
-            body: stdout.substring(0, 500),
+            body: stdout.substring(0, 1000),
+            stderr,
             parseError: parseError instanceof Error ? parseError.message : String(parseError),
+            method: 'curl',
           },
           '[kinopoisk] Failed to parse JSON response from curl',
         );
@@ -151,6 +179,19 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       }
 
       const responseText = await resp.text();
+
+      // Логируем полный ответ для диагностики
+      logger.debug(
+        {
+          url,
+          status: resp.status,
+          responseTextLength: responseText?.length || 0,
+          responseTextPreview: responseText ? responseText.substring(0, 500) : null,
+          responseHeaders: Object.fromEntries(resp.headers.entries()),
+        },
+        '[kinopoisk] fetch response',
+      );
+
       if (!responseText || responseText.trim() === '') {
         logger.warn(
           {
@@ -164,13 +205,24 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       }
 
       try {
-        return JSON.parse(responseText) as T;
+        const parsed = JSON.parse(responseText) as T;
+        logger.debug(
+          {
+            url,
+            status: resp.status,
+            hasData: !!parsed,
+            dataKeys: parsed && typeof parsed === 'object' ? Object.keys(parsed) : [],
+            fullResponse: JSON.stringify(parsed).substring(0, 1000),
+          },
+          '[kinopoisk] fetch parsed response',
+        );
+        return parsed;
       } catch (parseError) {
         logger.error(
           {
             url,
             status: resp.status,
-            body: responseText.substring(0, 500),
+            body: responseText.substring(0, 1000),
             parseError: parseError instanceof Error ? parseError.message : String(parseError),
           },
           '[kinopoisk] Failed to parse JSON response',
@@ -443,15 +495,40 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       const url = urlObj.toString();
 
       logger.debug({ query, encodedUrl: url, apiUrl: API_URL }, '[kinopoisk] suggest request');
-      // Используем fetchJson с автоматическим fallback на curl при ошибке
-      const data = await this.fetchJson<any>(url);
+
+      // Пробуем сначала через curl, так как из консоли работает
+      // Если curl не работает, fallback на fetchJson
+      let data: any = null;
+      try {
+        logger.debug({ query, url }, '[kinopoisk] Trying curl first for suggest');
+        data = await this.fetchJsonViaCurl<any>(url);
+        if (data) {
+          logger.debug(
+            { query, url, method: 'curl', success: true },
+            '[kinopoisk] Curl request succeeded',
+          );
+        } else {
+          logger.warn(
+            { query, url, method: 'curl' },
+            '[kinopoisk] Curl returned null, trying fetch',
+          );
+          data = await this.fetchJson<any>(url, 0, false); // Не используем curl fallback, так как уже пробовали
+        }
+      } catch (curlError) {
+        logger.warn(
+          { err: curlError, query, url, method: 'curl' },
+          '[kinopoisk] Curl failed, trying fetch',
+        );
+        data = await this.fetchJson<any>(url, 0, false);
+      }
+
       if (!data) {
         logger.warn({ query, url, apiUrl: API_URL }, 'Kinopoisk suggest returned null');
         return [];
       }
 
-      // Логируем структуру ответа для диагностики
-      logger.debug(
+      // Логируем полную структуру ответа для диагностики
+      logger.info(
         {
           query,
           url,
@@ -460,6 +537,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
           filmsType: Array.isArray(data?.films) ? 'array' : typeof data?.films,
           filmsLength: Array.isArray(data?.films) ? data.films.length : 'not array',
           dataKeys: data ? Object.keys(data) : [],
+          fullResponse: JSON.stringify(data).substring(0, 1000), // Первые 1000 символов ответа
         },
         '[kinopoisk] suggest response structure',
       );
