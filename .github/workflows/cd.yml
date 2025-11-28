@@ -142,7 +142,8 @@ jobs:
 
             while [ $BUILD_RETRY -lt $MAX_BUILD_RETRIES ]; do
               echo "🔨 Build attempt $((BUILD_RETRY + 1))/$MAX_BUILD_RETRIES"
-              echo "⏱️ Build timeout: $BUILD_TIMEOUT seconds ($(($BUILD_TIMEOUT / 60)) minutes)"
+              BUILD_TIMEOUT_MIN=$((BUILD_TIMEOUT / 60))
+              echo "⏱️ Build timeout: $BUILD_TIMEOUT seconds ($BUILD_TIMEOUT_MIN minutes)"
               BUILD_START_TIME=$(date +%s)
 
               # Собираем с таймаутом и выводом прогресса в реальном времени
@@ -154,14 +155,16 @@ jobs:
                   BUILD_SUCCESS=1
                   BUILD_END_TIME=$(date +%s)
                   BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
-                  echo "✅ Build successful in $BUILD_DURATION seconds ($(($BUILD_DURATION / 60)) minutes)"
+                  BUILD_DURATION_MIN=$((BUILD_DURATION / 60))
+                  echo "✅ Build successful in $BUILD_DURATION seconds ($BUILD_DURATION_MIN minutes)"
                 else
                   BUILD_EXIT_CODE=$?
                   BUILD_SUCCESS=0
                   BUILD_END_TIME=$(date +%s)
                   BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
                   if [ $BUILD_EXIT_CODE -eq 124 ]; then
-                    echo "⏱️ Build timed out after $BUILD_TIMEOUT seconds ($(($BUILD_TIMEOUT / 60)) minutes)"
+                    BUILD_TIMEOUT_MIN=$((BUILD_TIMEOUT / 60))
+                    echo "⏱️ Build timed out after $BUILD_TIMEOUT seconds ($BUILD_TIMEOUT_MIN minutes)"
                     echo "⏱️ Actual build duration: $BUILD_DURATION seconds"
                   else
                     echo "❌ Build failed with exit code $BUILD_EXIT_CODE after $BUILD_DURATION seconds"
