@@ -134,11 +134,42 @@ jobs:
             }
 
             echo "🔨 Building new images (old containers continue running)..."
+            echo "⏱️ This may take several minutes, especially on first build..."
             # Собираем новые образы БЕЗ остановки старых контейнеров для zero-downtime
             MAX_BUILD_RETRIES=3
             BUILD_RETRY=0
+            BUILD_TIMEOUT=1800  # 30 минут таймаут для сборки
+            
             while [ $BUILD_RETRY -lt $MAX_BUILD_RETRIES ]; do
-              if docker compose -f docker-compose.prod.yml build --pull; then
+              echo "🔨 Build attempt $((BUILD_RETRY + 1))/$MAX_BUILD_RETRIES"
+              
+              # Собираем с таймаутом и выводом прогресса в реальном времени
+              # Используем timeout если доступен, иначе просто запускаем сборку
+              if command -v timeout >/dev/null 2>&1; then
+                echo "⏱️ Using timeout: $BUILD_TIMEOUT seconds"
+                if timeout $BUILD_TIMEOUT docker compose -f docker-compose.prod.yml build --pull --progress=plain; then
+                  BUILD_SUCCESS=1
+                else
+                  BUILD_EXIT_CODE=$?
+                  BUILD_SUCCESS=0
+                  if [ $BUILD_EXIT_CODE -eq 124 ]; then
+                    echo "⏱️ Build timed out after $BUILD_TIMEOUT seconds"
+                  else
+                    echo "❌ Build failed with exit code $BUILD_EXIT_CODE"
+                  fi
+                fi
+              else
+                # Если timeout недоступен, просто запускаем сборку
+                echo "⚠️ timeout command not available, building without timeout"
+                if docker compose -f docker-compose.prod.yml build --pull --progress=plain; then
+                  BUILD_SUCCESS=1
+                else
+                  BUILD_SUCCESS=0
+                  echo "❌ Build failed"
+                fi
+              fi
+              
+              if [ "$BUILD_SUCCESS" -eq 1 ]; then
                 echo "✅ Build successful"
                 break
               else
@@ -148,7 +179,9 @@ jobs:
                   sleep 10
                 else
                   echo "❌ Build failed after $MAX_BUILD_RETRIES attempts"
-                  docker compose -f docker-compose.prod.yml logs || true
+                  echo "📋 Checking Docker status:"
+                  docker compose -f docker-compose.prod.yml ps || true
+                  docker compose -f docker-compose.prod.yml logs --tail=50 || true
                   exit 1
                 fi
               fi
