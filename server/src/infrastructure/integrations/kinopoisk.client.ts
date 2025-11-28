@@ -56,7 +56,7 @@ type StaffItem = {
 type BoxOfficeItem = { type?: string; amount?: number; currencyCode?: string; symbol?: string };
 
 export class KinopoiskHttpClient implements KinopoiskClient {
-  extractKpIdFromPosterUrl(posterUrl: string | null | undefined): number | null {
+  extractFilmIdFromPosterUrl(posterUrl: string | null | undefined): number | null {
     if (!posterUrl) return null;
     const match = posterUrl.match(/\/kp\/(\d+)\.(jpg|jpeg|png|webp)/i);
     if (match && match[1]) {
@@ -303,28 +303,28 @@ export class KinopoiskHttpClient implements KinopoiskClient {
   }
 
   private async fetchStaff(
-    kpId: number,
+    filmId: number,
   ): Promise<{ director: string | null; actors: string[] | null }> {
     try {
-      const staffUrl = `${API_URL}/api/v1/staff?filmId=${kpId}`;
+      const staffUrl = `${API_URL}/api/v1/staff?filmId=${filmId}`;
       const staff = await this.fetchJson<StaffItem[]>(staffUrl);
       if (!staff) {
         return { director: null, actors: null };
       }
       return this.mapStaff(staff);
     } catch (error) {
-      logger.error({ err: error, kpId }, 'Error fetching Kinopoisk staff');
+      logger.error({ err: error, filmId }, 'Error fetching Kinopoisk staff');
       return { director: null, actors: null };
     }
   }
 
-  private async fetchBudgetInfo(kpId: number): Promise<{
+  private async fetchBudgetInfo(filmId: number): Promise<{
     amount: number | null;
     currencyCode: string | null;
     currencySymbol: string | null;
   }> {
     try {
-      const url = `${API_URL}/api/v2.2/films/${kpId}/box_office`;
+      const url = `${API_URL}/api/v2.2/films/${filmId}/box_office`;
       const data = await this.fetchJson<{ items?: BoxOfficeItem[] }>(url);
       if (!data?.items) {
         return { amount: null, currencyCode: null, currencySymbol: null };
@@ -339,20 +339,20 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         currencySymbol: budgetItem.symbol ?? null,
       };
     } catch (error) {
-      logger.error({ err: error, kpId }, 'Error fetching Kinopoisk budget info');
+      logger.error({ err: error, filmId }, 'Error fetching Kinopoisk budget info');
       return { amount: null, currencyCode: null, currencySymbol: null };
     }
   }
 
-  async fetchFilmDetails(kpId: number): Promise<KpEnriched> {
-    if (!kpId) return {};
+  async fetchFilmDetails(filmId: number): Promise<KpEnriched> {
+    if (!filmId) return {};
     try {
-      const detailUrl = `${API_URL}/api/v2.2/films/${kpId}`;
+      const detailUrl = `${API_URL}/api/v2.2/films/${filmId}`;
       const detail = await this.fetchJson<any>(detailUrl);
       if (!detail) return {};
       const genres = (detail.genres || []).map((g: any) => g.genre).filter(Boolean) as string[];
-      const { director, actors } = await this.fetchStaff(kpId);
-      const budgetInfo = await this.fetchBudgetInfo(kpId);
+      const { director, actors } = await this.fetchStaff(filmId);
+      const budgetInfo = await this.fetchBudgetInfo(filmId);
       const budgetAmount =
         detail.budget != null
           ? typeof detail.budget === 'number'
@@ -369,7 +369,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       const seasonsCount =
         detail.seasons?.length ?? detail.serialSeasonsNumber ?? detail.totalSeasons ?? null;
       return {
-        kp_id: detail.kinopoiskId ?? kpId,
+        film_id: detail.kinopoiskId ?? detail.filmId ?? filmId,
         kp_poster: detail.posterUrl || detail.posterUrlPreview || null,
         kp_posterPreview: detail.posterUrlPreview || detail.posterUrl || null,
         kp_logo: detail.logoUrl ?? null,
@@ -391,7 +391,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         kp_filmLength: episodeLength ?? detail.filmLength ?? null,
       };
     } catch (error) {
-      logger.error({ err: error, kpId }, 'Error fetching film details by kp_id');
+      logger.error({ err: error, filmId }, 'Error fetching film details by film_id');
       return {};
     }
   }
@@ -411,25 +411,25 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       if (!film) {
         return {};
       }
-      // API может возвращать filmId или kinopoiskId - проверяем оба варианта
-      let filmKpId = film.filmId ?? film.kinopoiskId ?? null;
-      if (!filmKpId) {
-        const posterId = this.extractKpIdFromPosterUrl(film.posterUrl || film.posterUrlPreview);
+      // API возвращает filmId
+      let filmIdToUse = film.filmId ?? null;
+      if (!filmIdToUse) {
+        const posterId = this.extractFilmIdFromPosterUrl(film.posterUrl || film.posterUrlPreview);
         if (posterId) {
-          filmKpId = posterId;
+          filmIdToUse = posterId;
         }
       }
-      if (filmKpId) {
-        return this.fetchFilmDetails(filmKpId);
+      if (filmIdToUse) {
+        return this.fetchFilmDetails(filmIdToUse);
       }
       const genres = (film.genres || []).map((g: any) => g.genre).filter(Boolean) as string[];
-      const posterId = this.extractKpIdFromPosterUrl(film.posterUrl || film.posterUrlPreview);
-      const budgetInfo = filmKpId
-        ? await this.fetchBudgetInfo(filmKpId)
+      const posterId = this.extractFilmIdFromPosterUrl(film.posterUrl || film.posterUrlPreview);
+      const budgetInfo = filmIdToUse
+        ? await this.fetchBudgetInfo(filmIdToUse)
         : { amount: null, currencyCode: null, currencySymbol: null };
 
       return {
-        kp_id: film.filmId ?? film.kinopoiskId ?? posterId,
+        film_id: film.filmId ?? posterId,
         kp_poster: film.posterUrl || film.posterUrlPreview || null,
         kp_posterPreview: film.posterUrlPreview || film.posterUrl || null,
         kp_logo: film.logoUrl ?? null,
@@ -457,13 +457,13 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     }
   }
 
-  async fetchSeriesDetails(kpId: number): Promise<KpSeriesDetails> {
-    if (!kpId) {
-      logger.warn({ kpId }, 'fetchSeriesDetails: kpId is missing or invalid');
+  async fetchSeriesDetails(filmId: number): Promise<KpSeriesDetails> {
+    if (!filmId) {
+      logger.warn({ filmId }, 'fetchSeriesDetails: filmId is missing or invalid');
       return {};
     }
     try {
-      const url = `${API_URL}/api/v2.2/films/${kpId}/seasons`;
+      const url = `${API_URL}/api/v2.2/films/${filmId}/seasons`;
       const resp = await this.fetchJson<any>(url);
       if (!resp?.items || resp.items.length === 0) {
         return {};
@@ -479,7 +479,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       }));
       return { seasons };
     } catch (error) {
-      logger.error({ err: error, kpId }, 'Error in fetchSeriesDetails');
+      logger.error({ err: error, filmId }, 'Error in fetchSeriesDetails');
       return {};
     }
   }
@@ -557,10 +557,10 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         );
       }
       return films.slice(0, 10).map((f: any) => {
-        // API может возвращать filmId или kinopoiskId - проверяем оба варианта
-        let filmId = f.filmId ?? f.kinopoiskId ?? null;
+        // API возвращает filmId
+        let filmId = f.filmId ?? null;
         if (!filmId) {
-          const posterId = this.extractKpIdFromPosterUrl(f.posterUrlPreview || f.posterUrl);
+          const posterId = this.extractFilmIdFromPosterUrl(f.posterUrlPreview || f.posterUrl);
           if (posterId) {
             filmId = posterId;
           }
@@ -579,17 +579,17 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     }
   }
 
-  async fetchFilmImages(kpId: number, type: string, page = 1): Promise<KpImageResponse | null> {
-    if (!kpId) {
-      logger.warn({ kpId, type, page }, 'fetchFilmImages: kpId is missing or invalid');
+  async fetchFilmImages(filmId: number, type: string, page = 1): Promise<KpImageResponse | null> {
+    if (!filmId) {
+      logger.warn({ filmId, type, page }, 'fetchFilmImages: filmId is missing or invalid');
       return null;
     }
     try {
-      const url = `${API_URL}/api/v2.2/films/${kpId}/images?type=${encodeURIComponent(type)}&page=${page}`;
+      const url = `${API_URL}/api/v2.2/films/${filmId}/images?type=${encodeURIComponent(type)}&page=${page}`;
       const resp = await this.fetchJson<KpImageResponse>(url);
       return resp ?? null;
     } catch (error) {
-      logger.error({ err: error, kpId, type, page }, 'Error fetching Kinopoisk film images');
+      logger.error({ err: error, filmId, type, page }, 'Error fetching Kinopoisk film images');
       return null;
     }
   }

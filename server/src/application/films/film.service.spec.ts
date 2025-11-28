@@ -18,7 +18,7 @@ const baseRow: UserFilmRow = {
   kp_is_series: false,
   kp_episodes_count: null,
   kp_seasons_count: null,
-  kp_id: 123,
+  film_id: 123,
   web_url: null,
   director: 'Director',
   budget: null,
@@ -91,7 +91,7 @@ describe('FilmService', () => {
   });
 
   it('создает фильм и возвращает данные', async () => {
-    const kpData: KpEnriched = { kp_id: 200 };
+    const kpData: KpEnriched = { film_id: 200 };
     const repository = createRepositoryMock({
       createCatalogEntry: jest.fn().mockResolvedValue(5),
     });

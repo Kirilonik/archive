@@ -64,7 +64,7 @@ export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set()
         // Фильтруем результаты: исключаем уже добавленные в библиотеку
         const filteredData = Array.isArray(data)
           ? data.filter((item: SuggestItem) => {
-              // Если у элемента нет id (kp_id), показываем его (на случай если kp_id не определен)
+              // Если у элемента нет id (film_id), показываем его (на случай если film_id не определен)
               if (!item.id) return true;
               // Исключаем элементы, которые уже есть в библиотеке
               return !existingKpIds.has(item.id);
@@ -121,12 +121,12 @@ export function AddModal({ isOpen, onClose, onSuccess, existingKpIds = new Set()
     if (!selected) return;
 
     try {
-      const body: { title: string; kp_id?: number; my_rating?: number; opinion?: string } = {
+      const body: { title: string; film_id?: number; my_rating?: number; opinion?: string } = {
         title: selected.title,
       };
-      // Передаем kp_id (ID с Кинопоиска) если он есть в выбранном элементе
+      // Передаем film_id (ID с Кинопоиска) если он есть в выбранном элементе
       if (selected.id) {
-        body.kp_id = selected.id;
+        body.film_id = selected.id;
       }
       if (myRating > 0) body.my_rating = myRating;
       if (opinion) body.opinion = opinion;

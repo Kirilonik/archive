@@ -107,11 +107,11 @@ export function FilmDetails() {
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  {(data.web_url || data.kp_id) && (
+                  {(data.web_url || data.film_id) && (
                     <a
                       href={
                         data.web_url ||
-                        (data.kp_id ? `https://www.kinopoisk.ru/film/${data.kp_id}/` : '#')
+                        (data.film_id ? `https://www.kinopoisk.ru/film/${data.film_id}/` : '#')
                       }
                       target="_blank"
                       rel="noopener noreferrer"

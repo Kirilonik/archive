@@ -16,7 +16,7 @@ export interface Film {
   kp_is_series: boolean | null;
   kp_episodes_count: number | null;
   kp_seasons_count: number | null;
-  kp_id: number | null;
+  film_id: number | null;
   web_url: string | null;
   director: string | null;
   budget: number | null;
@@ -46,7 +46,7 @@ export interface Series {
   kp_is_series: boolean | null;
   kp_episodes_count: number | null;
   kp_seasons_count: number | null;
-  kp_id: number | null;
+  film_id: number | null;
   web_url: string | null;
   director: string | null;
   budget: number | null;

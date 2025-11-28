@@ -53,12 +53,12 @@ export function Home() {
     return Array.from(genresSet).sort();
   }, [items]);
 
-  // Собираем все kp_id из библиотеки для фильтрации поиска
+  // Собираем все film_id из библиотеки для фильтрации поиска
   const existingKpIds = useMemo(() => {
     const kpIdsSet = new Set<number>();
     items.forEach((item) => {
-      if (item.kp_id !== null && item.kp_id !== undefined) {
-        kpIdsSet.add(item.kp_id);
+      if (item.film_id !== null && item.film_id !== undefined) {
+        kpIdsSet.add(item.film_id);
       }
     });
     return kpIdsSet;

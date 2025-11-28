@@ -18,7 +18,7 @@ const baseRow: UserSeriesRow = {
   kp_is_series: true,
   kp_episodes_count: 10,
   kp_seasons_count: 1,
-  kp_id: 456,
+  film_id: 456,
   web_url: null,
   director: 'Director',
   budget: null,
@@ -85,7 +85,7 @@ describe('SeriesService', () => {
   });
 
   it('создает сериал и загружает сезоны', async () => {
-    const kpData: KpEnriched = { kp_id: 321, kp_year: 2021 };
+    const kpData: KpEnriched = { film_id: 321, kp_year: 2021 };
     const repository = createRepositoryMock();
     const kinopoisk = createKinopoiskMock({
       searchBestByTitle: jest.fn().mockResolvedValue(kpData) as any,

@@ -21,7 +21,7 @@ function mapRowToResponse(row: UserSeriesRow, userId: number) {
     kp_is_series: row.kp_is_series,
     kp_episodes_count: row.kp_episodes_count,
     kp_seasons_count: row.kp_seasons_count,
-    kp_id: row.kp_id,
+    film_id: row.kp_id,
     web_url: row.web_url,
     director: row.director,
     budget: row.budget,
@@ -103,21 +103,21 @@ export class SeriesService {
   }
 
   private async loadKpDataForCreate(input: SeriesCreateDto): Promise<KpEnriched> {
-    if (input.kp_id) {
-      return this.kinopoiskClient.fetchFilmDetails(input.kp_id);
+    if (input.film_id) {
+      return this.kinopoiskClient.fetchFilmDetails(input.film_id);
     }
     return this.kinopoiskClient.searchBestByTitle(input.title);
   }
 
   private async resolveCatalogId(input: SeriesCreateDto, kpData: KpEnriched): Promise<number> {
-    let kpIdToUse: number | null = input.kp_id ?? kpData.kp_id ?? null;
-    if (!kpIdToUse) {
+    let filmIdToUse: number | null = input.film_id ?? kpData.film_id ?? null;
+    if (!filmIdToUse) {
       const posterToCheck = input.poster_url ?? kpData.kp_poster ?? null;
-      kpIdToUse = this.kinopoiskClient.extractKpIdFromPosterUrl(posterToCheck);
+      filmIdToUse = this.kinopoiskClient.extractFilmIdFromPosterUrl(posterToCheck);
     }
 
-    if (kpIdToUse) {
-      const existing = await this.repository.findCatalogIdByKpId(kpIdToUse);
+    if (filmIdToUse) {
+      const existing = await this.repository.findCatalogIdByFilmId(filmIdToUse);
       if (existing) {
         return existing;
       }
@@ -141,7 +141,7 @@ export class SeriesService {
       kpIsSeries: kpData.kp_isSeries ?? true,
       kpEpisodesCount: kpData.kp_episodesCount ?? null,
       kpSeasonsCount: kpData.kp_seasonsCount ?? null,
-      kpId: kpIdToUse,
+      filmId: filmIdToUse,
       webUrl: kpData.kp_webUrl ?? null,
       director: input.director ?? kpData.kp_director ?? null,
       budget: input.budget ?? kpData.kp_budget ?? null,
@@ -157,10 +157,10 @@ export class SeriesService {
   private async ensureSeasonsAndEpisodes(
     userId: number,
     seriesCatalogId: number,
-    kpId: number | null,
+    filmId: number | null,
   ) {
-    if (!kpId) return;
-    const details = await this.kinopoiskClient.fetchSeriesDetails(kpId);
+    if (!filmId) return;
+    const details = await this.kinopoiskClient.fetchSeriesDetails(filmId);
     const seasons = details.seasons ?? [];
     for (const season of seasons) {
       if (season.number === undefined) continue;
@@ -209,8 +209,8 @@ export class SeriesService {
       status: input.status ?? null,
     });
 
-    const kpIdToUse = input.kp_id ?? kpData.kp_id ?? null;
-    await this.ensureSeasonsAndEpisodes(userId, catalogId, kpIdToUse);
+    const filmIdToUse = input.film_id ?? kpData.film_id ?? null;
+    await this.ensureSeasonsAndEpisodes(userId, catalogId, filmIdToUse);
 
     const row = await this.repository.getUserSeries(userSeriesId, userId);
     if (!row) throw new Error('Failed to load created series');

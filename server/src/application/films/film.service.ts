@@ -21,7 +21,7 @@ function mapRowToResponse(row: UserFilmRow, userId: number) {
     kp_is_series: row.kp_is_series,
     kp_episodes_count: row.kp_episodes_count,
     kp_seasons_count: row.kp_seasons_count,
-    kp_id: row.kp_id,
+    film_id: row.kp_id,
     web_url: row.web_url,
     director: row.director,
     budget: row.budget,
@@ -105,14 +105,14 @@ export class FilmService {
   }
 
   private async resolveCatalogId(input: FilmCreateDto, kpData: KpEnriched): Promise<number> {
-    let kpIdToUse: number | null = input.kp_id ?? kpData.kp_id ?? null;
-    if (!kpIdToUse) {
+    let filmIdToUse: number | null = input.film_id ?? kpData.film_id ?? null;
+    if (!filmIdToUse) {
       const posterToCheck = input.poster_url ?? kpData.kp_poster ?? null;
-      kpIdToUse = this.kinopoiskClient.extractKpIdFromPosterUrl(posterToCheck);
+      filmIdToUse = this.kinopoiskClient.extractFilmIdFromPosterUrl(posterToCheck);
     }
 
-    if (kpIdToUse) {
-      const existing = await this.repository.findCatalogIdByKpId(kpIdToUse);
+    if (filmIdToUse) {
+      const existing = await this.repository.findCatalogIdByFilmId(filmIdToUse);
       if (existing) {
         return existing;
       }
@@ -136,7 +136,7 @@ export class FilmService {
       kpIsSeries: kpData.kp_isSeries ?? null,
       kpEpisodesCount: kpData.kp_episodesCount ?? null,
       kpSeasonsCount: kpData.kp_seasonsCount ?? null,
-      kpId: kpIdToUse,
+      filmId: filmIdToUse,
       webUrl: kpData.kp_webUrl ?? null,
       director: input.director ?? kpData.kp_director ?? null,
       budget: input.budget ?? kpData.kp_budget ?? null,
@@ -173,8 +173,8 @@ export class FilmService {
   }
 
   private async loadKpDataForCreate(input: FilmCreateDto): Promise<KpEnriched> {
-    if (input.kp_id) {
-      const detailed = await this.kinopoiskClient.fetchFilmDetails(input.kp_id);
+    if (input.film_id) {
+      const detailed = await this.kinopoiskClient.fetchFilmDetails(input.film_id);
       return detailed ?? {};
     }
     return this.kinopoiskClient.searchBestByTitle(input.title);

@@ -17,7 +17,7 @@ const film = {
   kp_is_series: false,
   kp_episodes_count: null,
   kp_seasons_count: null,
-  kp_id: 123,
+  film_id: 123,
   director: 'Christopher Nolan',
   budget: 160000000,
   budget_currency_code: 'USD',

@@ -17,7 +17,7 @@ const series = {
   kp_is_series: true,
   kp_episodes_count: 26,
   kp_seasons_count: 3,
-  kp_id: 999,
+  film_id: 999,
   director: 'Baran bo Odar',
   budget: null,
   revenue: null,

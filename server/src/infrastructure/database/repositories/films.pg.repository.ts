@@ -76,7 +76,7 @@ export class FilmsPgRepository implements FilmsRepository {
 
   async getUserFilm(userFilmId: number, userId: number): Promise<UserFilmRow | null> {
     const { rows } = await pool.query<UserFilmRow>(
-      `SELECT 
+      `SELECT
         uf.id as user_film_id,
         uf.user_id,
         uf.film_catalog_id,
@@ -114,10 +114,10 @@ export class FilmsPgRepository implements FilmsRepository {
     return rows[0] ?? null;
   }
 
-  async findCatalogIdByKpId(kpId: number): Promise<number | null> {
+  async findCatalogIdByFilmId(filmId: number): Promise<number | null> {
     const { rows } = await pool.query<{ id: number }>(
       'SELECT id FROM films_catalog WHERE kp_id = $1',
-      [kpId],
+      [filmId],
     );
     return rows[0]?.id ?? null;
   }
@@ -150,7 +150,7 @@ export class FilmsPgRepository implements FilmsRepository {
         input.kpIsSeries ?? null,
         input.kpEpisodesCount ?? null,
         input.kpSeasonsCount ?? null,
-        input.kpId ?? null,
+        input.filmId ?? null,
         input.webUrl ?? null,
         input.director ?? null,
         input.budget ?? null,
@@ -224,7 +224,7 @@ export class FilmsPgRepository implements FilmsRepository {
     data: { myRating?: number | null; opinion?: string | null; status?: string | null },
   ): Promise<void> {
     await pool.query(
-      `UPDATE user_films 
+      `UPDATE user_films
        SET my_rating = $1, opinion = $2, status = $3, updated_at = NOW()
        WHERE id = $4 AND user_id = $5`,
       [data.myRating ?? null, data.opinion ?? null, data.status ?? null, userFilmId, userId],

@@ -1,5 +1,5 @@
 export type KpEnriched = {
-  kp_id?: number | null;
+  film_id?: number | null;
   kp_poster?: string | null;
   kp_posterPreview?: string | null;
   kp_logo?: string | null;
@@ -57,9 +57,9 @@ export type KpImageResponse = {
 
 export interface KinopoiskClient {
   searchBestByTitle(title: string): Promise<KpEnriched>;
-  fetchFilmDetails(kpId: number): Promise<KpEnriched>;
-  fetchSeriesDetails(kpId: number): Promise<KpSeriesDetails>;
+  fetchFilmDetails(filmId: number): Promise<KpEnriched>;
+  fetchSeriesDetails(filmId: number): Promise<KpSeriesDetails>;
   suggest(query: string): Promise<KpSuggestItem[]>;
-  extractKpIdFromPosterUrl(posterUrl: string | null | undefined): number | null;
-  fetchFilmImages(kpId: number, type: string, page?: number): Promise<KpImageResponse | null>;
+  extractFilmIdFromPosterUrl(posterUrl: string | null | undefined): number | null;
+  fetchFilmImages(filmId: number, type: string, page?: number): Promise<KpImageResponse | null>;
 }

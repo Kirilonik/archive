@@ -278,11 +278,13 @@ export function SeriesDetails() {
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  {(series.web_url || series.kp_id) && (
+                  {(series.web_url || series.film_id) && (
                     <a
                       href={
                         series.web_url ||
-                        (series.kp_id ? `https://www.kinopoisk.ru/series/${series.kp_id}/` : '#')
+                        (series.film_id
+                          ? `https://www.kinopoisk.ru/series/${series.film_id}/`
+                          : '#')
                       }
                       target="_blank"
                       rel="noopener noreferrer"

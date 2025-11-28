@@ -76,7 +76,7 @@ export class SeriesPgRepository implements SeriesRepository {
 
   async getUserSeries(userSeriesId: number, userId: number): Promise<UserSeriesRow | null> {
     const { rows } = await pool.query<UserSeriesRow>(
-      `SELECT 
+      `SELECT
         us.id as user_series_id,
         us.user_id,
         us.series_catalog_id,
@@ -112,10 +112,10 @@ export class SeriesPgRepository implements SeriesRepository {
     return rows[0] ?? null;
   }
 
-  async findCatalogIdByKpId(kpId: number): Promise<number | null> {
+  async findCatalogIdByFilmId(filmId: number): Promise<number | null> {
     const { rows } = await pool.query<{ id: number }>(
       'SELECT id FROM series_catalog WHERE kp_id = $1',
-      [kpId],
+      [filmId],
     );
     return rows[0]?.id ?? null;
   }
@@ -147,7 +147,7 @@ export class SeriesPgRepository implements SeriesRepository {
         input.kpIsSeries ?? null,
         input.kpEpisodesCount ?? null,
         input.kpSeasonsCount ?? null,
-        input.kpId ?? null,
+        input.filmId ?? null,
         input.webUrl ?? null,
         input.director ?? null,
         input.budget ?? null,

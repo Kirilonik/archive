@@ -1,6 +1,6 @@
 export interface FilmCreateInput {
   title: string;
-  kpId?: number;
+  filmId?: number;
   posterUrl?: string;
   rating?: number;
   status?: string;
@@ -31,7 +31,7 @@ export interface FilmCatalogCreateInput {
   kpIsSeries?: boolean | null;
   kpEpisodesCount?: number | null;
   kpSeasonsCount?: number | null;
-  kpId?: number | null;
+  filmId?: number | null;
   webUrl?: string | null;
   director?: string | null;
   budget?: number | null;
@@ -58,7 +58,7 @@ export interface UserFilmRow {
   kp_is_series: boolean | null;
   kp_episodes_count: number | null;
   kp_seasons_count: number | null;
-  kp_id: number | null;
+  film_id: number | null;
   web_url: string | null;
   director: string | null;
   budget: number | null;
@@ -85,7 +85,7 @@ export interface FilmsRepository {
     offset: number;
   }): Promise<{ items: UserFilmRow[]; total: number }>;
   getUserFilm(userFilmId: number, userId: number): Promise<UserFilmRow | null>;
-  findCatalogIdByKpId(kpId: number): Promise<number | null>;
+  findCatalogIdByFilmId(filmId: number): Promise<number | null>;
   findCatalogIdByTitleYear(title: string, year: number | null): Promise<number | null>;
   createCatalogEntry(input: FilmCatalogCreateInput): Promise<number>;
   findUserFilmDuplicateByTitleYear(
