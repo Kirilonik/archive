@@ -45,7 +45,7 @@ jobs:
     needs: check-ci
     environment:
       name: ${{ github.event.inputs.environment || 'production' }}
-    timeout-minutes: 30
+    timeout-minutes: 90
 
     steps:
       - name: Checkout repository
@@ -138,50 +138,76 @@ jobs:
             # Собираем новые образы БЕЗ остановки старых контейнеров для zero-downtime
             MAX_BUILD_RETRIES=3
             BUILD_RETRY=0
-            BUILD_TIMEOUT=1800  # 30 минут таймаут для сборки
-            
+            BUILD_TIMEOUT=4800  # 80 минут таймаут для сборки (больше чем job timeout для буфера)
+
             while [ $BUILD_RETRY -lt $MAX_BUILD_RETRIES ]; do
               echo "🔨 Build attempt $((BUILD_RETRY + 1))/$MAX_BUILD_RETRIES"
-              
+              echo "⏱️ Build timeout: $BUILD_TIMEOUT seconds ($(($BUILD_TIMEOUT / 60)) minutes)"
+              BUILD_START_TIME=$(date +%s)
+
               # Собираем с таймаутом и выводом прогресса в реальном времени
               # Используем timeout если доступен, иначе просто запускаем сборку
               if command -v timeout >/dev/null 2>&1; then
-                echo "⏱️ Using timeout: $BUILD_TIMEOUT seconds"
-                if timeout $BUILD_TIMEOUT docker compose -f docker-compose.prod.yml build --pull --progress=plain; then
+                echo "⏱️ Using timeout command: $BUILD_TIMEOUT seconds"
+                # Запускаем сборку с таймаутом и логированием прогресса
+                if timeout $BUILD_TIMEOUT docker compose -f docker-compose.prod.yml build --pull --progress=plain 2>&1 | tee /tmp/docker-build.log; then
                   BUILD_SUCCESS=1
+                  BUILD_END_TIME=$(date +%s)
+                  BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
+                  echo "✅ Build successful in $BUILD_DURATION seconds ($(($BUILD_DURATION / 60)) minutes)"
                 else
                   BUILD_EXIT_CODE=$?
                   BUILD_SUCCESS=0
+                  BUILD_END_TIME=$(date +%s)
+                  BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
                   if [ $BUILD_EXIT_CODE -eq 124 ]; then
-                    echo "⏱️ Build timed out after $BUILD_TIMEOUT seconds"
+                    echo "⏱️ Build timed out after $BUILD_TIMEOUT seconds ($(($BUILD_TIMEOUT / 60)) minutes)"
+                    echo "⏱️ Actual build duration: $BUILD_DURATION seconds"
                   else
-                    echo "❌ Build failed with exit code $BUILD_EXIT_CODE"
+                    echo "❌ Build failed with exit code $BUILD_EXIT_CODE after $BUILD_DURATION seconds"
+                    echo "📋 Last 50 lines of build log:"
+                    tail -n 50 /tmp/docker-build.log 2>/dev/null || echo "⚠️ Could not read build log"
                   fi
                 fi
               else
                 # Если timeout недоступен, просто запускаем сборку
                 echo "⚠️ timeout command not available, building without timeout"
-                if docker compose -f docker-compose.prod.yml build --pull --progress=plain; then
+                if docker compose -f docker-compose.prod.yml build --pull --progress=plain 2>&1 | tee /tmp/docker-build.log; then
                   BUILD_SUCCESS=1
+                  BUILD_END_TIME=$(date +%s)
+                  BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
+                  echo "✅ Build successful in $BUILD_DURATION seconds"
                 else
                   BUILD_SUCCESS=0
-                  echo "❌ Build failed"
+                  BUILD_END_TIME=$(date +%s)
+                  BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
+                  echo "❌ Build failed after $BUILD_DURATION seconds"
+                  echo "📋 Last 50 lines of build log:"
+                  tail -n 50 /tmp/docker-build.log 2>/dev/null || echo "⚠️ Could not read build log"
                 fi
               fi
-              
+
               if [ "$BUILD_SUCCESS" -eq 1 ]; then
                 echo "✅ Build successful"
                 break
               else
                 BUILD_RETRY=$((BUILD_RETRY + 1))
                 if [ $BUILD_RETRY -lt $MAX_BUILD_RETRIES ]; then
-                  echo "⚠️ Build failed, retrying... ($BUILD_RETRY/$MAX_BUILD_RETRIES)"
-                  sleep 10
+                  echo "⚠️ Build failed, retrying in 15 seconds... ($BUILD_RETRY/$MAX_BUILD_RETRIES)"
+                  echo "🧹 Cleaning up Docker build cache..."
+                  docker builder prune -f || true
+                  sleep 15
                 else
                   echo "❌ Build failed after $MAX_BUILD_RETRIES attempts"
                   echo "📋 Checking Docker status:"
                   docker compose -f docker-compose.prod.yml ps || true
+                  echo "📋 Recent Docker logs:"
                   docker compose -f docker-compose.prod.yml logs --tail=50 || true
+                  echo "📋 Full build log (last 100 lines):"
+                  tail -n 100 /tmp/docker-build.log 2>/dev/null || echo "⚠️ Could not read build log"
+                  echo "💾 Disk space:"
+                  df -h / || true
+                  df -h /var/lib/docker || true
                   exit 1
                 fi
               fi
