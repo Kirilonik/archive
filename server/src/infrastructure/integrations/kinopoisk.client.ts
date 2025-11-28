@@ -30,10 +30,11 @@ const API_URL = env.KINOPOISK_API_URL;
 const API_KEY = env.KINOPOISK_API_KEY;
 
 function getHeaders(): Record<string, string> {
-  // Минимальные заголовки, точно как в рабочем примере из консоли
-  // Только X-API-KEY и Content-Type - ничего лишнего
+  // Заголовки для запросов к Kinopoisk API
+  // Accept указывает формат ожидаемого ответа (важно для GET запросов)
+  // Content-Type указывает формат отправляемых данных (для POST/PUT)
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    Accept: 'application/json',
   };
 
   if (API_KEY) {
@@ -410,7 +411,8 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       if (!film) {
         return {};
       }
-      let filmKpId = film.kinopoiskId ?? null;
+      // API может возвращать filmId или kinopoiskId - проверяем оба варианта
+      let filmKpId = film.filmId ?? film.kinopoiskId ?? null;
       if (!filmKpId) {
         const posterId = this.extractKpIdFromPosterUrl(film.posterUrl || film.posterUrlPreview);
         if (posterId) {
@@ -427,7 +429,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         : { amount: null, currencyCode: null, currencySymbol: null };
 
       return {
-        kp_id: film.kinopoiskId ?? posterId,
+        kp_id: film.filmId ?? film.kinopoiskId ?? posterId,
         kp_poster: film.posterUrl || film.posterUrlPreview || null,
         kp_posterPreview: film.posterUrlPreview || film.posterUrl || null,
         kp_logo: film.logoUrl ?? null,
@@ -555,7 +557,8 @@ export class KinopoiskHttpClient implements KinopoiskClient {
         );
       }
       return films.slice(0, 10).map((f: any) => {
-        let filmId = f.kinopoiskId ?? null;
+        // API может возвращать filmId или kinopoiskId - проверяем оба варианта
+        let filmId = f.filmId ?? f.kinopoiskId ?? null;
         if (!filmId) {
           const posterId = this.extractKpIdFromPosterUrl(f.posterUrlPreview || f.posterUrl);
           if (posterId) {
