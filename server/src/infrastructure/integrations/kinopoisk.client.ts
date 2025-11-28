@@ -434,13 +434,17 @@ export class KinopoiskHttpClient implements KinopoiskClient {
     if (!query) return [];
     try {
       // Используем URL объект для правильной кодировки
+      // Согласно документации: https://kinopoiskapiunofficial.tech/documentation/api/
+      // Эндпоинт: /api/v2.1/films/search-by-keyword
+      // Параметры: keyword (обязательный), page (опциональный)
       const urlObj = new URL('/api/v2.1/films/search-by-keyword', API_URL);
       urlObj.searchParams.set('keyword', query);
       urlObj.searchParams.set('page', '1');
       const url = urlObj.toString();
 
       logger.debug({ query, encodedUrl: url, apiUrl: API_URL }, '[kinopoisk] suggest request');
-      const data = await this.fetchJsonViaCurl<any>(url);
+      // Используем fetchJson с автоматическим fallback на curl при ошибке
+      const data = await this.fetchJson<any>(url);
       if (!data) {
         logger.warn({ query, url, apiUrl: API_URL }, 'Kinopoisk suggest returned null');
         return [];
