@@ -447,7 +447,7 @@ jobs:
           API_URL: ${{ steps.urls.outputs.api_url }}
           DEPLOY_SECRET: ${{ secrets.TELEGRAM_DEPLOY_SECRET }}
         run: |
-          STATUS="${{ needs.deploy.result }}"
+          DEPLOY_RESULT="${{ needs.deploy.result }}"
           ENVIRONMENT="${{ github.event.inputs.environment || 'production' }}"
 
           if [ -z "$DEPLOY_SECRET" ]; then
@@ -457,6 +457,22 @@ jobs:
 
           if [ -z "$API_URL" ]; then
             echo "⚠️ API_BASE_URL is not set. Skipping Telegram notification."
+            exit 0
+          fi
+
+          # Маппим статус деплоя на формат, ожидаемый API
+          if [ "$DEPLOY_RESULT" == "success" ]; then
+            STATUS="success"
+          else
+            # failure, cancelled, skipped - все считаем failure
+            STATUS="failure"
+          fi
+
+          echo "📤 Sending Telegram notification: status=$STATUS, environment=$ENVIRONMENT"
+
+          # Проверяем доступность API перед отправкой
+          if ! curl -f -s --max-time 5 "$API_URL/api/health" > /dev/null 2>&1; then
+            echo "⚠️ API is not accessible at $API_URL. Skipping Telegram notification."
             exit 0
           fi
 
