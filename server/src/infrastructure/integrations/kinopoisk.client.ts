@@ -440,7 +440,7 @@ export class KinopoiskHttpClient implements KinopoiskClient {
       const url = urlObj.toString();
 
       logger.debug({ query, encodedUrl: url, apiUrl: API_URL }, '[kinopoisk] suggest request');
-      const data = await this.fetchJson<any>(url);
+      const data = await this.fetchJsonViaCurl<any>(url);
       if (!data) {
         logger.warn({ query, url, apiUrl: API_URL }, 'Kinopoisk suggest returned null');
         return [];
