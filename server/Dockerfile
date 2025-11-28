@@ -1,5 +1,8 @@
 FROM node:20-alpine
 
+# Устанавливаем curl для fallback запросов к внешним API
+RUN apk add --no-cache curl
+
 WORKDIR /work
 
 # Общая база TS
