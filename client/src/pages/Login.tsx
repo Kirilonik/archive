@@ -7,6 +7,11 @@ import { PasswordInput } from '../components/PasswordInput';
 
 const googleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined)?.trim();
 
+// Определяем, является ли устройство мобильным
+function isMobileDevice(): boolean {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,6 +20,7 @@ export function Login() {
   const navigate = useNavigate();
   const { login, loginWithGoogle } = useAuth();
   const googleContainerRef = useRef<HTMLDivElement | null>(null);
+  const isMobile = isMobileDevice();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -23,6 +29,22 @@ export function Login() {
       toast.error(`Ошибка авторизации: ${error}`);
       window.history.replaceState(null, '', '/app/login');
     }
+
+    // Обработка закрытия popup окна после авторизации (для мобильных)
+    const handleMessage = (event: MessageEvent) => {
+      // Проверяем origin для безопасности
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data?.type === 'GOOGLE_AUTH_SUCCESS') {
+        // Авторизация успешна, закрываем popup если он открыт
+        if (window.opener) {
+          window.close();
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   async function submit() {
@@ -177,6 +199,18 @@ export function Login() {
                     try {
                       setGoogleLoading(true);
                       await loginWithGoogle(credentialResponse.credential);
+
+                      // Закрываем popup окно, если оно открыто (особенно важно для мобильных)
+                      if (window.opener && !window.opener.closed) {
+                        // Отправляем сообщение родительскому окну
+                        window.opener.postMessage(
+                          { type: 'GOOGLE_AUTH_SUCCESS' },
+                          window.location.origin,
+                        );
+                        window.close();
+                        return; // Не делаем navigate, так как окно закрывается
+                      }
+
                       navigate('/app');
                     } catch (error: any) {
                       toast.error(error?.message ?? 'Ошибка входа через Google');
@@ -194,7 +228,7 @@ export function Login() {
                   size="large"
                   auto_select={false}
                   use_fedcm_for_prompt={false}
-                  ux_mode="popup"
+                  ux_mode={isMobile ? 'redirect' : 'popup'}
                 />
               </div>
             </div>
