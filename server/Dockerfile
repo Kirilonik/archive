@@ -1,7 +1,13 @@
 FROM node:20-alpine
 
 # Устанавливаем curl для fallback запросов к внешним API
-RUN apk add --no-cache curl
+# Используем retry логику для надежной установки
+RUN set -eux; \
+    for i in 1 2 3; do \
+        apk update --no-cache && \
+        apk add --no-cache curl && break || \
+        (echo "Attempt $i failed, retrying..." && sleep 10); \
+    done
 
 WORKDIR /work
 
