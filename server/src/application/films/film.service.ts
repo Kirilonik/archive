@@ -21,7 +21,7 @@ function mapRowToResponse(row: UserFilmRow, userId: number) {
     kp_is_series: row.kp_is_series,
     kp_episodes_count: row.kp_episodes_count,
     kp_seasons_count: row.kp_seasons_count,
-    film_id: row.kp_id,
+    film_id: row.film_id,
     web_url: row.web_url,
     director: row.director,
     budget: row.budget,
@@ -155,10 +155,10 @@ export class FilmService {
     if (!userId) return null;
     const row = await this.repository.getUserFilm(userFilmId, userId);
     if (!row) return null;
-    if (!row.kp_id) {
+    if (!row.film_id) {
       return { items: [] };
     }
-    const response = await this.kinopoiskClient.fetchFilmImages(row.kp_id, type, 1);
+    const response = await this.kinopoiskClient.fetchFilmImages(row.film_id, type, 1);
     const items =
       response?.items
         ?.filter(
