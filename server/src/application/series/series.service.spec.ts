@@ -37,7 +37,7 @@ function createRepositoryMock(overrides: Partial<SeriesRepository> = {}): Series
   return {
     listUserSeries: jest.fn().mockResolvedValue({ items: [baseRow], total: 1 }),
     getUserSeries: jest.fn().mockResolvedValue(baseRow),
-    findCatalogIdByKpId: jest.fn().mockResolvedValue(null),
+    findCatalogIdByFilmId: jest.fn().mockResolvedValue(null),
     findCatalogIdByTitleYear: jest.fn().mockResolvedValue(null),
     createCatalogEntry: jest.fn().mockResolvedValue(7),
     findUserSeriesDuplicateByTitleYear: jest.fn().mockResolvedValue(null),
@@ -59,7 +59,7 @@ function createKinopoiskMock(overrides: Partial<KinopoiskClient> = {}): Kinopois
     fetchSeriesDetails: jest.fn().mockResolvedValue({ seasons: [] }) as any,
     fetchFilmImages: jest.fn().mockResolvedValue(null),
     suggest: jest.fn().mockResolvedValue([]),
-    extractKpIdFromPosterUrl: jest.fn().mockReturnValue(null),
+    extractFilmIdFromPosterUrl: jest.fn().mockReturnValue(null),
     ...overrides,
   };
 }
